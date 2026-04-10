@@ -1,0 +1,96 @@
+<!-- pages/add/add.wxml - 记账页 -->
+<view class="container">
+
+  <!-- 收入/支出切换 -->
+  <view class="type-switcher">
+    <view
+      class="type-btn {{type === 'expense' ? 'type-btn-active-expense' : ''}}"
+      data-type="expense"
+      bindtap="switchType"
+    >
+      <text>💸 支出</text>
+    </view>
+    <view
+      class="type-btn {{type === 'income' ? 'type-btn-active-income' : ''}}"
+      data-type="income"
+      bindtap="switchType"
+    >
+      <text>💰 收入</text>
+    </view>
+  </view>
+
+  <!-- 金额显示 -->
+  <view class="amount-display-card">
+    <text class="amount-unit">¥</text>
+    <text class="amount-display {{type === 'income' ? 'income-text' : 'expense-text'}}">
+      {{amountStr || '0.00'}}
+    </text>
+  </view>
+
+  <!-- 分类选择 -->
+  <view class="card category-section">
+    <text class="form-label">分类</text>
+    <view class="category-grid">
+      <view
+        class="category-item {{selectedCategory === item.name ? 'category-selected' : ''}}"
+        wx:for="{{categories}}"
+        wx:key="name"
+        data-category="{{item.name}}"
+        bindtap="selectCategory"
+      >
+        <text class="category-emoji">{{item.emoji}}</text>
+        <text class="category-name">{{item.name}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 备注和日期 -->
+  <view class="card form-section">
+    <view class="form-row">
+      <text class="form-label-inline">📅 日期</text>
+      <picker mode="date" value="{{date}}" bindchange="onDateChange">
+        <text class="form-value">{{date}}</text>
+      </picker>
+    </view>
+    <view class="divider-light"></view>
+    <view class="form-row">
+      <text class="form-label-inline">📝 备注</text>
+      <input
+        class="form-input"
+        value="{{note}}"
+        placeholder="点击添加备注..."
+        placeholder-class="input-placeholder"
+        bindinput="onNoteInput"
+        maxlength="30"
+      />
+    </view>
+  </view>
+
+  <!-- 数字键盘 -->
+  <view class="keyboard">
+    <view class="keyboard-row">
+      <view class="key-btn" data-key="7" bindtap="pressKey"><text>7</text></view>
+      <view class="key-btn" data-key="8" bindtap="pressKey"><text>8</text></view>
+      <view class="key-btn" data-key="9" bindtap="pressKey"><text>9</text></view>
+      <view class="key-btn key-del" data-key="del" bindtap="pressKey"><text>⌫</text></view>
+    </view>
+    <view class="keyboard-row">
+      <view class="key-btn" data-key="4" bindtap="pressKey"><text>4</text></view>
+      <view class="key-btn" data-key="5" bindtap="pressKey"><text>5</text></view>
+      <view class="key-btn" data-key="6" bindtap="pressKey"><text>6</text></view>
+      <view class="key-btn key-clear" data-key="0" bindtap="pressKey"><text>0</text></view>
+    </view>
+    <view class="keyboard-row">
+      <view class="key-btn" data-key="1" bindtap="pressKey"><text>1</text></view>
+      <view class="key-btn" data-key="2" bindtap="pressKey"><text>2</text></view>
+      <view class="key-btn" data-key="3" bindtap="pressKey"><text>3</text></view>
+      <view class="key-btn key-dot" data-key="." bindtap="pressKey"><text>.</text></view>
+    </view>
+    <view class="keyboard-row">
+      <view class="key-btn key-save {{type === 'income' ? 'key-save-income' : 'key-save-expense'}}" bindtap="saveRecord">
+        <text>保存 🐾</text>
+      </view>
+    </view>
+  </view>
+
+</view>

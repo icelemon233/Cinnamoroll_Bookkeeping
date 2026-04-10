@@ -1,0 +1,22 @@
+{
+  "appid": "wx_cinnamoroll_account",
+  "projectname": "Cinnamoroll记账本",
+  "description": "肉桂狗风格微信小程序记账应用",
+  "compileType": "miniprogram",
+  "libVersion": "3.2.4",
+  "setting": {
+    "coverView": true,
+    "es6": true,
+    "postcss": true,
+    "minified": true,
+    "enhance": true,
+    "showShadowRootInWxmlPanel": true,
+    "packNpmManually": false,
+    "packNpmRelationList": [],
+    "minifyWXSS": true,
+    "disableUseStrict": false
+  },
+  "miniprogramRoot": "./",
+  "srcMiniprogramRoot": "./",
+  "condition": {}
+}

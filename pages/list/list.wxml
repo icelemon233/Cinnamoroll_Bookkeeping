@@ -1,0 +1,81 @@
+<!-- pages/list/list.wxml - 账单列表页 -->
+<view class="container">
+
+  <!-- 顶部汇总 -->
+  <view class="summary-bar">
+    <view class="summary-bar-item">
+      <text class="bar-label">收入</text>
+      <text class="bar-amount income-text">+{{totalIncome}}</text>
+    </view>
+    <view class="bar-divider"></view>
+    <view class="summary-bar-item">
+      <text class="bar-label">支出</text>
+      <text class="bar-amount expense-text">-{{totalExpense}}</text>
+    </view>
+  </view>
+
+  <!-- 类型筛选 -->
+  <view class="filter-row">
+    <view
+      class="filter-btn {{filterType === 'all' ? 'filter-active' : ''}}"
+      data-type="all"
+      bindtap="switchFilter"
+    >全部</view>
+    <view
+      class="filter-btn {{filterType === 'expense' ? 'filter-active filter-expense' : ''}}"
+      data-type="expense"
+      bindtap="switchFilter"
+    >支出</view>
+    <view
+      class="filter-btn {{filterType === 'income' ? 'filter-active filter-income' : ''}}"
+      data-type="income"
+      bindtap="switchFilter"
+    >收入</view>
+  </view>
+
+  <!-- 空状态 -->
+  <view wx:if="{{isEmpty}}" class="empty-state">
+    <text class="empty-emoji">🌸</text>
+    <text class="empty-text">暂无账单记录</text>
+    <view class="add-btn" bindtap="goToAdd">
+      <text>去记账 ✏️</text>
+    </view>
+  </view>
+
+  <!-- 账单列表（按日期分组） -->
+  <view wx:else>
+    <view class="date-group card" wx:for="{{allGroups}}" wx:key="date">
+      <!-- 日期头 -->
+      <view class="group-header">
+        <text class="group-date">{{item.dateLabel}} ({{item.date}})</text>
+        <view class="group-subtotal">
+          <text wx:if="{{item.groupIncome > 0}}" class="subtotal-income">+{{item.groupIncome}}</text>
+          <text wx:if="{{item.groupExpense > 0}}" class="subtotal-expense"> -{{item.groupExpense}}</text>
+        </view>
+      </view>
+
+      <!-- 每条记录 -->
+      <view
+        class="record-item"
+        wx:for="{{item.records}}"
+        wx:for-item="record"
+        wx:key="id"
+        data-id="{{record.id}}"
+        bindlongpress="onLongPress"
+      >
+        <view class="record-icon">
+          <text>{{record.category === '餐饮' ? '🍜' : record.category === '交通' ? '🚌' : record.category === '购物' ? '🛍️' : record.category === '娱乐' ? '🎮' : record.category === '工资' ? '💼' : '📦'}}</text>
+        </view>
+        <view class="record-body">
+          <text class="record-category">{{record.category}}</text>
+          <text class="record-note" wx:if="{{record.note}}">{{record.note}}</text>
+        </view>
+        <text class="record-amount {{record.type === 'income' ? 'income-text' : 'expense-text'}}">
+          {{record.amountDisplay}}
+        </text>
+      </view>
+
+    </view>
+  </view>
+
+</view>

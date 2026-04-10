@@ -1,0 +1,75 @@
+<!-- pages/stats/stats.wxml - 统计页 -->
+<view class="container">
+
+  <!-- 月份标题 -->
+  <view class="month-bar">
+    <text class="month-title">{{currentMonth}} 统计</text>
+  </view>
+
+  <!-- 收支切换 -->
+  <view class="type-switcher">
+    <view
+      class="type-btn {{statsType === 'expense' ? 'active-expense' : ''}}"
+      data-type="expense"
+      bindtap="switchStatsType"
+    >💸 支出</view>
+    <view
+      class="type-btn {{statsType === 'income' ? 'active-income' : ''}}"
+      data-type="income"
+      bindtap="switchStatsType"
+    >💰 收入</view>
+  </view>
+
+  <!-- 空状态 -->
+  <view wx:if="{{isEmpty}}" class="empty-state">
+    <text class="empty-emoji">🌸</text>
+    <text class="empty-text">本月暂无{{statsType === 'expense' ? '支出' : '收入'}}记录</text>
+  </view>
+
+  <!-- 图表区域 -->
+  <view wx:else>
+
+    <!-- Canvas 饼图（新版 2d context） -->
+    <view class="chart-card">
+      <canvas
+        id="pieCanvas"
+        type="2d"
+        class="pie-canvas"
+        style="width: 300px; height: 300px;"
+      ></canvas>
+      <!-- 降级旧 canvas -->
+      <canvas
+        canvas-id="pieCanvasLegacy"
+        class="pie-canvas-legacy"
+        style="width: 300px; height: 300px; display: none;"
+      ></canvas>
+    </view>
+
+    <!-- 分类列表 -->
+    <view class="card category-list">
+      <text class="list-title">分类明细</text>
+      <view
+        class="category-row"
+        wx:for="{{categoryList}}"
+        wx:key="category"
+      >
+        <view class="cat-color-dot" style="background: {{item.color}};"></view>
+        <view class="cat-info">
+          <text class="cat-name">
+            {{item.category === '餐饮' ? '🍜' : item.category === '交通' ? '🚌' : item.category === '购物' ? '🛍️' : item.category === '娱乐' ? '🎮' : item.category === '工资' ? '💼' : '📦'}}
+            {{item.category}}
+          </text>
+          <view class="progress-bar-wrap">
+            <view class="progress-bar" style="width: {{item.percent}}%; background: {{item.color}};"></view>
+          </view>
+        </view>
+        <view class="cat-right">
+          <text class="cat-amount">¥{{item.amount}}</text>
+          <text class="cat-percent">{{item.percent}}%</text>
+        </view>
+      </view>
+    </view>
+
+  </view>
+
+</view>
