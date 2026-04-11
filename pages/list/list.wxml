@@ -33,6 +33,11 @@
     >收入</view>
   </view>
 
+  <!-- 操作提示 -->
+  <view wx:if="{{!isEmpty}}" class="hint-bar">
+    <text class="hint-text">长按账单可编辑或删除 ✨</text>
+  </view>
+
   <!-- 空状态 -->
   <view wx:if="{{isEmpty}}" class="empty-state">
     <text class="empty-emoji">🌸</text>
@@ -64,15 +69,18 @@
         bindlongpress="onLongPress"
       >
         <view class="record-icon">
-          <text>{{record.category === '餐饮' ? '🍜' : record.category === '交通' ? '🚌' : record.category === '购物' ? '🛍️' : record.category === '娱乐' ? '🎮' : record.category === '工资' ? '💼' : '📦'}}</text>
+          <text>{{record.emoji}}</text>
         </view>
         <view class="record-body">
           <text class="record-category">{{record.category}}</text>
           <text class="record-note" wx:if="{{record.note}}">{{record.note}}</text>
         </view>
-        <text class="record-amount {{record.type === 'income' ? 'income-text' : 'expense-text'}}">
-          {{record.amountDisplay}}
-        </text>
+        <view class="record-right">
+          <text class="record-amount {{record.type === 'income' ? 'income-text' : 'expense-text'}}">
+            {{record.amountDisplay}}
+          </text>
+          <text class="record-edit-hint">长按</text>
+        </view>
       </view>
 
     </view>

@@ -1,6 +1,15 @@
 // pages/index/index.js - 首页
 const { getMonthSummary, groupByDate, formatDate } = require('../../utils/storage');
 
+// 分类 emoji 映射（与 add 页保持一致）
+const CATEGORY_EMOJI = {
+  '餐饮': '🍜', '交通': '🚌', '购物': '🛍️', '娱乐': '🎮',
+  '住房': '🏠', '医疗': '💊', '教育': '📚', '运动': '🏃',
+  '旅行': '✈️', '宠物': '🐾', '日用': '🧴',
+  '工资': '💼', '奖金': '🎁', '副业': '💡', '理财': '📈', '红包': '🧧',
+  '其他': '📦'
+};
+
 Page({
   data: {
     currentMonth: '',        // 当前月份显示，如 '2026年04月'
@@ -45,6 +54,7 @@ Page({
       dateLabel: formatDate(group.date),
       records: group.records.map(r => ({
         ...r,
+        emoji: CATEGORY_EMOJI[r.category] || '📦',
         amountDisplay: r.type === 'income' ? `+${r.amount}` : `-${r.amount}`
       }))
     }));

@@ -68,7 +68,7 @@
           >
             <view class="record-left">
               <view class="record-category-icon">
-                <text>{{record.category === '餐饮' ? '🍜' : record.category === '交通' ? '🚌' : record.category === '购物' ? '🛍️' : record.category === '娱乐' ? '🎮' : record.category === '工资' ? '💼' : '📦'}}</text>
+                <text>{{record.emoji}}</text>
               </view>
               <view class="record-info">
                 <text class="record-category">{{record.category}}</text>

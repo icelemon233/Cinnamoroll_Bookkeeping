@@ -1,21 +1,40 @@
-// pages/add/add.js - 记账页
-const { saveRecord } = require('../../utils/storage');
+// pages/add/add.js - 记账页（支持新增和编辑两种模式）
+const { saveRecord, updateRecord, getRecordById } = require('../../utils/storage');
 
 const EXPENSE_CATEGORIES = [
   { name: '餐饮', emoji: '🍜' },
   { name: '交通', emoji: '🚌' },
   { name: '购物', emoji: '🛍️' },
   { name: '娱乐', emoji: '🎮' },
+  { name: '住房', emoji: '🏠' },
+  { name: '医疗', emoji: '💊' },
+  { name: '教育', emoji: '📚' },
+  { name: '运动', emoji: '🏃' },
+  { name: '旅行', emoji: '✈️' },
+  { name: '宠物', emoji: '🐾' },
+  { name: '日用', emoji: '🧴' },
   { name: '其他', emoji: '📦' }
 ];
 
 const INCOME_CATEGORIES = [
   { name: '工资', emoji: '💼' },
+  { name: '奖金', emoji: '🎁' },
+  { name: '副业', emoji: '💡' },
+  { name: '理财', emoji: '📈' },
+  { name: '红包', emoji: '🧧' },
   { name: '其他', emoji: '📦' }
 ];
 
+// emoji 映射表（供 wxml 等外部使用）
+const CATEGORY_EMOJI = {};
+[...EXPENSE_CATEGORIES, ...INCOME_CATEGORIES].forEach(c => {
+  CATEGORY_EMOJI[c.name] = c.emoji;
+});
+
 Page({
   data: {
+    isEditMode: false,           // 是否为编辑模式
+    editRecordId: null,          // 编辑时的记录 id
     type: 'expense',             // 'expense' | 'income'
     categories: EXPENSE_CATEGORIES,
     selectedCategory: '餐饮',
@@ -34,6 +53,27 @@ Page({
         selectedCategory: '工资'
       });
     }
+
+    // 编辑模式：从 options 中读取 recordId
+    if (options.recordId) {
+      const record = getRecordById(options.recordId);
+      if (record) {
+        const cats = record.type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
+        this.setData({
+          isEditMode: true,
+          editRecordId: record.id,
+          type: record.type,
+          categories: cats,
+          selectedCategory: record.category,
+          amountStr: String(record.amount),
+          note: record.note || '',
+          date: record.date
+        });
+        wx.setNavigationBarTitle({ title: '编辑记录' });
+        return;
+      }
+    }
+
     const now = new Date();
     const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     this.setData({ date });
@@ -99,9 +139,9 @@ Page({
     this.setData({ date: e.detail.value });
   },
 
-  // 保存记录
+  // 保存/更新记录
   saveRecord() {
-    const { type, selectedCategory, amountStr, note, date } = this.data;
+    const { isEditMode, editRecordId, type, selectedCategory, amountStr, note, date } = this.data;
     const amount = parseFloat(amountStr);
 
     if (!amountStr || isNaN(amount) || amount <= 0) {
@@ -109,6 +149,22 @@ Page({
       return;
     }
 
+    if (isEditMode && editRecordId) {
+      // 编辑模式：更新已有记录
+      const patch = { type, category: selectedCategory, amount, note: note.trim(), date };
+      const { success } = updateRecord(editRecordId, patch);
+      if (success) {
+        wx.showToast({ title: '修改成功 ✨', icon: 'success', duration: 1200 });
+        setTimeout(() => {
+          wx.navigateBack({ delta: 1 });
+        }, 800);
+      } else {
+        wx.showToast({ title: '修改失败，记录不存在', icon: 'none' });
+      }
+      return;
+    }
+
+    // 新增模式
     const record = {
       id: Date.now(),
       type,

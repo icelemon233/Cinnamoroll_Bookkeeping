@@ -30,6 +30,31 @@ function saveRecord(record) {
 }
 
 /**
+ * 更新一条已有账单记录
+ * @param {number|string} id - 账单 id
+ * @param {Object} patch - 需要更新的字段
+ * @returns {{ success: boolean, records: Array }}
+ */
+function updateRecord(id, patch) {
+  const records = getRecords();
+  const idx = records.findIndex(r => String(r.id) === String(id));
+  if (idx < 0) return { success: false, records };
+  records[idx] = Object.assign({}, records[idx], patch);
+  wx.setStorageSync(STORAGE_KEY, records);
+  return { success: true, records };
+}
+
+/**
+ * 根据 id 获取单条账单
+ * @param {number|string} id
+ * @returns {Object|null}
+ */
+function getRecordById(id) {
+  const records = getRecords();
+  return records.find(r => String(r.id) === String(id)) || null;
+}
+
+/**
  * 删除一条账单记录
  * @param {number} id - 账单 id
  * @returns {Array} 更新后的全部账单
@@ -137,6 +162,8 @@ function formatDate(dateStr) {
 module.exports = {
   getRecords,
   saveRecord,
+  updateRecord,
+  getRecordById,
   deleteRecord,
   getMonthSummary,
   groupByDate,

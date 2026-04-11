@@ -1,7 +1,7 @@
-<!-- pages/add/add.wxml - 记账页 -->
+<!-- pages/add/add.wxml - 记账页（支持新增/编辑两种模式） -->
 <view class="container">
 
-  <!-- 收入/支出切换 -->
+  <!-- 收入/支出切换（编辑模式下仍可切换） -->
   <view class="type-switcher">
     <view
       class="type-btn {{type === 'expense' ? 'type-btn-active-expense' : ''}}"
@@ -87,8 +87,11 @@
       <view class="key-btn key-dot" data-key="." bindtap="pressKey"><text>.</text></view>
     </view>
     <view class="keyboard-row">
-      <view class="key-btn key-save {{type === 'income' ? 'key-save-income' : 'key-save-expense'}}" bindtap="saveRecord">
-        <text>保存 🐾</text>
+      <view
+        class="key-btn key-save {{type === 'income' ? 'key-save-income' : 'key-save-expense'}}"
+        bindtap="saveRecord"
+      >
+        <text>{{isEditMode ? '保存修改 ✨' : '保存 🐾'}}</text>
       </view>
     </view>
   </view>
