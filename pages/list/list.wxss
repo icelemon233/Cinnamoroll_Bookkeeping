@@ -1,5 +1,41 @@
 /* pages/list/list.wxss */
 
+/* 月份切换导航栏 */
+.month-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8rpx 0 20rpx;
+}
+
+.month-arrow {
+  width: 72rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #EBF7FB;
+}
+
+.arrow-text {
+  font-size: 48rpx;
+  color: #4FB8D4;
+  font-weight: 700;
+  line-height: 1;
+  margin-top: -4rpx;
+}
+
+.arrow-disabled {
+  opacity: 0.3;
+}
+
+.month-nav-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #3D5A6E;
+}
+
 /* 顶部汇总 */
 .summary-bar {
   display: flex;

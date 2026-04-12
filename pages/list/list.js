@@ -17,10 +17,14 @@ Page({
     totalIncome: 0,
     totalExpense: 0,
     isEmpty: false,
-    filterMonth: ''       // 'YYYY-MM'，空表示全部
+    filterMonth: '',      // 'YYYY-MM'，空表示全部
+    // 月份导航
+    currentMonthLabel: '',   // '2026年04月'
+    isLatestMonth: true      // 是否已是最新有记录的月份（或当月）
   },
 
   onLoad() {
+    this._initMonth();
     this.loadData();
   },
 
@@ -29,6 +33,54 @@ Page({
       this.getTabBar().setData({ selected: 2 });
     }
     this.loadData();
+  },
+
+  // 初始化为当前月份
+  _initMonth() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const m = now.getMonth() + 1;
+    const filterMonth = `${year}-${m < 10 ? '0' + m : m}`;
+    const currentMonthLabel = `${year}年${m < 10 ? '0' + m : m}月`;
+    this.setData({ filterMonth, currentMonthLabel, isLatestMonth: true });
+  },
+
+  // 上一月
+  prevMonth() {
+    const { filterMonth } = this.data;
+    const [year, m] = filterMonth.split('-').map(Number);
+    let newYear = year;
+    let newMonth = m - 1;
+    if (newMonth < 1) {
+      newMonth = 12;
+      newYear -= 1;
+    }
+    this._setMonth(newYear, newMonth);
+  },
+
+  // 下一月（不超过当前月）
+  nextMonth() {
+    const now = new Date();
+    const nowYM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    if (this.data.filterMonth >= nowYM) return;
+
+    const [year, m] = this.data.filterMonth.split('-').map(Number);
+    let newYear = year;
+    let newMonth = m + 1;
+    if (newMonth > 12) {
+      newMonth = 1;
+      newYear += 1;
+    }
+    this._setMonth(newYear, newMonth);
+  },
+
+  _setMonth(year, month) {
+    const now = new Date();
+    const nowYM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const filterMonth = `${year}-${month < 10 ? '0' + month : month}`;
+    const currentMonthLabel = `${year}年${month < 10 ? '0' + month : month}月`;
+    const isLatestMonth = filterMonth >= nowYM;
+    this.setData({ filterMonth, currentMonthLabel, isLatestMonth }, () => this.loadData());
   },
 
   loadData() {

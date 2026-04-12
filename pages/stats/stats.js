@@ -13,23 +13,33 @@ const COLORS = [
   '#88C8D8'  // 中蓝
 ];
 
+// 分类 emoji 映射（与 add 页保持一致，覆盖全部 18 种分类）
+const CATEGORY_EMOJI = {
+  '餐饮': '🍜', '交通': '🚌', '购物': '🛍️', '娱乐': '🎮',
+  '住房': '🏠', '医疗': '💊', '教育': '📚', '运动': '🏃',
+  '旅行': '✈️', '宠物': '🐾', '日用': '🧴',
+  '工资': '💼', '奖金': '🎁', '副业': '💡', '理财': '📈', '红包': '🧧',
+  '其他': '📦'
+};
+
 Page({
   data: {
+    // 当前浏览月份（YYYY-MM 格式，用于数据查询）
+    yearMonth: '',
+    // 展示用标签，如 "2026年04月"
     currentMonth: '',
+    // 是否已到当月（不能再往后翻）
+    isCurrentMonth: true,
     monthIncome: 0,
     monthExpense: 0,
     statsType: 'expense',     // 'expense' | 'income'
-    categoryList: [],         // [{ category, amount, percent, color }]
+    categoryList: [],         // [{ category, amount, percent, color, emoji }]
     isEmpty: false,
     canvasSize: 600           // canvas 边长（rpx 转 px 需乘 dpr）
   },
 
   onLoad() {
-    const now = new Date();
-    const year = now.getFullYear();
-    const m = now.getMonth() + 1;
-    const monthLabel = `${year}年${m < 10 ? '0' + m : m}月`;
-    this.setData({ currentMonth: monthLabel });
+    this._initMonth();
   },
 
   onShow() {
@@ -39,14 +49,60 @@ Page({
     this.loadStats();
   },
 
-  loadStats() {
+  // 初始化为当前月份
+  _initMonth() {
     const now = new Date();
     const year = now.getFullYear();
     const m = now.getMonth() + 1;
     const yearMonth = `${year}-${m < 10 ? '0' + m : m}`;
+    const currentMonth = `${year}年${m < 10 ? '0' + m : m}月`;
+    this.setData({ yearMonth, currentMonth, isCurrentMonth: true });
+  },
+
+  // 上一月
+  prevMonth() {
+    const [year, m] = this.data.yearMonth.split('-').map(Number);
+    let newYear = year;
+    let newMonth = m - 1;
+    if (newMonth < 1) {
+      newMonth = 12;
+      newYear -= 1;
+    }
+    const yearMonth = `${newYear}-${newMonth < 10 ? '0' + newMonth : newMonth}`;
+    const currentMonth = `${newYear}年${newMonth < 10 ? '0' + newMonth : newMonth}月`;
+
+    // 与真实当月比较，确定是否还能往后翻
+    const now = new Date();
+    const nowYM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const isCurrentMonth = yearMonth === nowYM;
+
+    this.setData({ yearMonth, currentMonth, isCurrentMonth }, () => this.loadStats());
+  },
+
+  // 下一月（不能超过当前月）
+  nextMonth() {
+    const now = new Date();
+    const nowYM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    if (this.data.yearMonth >= nowYM) return; // 已是当月，不再往后翻
+
+    const [year, m] = this.data.yearMonth.split('-').map(Number);
+    let newYear = year;
+    let newMonth = m + 1;
+    if (newMonth > 12) {
+      newMonth = 1;
+      newYear += 1;
+    }
+    const yearMonth = `${newYear}-${newMonth < 10 ? '0' + newMonth : newMonth}`;
+    const currentMonth = `${newYear}年${newMonth < 10 ? '0' + newMonth : newMonth}月`;
+    const isCurrentMonth = yearMonth === nowYM;
+
+    this.setData({ yearMonth, currentMonth, isCurrentMonth }, () => this.loadStats());
+  },
+
+  loadStats() {
+    const { yearMonth, statsType } = this.data;
 
     const summary = getMonthSummary(yearMonth);
-    const { statsType } = this.data;
 
     // 获取各分类统计
     let catList = [];
@@ -60,7 +116,8 @@ Page({
 
     const categoryList = catList.map((item, i) => ({
       ...item,
-      color: COLORS[i % COLORS.length]
+      color: COLORS[i % COLORS.length],
+      emoji: CATEGORY_EMOJI[item.category] || '📦'
     }));
 
     this.setData({

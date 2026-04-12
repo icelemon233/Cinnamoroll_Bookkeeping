@@ -1,9 +1,33 @@
 /* pages/stats/stats.wxss */
 
-/* 月份标题 */
-.month-bar {
-  text-align: center;
+/* 月份切换导航栏 */
+.month-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: 8rpx 0 24rpx;
+}
+
+.month-arrow {
+  width: 72rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #EBF7FB;
+}
+
+.arrow-text {
+  font-size: 48rpx;
+  color: #4FB8D4;
+  font-weight: 700;
+  line-height: 1;
+  margin-top: -4rpx; /* 视觉居中微调 */
+}
+
+.arrow-disabled {
+  opacity: 0.3;
 }
 
 .month-title {
@@ -12,13 +36,55 @@
   color: #3D5A6E;
 }
 
+/* 收支概览卡片 */
+.summary-row {
+  display: flex;
+  background: #FFFFFF;
+  border-radius: 24rpx;
+  padding: 28rpx 0;
+  margin-bottom: 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(79, 184, 212, 0.1);
+}
+
+.summary-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.summary-divider {
+  width: 1rpx;
+  background: #EBF7FB;
+  margin: 8rpx 0;
+}
+
+.summary-label {
+  font-size: 24rpx;
+  color: #9BAAB8;
+  margin-bottom: 8rpx;
+}
+
+.summary-amount {
+  font-size: 36rpx;
+  font-weight: 700;
+}
+
+.income-text {
+  color: #4FB8D4;
+}
+
+.expense-text {
+  color: #FF8BAB;
+}
+
 /* 收支切换 */
 .type-switcher {
   display: flex;
   background: #FFFFFF;
   border-radius: 100rpx;
   padding: 8rpx;
-  margin-bottom: 28rpx;
+  margin-bottom: 24rpx;
   box-shadow: 0 4rpx 16rpx rgba(79, 184, 212, 0.1);
 }
 
