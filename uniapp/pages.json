@@ -1,0 +1,55 @@
+{
+  "pages": [
+    {
+      "path": "pages/index/index",
+      "style": {
+        "navigationBarTitleText": "🐾 首页",
+        "navigationBarBackgroundColor": "#A8D8EA",
+        "navigationBarTextStyle": "white"
+      }
+    },
+    {
+      "path": "pages/add/add",
+      "style": {
+        "navigationBarTitleText": "记账",
+        "navigationBarBackgroundColor": "#A8D8EA",
+        "navigationBarTextStyle": "white"
+      }
+    },
+    {
+      "path": "pages/list/list",
+      "style": {
+        "navigationBarTitleText": "账单",
+        "navigationBarBackgroundColor": "#A8D8EA",
+        "navigationBarTextStyle": "white"
+      }
+    },
+    {
+      "path": "pages/stats/stats",
+      "style": {
+        "navigationBarTitleText": "统计",
+        "navigationBarBackgroundColor": "#A8D8EA",
+        "navigationBarTextStyle": "white"
+      }
+    }
+  ],
+  "globalStyle": {
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#A8D8EA",
+    "navigationBarTitleText": "🐾 Cinnamoroll 记账本",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#F0F8FF"
+  },
+  "tabBar": {
+    "color": "#9BAAB8",
+    "selectedColor": "#4FB8D4",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "white",
+    "list": [
+      { "pagePath": "pages/index/index", "text": "首页" },
+      { "pagePath": "pages/add/add", "text": "记账" },
+      { "pagePath": "pages/list/list", "text": "账单" },
+      { "pagePath": "pages/stats/stats", "text": "统计" }
+    ]
+  }
+}

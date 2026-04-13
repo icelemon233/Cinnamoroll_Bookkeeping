@@ -1,0 +1,506 @@
+<template>
+  <view class="container">
+
+    <!-- 月份切换导航 -->
+    <view class="month-nav">
+      <view class="month-arrow" @tap="prevMonth">
+        <text class="arrow-text">‹</text>
+      </view>
+      <text class="month-nav-title">{{ currentMonthLabel }}</text>
+      <view :class="['month-arrow', isLatestMonth ? 'arrow-disabled' : '']" @tap="nextMonth">
+        <text class="arrow-text">›</text>
+      </view>
+    </view>
+
+    <!-- 顶部汇总 -->
+    <view class="summary-bar">
+      <view class="summary-bar-item">
+        <text class="bar-label">收入</text>
+        <text class="bar-amount income-text">+{{ totalIncome }}</text>
+      </view>
+      <view class="bar-divider"></view>
+      <view class="summary-bar-item">
+        <text class="bar-label">支出</text>
+        <text class="bar-amount expense-text">-{{ totalExpense }}</text>
+      </view>
+    </view>
+
+    <!-- 类型筛选 -->
+    <view class="filter-row">
+      <view
+        :class="['filter-btn', filterType === 'all' ? 'filter-active' : '']"
+        :data-type="'all'"
+        @tap="switchFilter"
+      >全部</view>
+      <view
+        :class="['filter-btn', filterType === 'expense' ? 'filter-active filter-expense' : '']"
+        :data-type="'expense'"
+        @tap="switchFilter"
+      >支出</view>
+      <view
+        :class="['filter-btn', filterType === 'income' ? 'filter-active filter-income' : '']"
+        :data-type="'income'"
+        @tap="switchFilter"
+      >收入</view>
+    </view>
+
+    <!-- 操作提示 -->
+    <view v-if="!isEmpty" class="hint-bar">
+      <text class="hint-text">长按账单可编辑或删除 ✨</text>
+    </view>
+
+    <!-- 空状态 -->
+    <view v-if="isEmpty" class="empty-state">
+      <text class="empty-emoji">🌸</text>
+      <text class="empty-text">{{ currentMonthLabel }}暂无账单</text>
+      <view class="add-btn" @tap="goToAdd">
+        <text>去记账 ✏️</text>
+      </view>
+    </view>
+
+    <!-- 账单列表（按日期分组） -->
+    <view v-else>
+      <view class="date-group card" v-for="item in allGroups" :key="item.date">
+        <!-- 日期头 -->
+        <view class="group-header">
+          <text class="group-date">{{ item.dateLabel }} ({{ item.date }})</text>
+          <view class="group-subtotal">
+            <text v-if="item.groupIncome > 0" class="subtotal-income">+{{ item.groupIncome }}</text>
+            <text v-if="item.groupExpense > 0" class="subtotal-expense"> -{{ item.groupExpense }}</text>
+          </view>
+        </view>
+
+        <!-- 每条记录 -->
+        <view
+          class="record-item"
+          v-for="record in item.records"
+          :key="record.id"
+          :data-id="record.id"
+          @longpress="onLongPress"
+        >
+          <view class="record-icon">
+            <text>{{ record.emoji }}</text>
+          </view>
+          <view class="record-body">
+            <text class="record-category">{{ record.category }}</text>
+            <text class="record-note" v-if="record.note">{{ record.note }}</text>
+          </view>
+          <view class="record-right">
+            <text :class="['record-amount', record.type === 'income' ? 'income-text' : 'expense-text']">
+              {{ record.amountDisplay }}
+            </text>
+            <text class="record-edit-hint">长按</text>
+          </view>
+        </view>
+
+      </view>
+    </view>
+
+  </view>
+</template>
+
+<script>
+import { getRecords, deleteRecord, groupByDate, formatDate } from '../../utils/storage.js'
+
+const CATEGORY_EMOJI = {
+  '餐饮': '🍜', '交通': '🚌', '购物': '🛍️', '娱乐': '🎮',
+  '住房': '🏠', '医疗': '💊', '教育': '📚', '运动': '🏃',
+  '旅行': '✈️', '宠物': '🐾', '日用': '🧴',
+  '工资': '💼', '奖金': '🎁', '副业': '💡', '理财': '📈', '红包': '🧧',
+  '其他': '📦'
+}
+
+export default {
+  data() {
+    return {
+      allGroups: [],
+      filterType: 'all',
+      totalIncome: 0,
+      totalExpense: 0,
+      isEmpty: false,
+      filterMonth: '',
+      currentMonthLabel: '',
+      isLatestMonth: true
+    }
+  },
+
+  onLoad() {
+    this._initMonth()
+    this.loadData()
+  },
+
+  onShow() {
+    this.loadData()
+  },
+
+  methods: {
+    _initMonth() {
+      const now = new Date()
+      const year = now.getFullYear()
+      const m = now.getMonth() + 1
+      const filterMonth = `${year}-${m < 10 ? '0' + m : m}`
+      const currentMonthLabel = `${year}年${m < 10 ? '0' + m : m}月`
+      this.filterMonth = filterMonth
+      this.currentMonthLabel = currentMonthLabel
+      this.isLatestMonth = true
+    },
+
+    prevMonth() {
+      const { filterMonth } = this
+      const [year, m] = filterMonth.split('-').map(Number)
+      let newYear = year
+      let newMonth = m - 1
+      if (newMonth < 1) {
+        newMonth = 12
+        newYear -= 1
+      }
+      this._setMonth(newYear, newMonth)
+    },
+
+    nextMonth() {
+      const now = new Date()
+      const nowYM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+      if (this.filterMonth >= nowYM) return
+      const [year, m] = this.filterMonth.split('-').map(Number)
+      let newYear = year
+      let newMonth = m + 1
+      if (newMonth > 12) {
+        newMonth = 1
+        newYear += 1
+      }
+      this._setMonth(newYear, newMonth)
+    },
+
+    _setMonth(year, month) {
+      const now = new Date()
+      const nowYM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+      const filterMonth = `${year}-${month < 10 ? '0' + month : month}`
+      const currentMonthLabel = `${year}年${month < 10 ? '0' + month : month}月`
+      const isLatestMonth = filterMonth >= nowYM
+      this.filterMonth = filterMonth
+      this.currentMonthLabel = currentMonthLabel
+      this.isLatestMonth = isLatestMonth
+      this.loadData()
+    },
+
+    loadData() {
+      const { filterType, filterMonth } = this
+      let records = getRecords()
+
+      if (filterMonth) {
+        records = records.filter(r => r.date && r.date.startsWith(filterMonth))
+      }
+
+      let filtered = records
+      if (filterType !== 'all') {
+        filtered = records.filter(r => r.type === filterType)
+      }
+
+      let totalIncome = 0
+      let totalExpense = 0
+      records.forEach(r => {
+        if (r.type === 'income') totalIncome += Number(r.amount) || 0
+        else totalExpense += Number(r.amount) || 0
+      })
+
+      const allGroups = groupByDate(filtered).map(group => ({
+        ...group,
+        dateLabel: formatDate(group.date),
+        groupIncome: group.records.filter(r => r.type === 'income').reduce((s, r) => s + Number(r.amount), 0),
+        groupExpense: group.records.filter(r => r.type === 'expense').reduce((s, r) => s + Number(r.amount), 0),
+        records: group.records.map(r => ({
+          ...r,
+          emoji: CATEGORY_EMOJI[r.category] || '📦',
+          amountDisplay: r.type === 'income' ? `+${r.amount}` : `-${r.amount}`
+        }))
+      }))
+
+      this.allGroups = allGroups
+      this.totalIncome = parseFloat(totalIncome.toFixed(2))
+      this.totalExpense = parseFloat(totalExpense.toFixed(2))
+      this.isEmpty = allGroups.length === 0
+    },
+
+    switchFilter(e) {
+      const filterType = e.currentTarget.dataset.type
+      this.filterType = filterType
+      this.loadData()
+    },
+
+    onLongPress(e) {
+      const id = e.currentTarget.dataset.id
+      uni.showActionSheet({
+        itemList: ['✏️ 编辑', '🗑️ 删除'],
+        success: (res) => {
+          if (res.tapIndex === 0) {
+            uni.navigateTo({ url: `/pages/add/add?recordId=${id}` })
+          } else if (res.tapIndex === 1) {
+            this._confirmDelete(id)
+          }
+        }
+      })
+    },
+
+    _confirmDelete(id) {
+      uni.showModal({
+        title: '确认删除',
+        content: '删除这条账单记录？',
+        confirmText: '删除',
+        confirmColor: '#FF8BAB',
+        cancelText: '取消',
+        success: (res) => {
+          if (res.confirm) {
+            deleteRecord(id)
+            uni.showToast({ title: '已删除', icon: 'success', duration: 800 })
+            this.loadData()
+          }
+        }
+      })
+    },
+
+    goToAdd() {
+      uni.switchTab({ url: '/pages/add/add' })
+    }
+  }
+}
+</script>
+
+<style scoped>
+.month-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8rpx 0 20rpx;
+}
+
+.month-arrow {
+  width: 72rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #EBF7FB;
+}
+
+.arrow-text {
+  font-size: 48rpx;
+  color: #4FB8D4;
+  font-weight: 700;
+  line-height: 1;
+  margin-top: -4rpx;
+}
+
+.arrow-disabled {
+  opacity: 0.3;
+}
+
+.month-nav-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #3D5A6E;
+}
+
+.summary-bar {
+  display: flex;
+  background: #FFFFFF;
+  border-radius: 24rpx;
+  padding: 28rpx 36rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 4rpx 16rpx rgba(79, 184, 212, 0.1);
+  align-items: center;
+  justify-content: center;
+}
+
+.summary-bar-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.bar-label {
+  font-size: 24rpx;
+  color: #9BAAB8;
+  margin-bottom: 8rpx;
+}
+
+.bar-amount {
+  font-size: 40rpx;
+  font-weight: 700;
+}
+
+.bar-divider {
+  width: 1rpx;
+  height: 60rpx;
+  background: #E8F4F8;
+  margin: 0 20rpx;
+}
+
+.income-text { color: #4FB8D4; }
+.expense-text { color: #FF8BAB; }
+
+.filter-row {
+  display: flex;
+  gap: 16rpx;
+  margin-bottom: 24rpx;
+}
+
+.filter-btn {
+  flex: 1;
+  text-align: center;
+  padding: 16rpx 0;
+  border-radius: 100rpx;
+  font-size: 28rpx;
+  color: #9BAAB8;
+  background: #FFFFFF;
+  border: 2rpx solid transparent;
+  font-weight: 400;
+}
+
+.filter-active {
+  background: #E0F5FA;
+  color: #4FB8D4;
+  border-color: #A8D8EA;
+  font-weight: 600;
+}
+
+.filter-expense.filter-active {
+  background: #FFE0E8;
+  color: #FF8BAB;
+  border-color: #FFB3C8;
+}
+
+.date-group {
+  padding: 20rpx 28rpx;
+  margin-bottom: 20rpx;
+}
+
+.group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 16rpx;
+  border-bottom: 1rpx solid #F0F8FF;
+  margin-bottom: 8rpx;
+}
+
+.group-date {
+  font-size: 26rpx;
+  color: #9BAAB8;
+  font-weight: 500;
+}
+
+.group-subtotal {
+  display: flex;
+  gap: 8rpx;
+}
+
+.subtotal-income {
+  font-size: 26rpx;
+  color: #4FB8D4;
+}
+
+.subtotal-expense {
+  font-size: 26rpx;
+  color: #FF8BAB;
+}
+
+.record-item {
+  display: flex;
+  align-items: center;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #F8FCFE;
+}
+
+.record-item:last-child {
+  border-bottom: none;
+  padding-bottom: 4rpx;
+}
+
+.record-icon {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  background: #EEF8FB;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36rpx;
+  margin-right: 20rpx;
+  flex-shrink: 0;
+}
+
+.record-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.record-category {
+  font-size: 30rpx;
+  font-weight: 500;
+  color: #3D5A6E;
+}
+
+.record-note {
+  font-size: 24rpx;
+  color: #9BAAB8;
+  margin-top: 4rpx;
+}
+
+.record-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+
+.record-amount {
+  font-size: 34rpx;
+  font-weight: 700;
+}
+
+.record-edit-hint {
+  font-size: 20rpx;
+  color: #C8D8E4;
+  margin-top: 4rpx;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 100rpx 0;
+}
+
+.empty-emoji {
+  font-size: 100rpx;
+  margin-bottom: 20rpx;
+}
+
+.empty-text {
+  font-size: 30rpx;
+  color: #9BAAB8;
+  margin-bottom: 40rpx;
+}
+
+.add-btn {
+  background: linear-gradient(135deg, #7EC8E3, #4FB8D4);
+  color: #FFFFFF;
+  padding: 24rpx 60rpx;
+  border-radius: 100rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+}
+
+.hint-bar {
+  text-align: center;
+  margin-bottom: 16rpx;
+}
+
+.hint-text {
+  font-size: 24rpx;
+  color: #B8D8E4;
+}
+</style>
