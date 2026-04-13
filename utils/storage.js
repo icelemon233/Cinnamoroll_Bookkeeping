@@ -159,6 +159,42 @@ function formatDate(dateStr) {
   return `${parts[1]}月${parts[2]}日`;
 }
 
+// ─────────────────────────────────────────────
+// 月度预算
+// ─────────────────────────────────────────────
+
+const BUDGET_KEY = 'monthly_budgets'; // { 'YYYY-MM': number }
+
+/**
+ * 获取指定月份的预算金额
+ * @param {string} yearMonth - 'YYYY-MM'，默认当前月
+ * @returns {number} 预算金额，0 表示未设置
+ */
+function getMonthBudget(yearMonth) {
+  if (!yearMonth) {
+    const now = new Date();
+    const m = now.getMonth() + 1;
+    yearMonth = `${now.getFullYear()}-${m < 10 ? '0' + m : m}`;
+  }
+  const budgets = wx.getStorageSync(BUDGET_KEY) || {};
+  return Number(budgets[yearMonth]) || 0;
+}
+
+/**
+ * 设置指定月份的预算金额
+ * @param {string} yearMonth - 'YYYY-MM'
+ * @param {number} amount - 预算金额，0 表示清除预算
+ */
+function setMonthBudget(yearMonth, amount) {
+  const budgets = wx.getStorageSync(BUDGET_KEY) || {};
+  if (!amount || amount <= 0) {
+    delete budgets[yearMonth];
+  } else {
+    budgets[yearMonth] = parseFloat(Number(amount).toFixed(2));
+  }
+  wx.setStorageSync(BUDGET_KEY, budgets);
+}
+
 module.exports = {
   getRecords,
   saveRecord,
@@ -168,5 +204,7 @@ module.exports = {
   getMonthSummary,
   groupByDate,
   getCategoryStats,
-  formatDate
+  formatDate,
+  getMonthBudget,
+  setMonthBudget
 };

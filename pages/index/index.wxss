@@ -239,3 +239,158 @@
   font-size: 28rpx;
   color: #9BAAB8;
 }
+
+/* ─── 月度预算卡片 ─── */
+.budget-card {
+  padding: 28rpx 32rpx;
+  margin-bottom: 24rpx;
+}
+
+.budget-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+}
+
+.budget-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.budget-icon {
+  font-size: 36rpx;
+}
+
+.budget-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #3D5A6E;
+}
+
+.budget-set-btn {
+  background: #EEF8FB;
+  border-radius: 100rpx;
+  padding: 8rpx 28rpx;
+}
+
+.budget-set-text {
+  font-size: 26rpx;
+  color: #4FB8D4;
+  font-weight: 500;
+}
+
+/* 未设置预算 */
+.budget-empty {
+  padding: 16rpx 0 8rpx;
+}
+
+.budget-empty-text {
+  font-size: 26rpx;
+  color: #B8CCD8;
+}
+
+/* 已设置预算 */
+.budget-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.budget-amounts {
+  display: flex;
+  align-items: flex-end;
+  gap: 16rpx;
+}
+
+.budget-used,
+.budget-total {
+  display: flex;
+  flex-direction: column;
+}
+
+.budget-label-small {
+  font-size: 22rpx;
+  color: #9BAAB8;
+  margin-bottom: 4rpx;
+}
+
+.budget-val {
+  font-size: 40rpx;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.budget-normal-text {
+  color: #3D5A6E;
+}
+
+.budget-over-text {
+  color: #FF8BAB;
+}
+
+.budget-total-text {
+  color: #9BAAB8;
+}
+
+.budget-slash {
+  font-size: 36rpx;
+  color: #C8D8E4;
+  padding-bottom: 4rpx;
+}
+
+.budget-remain-wrap {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+}
+
+.budget-remain-ok {
+  font-size: 26rpx;
+  color: #4FB8D4;
+  background: #EEF8FB;
+  border-radius: 100rpx;
+  padding: 6rpx 20rpx;
+}
+
+.budget-remain-over {
+  font-size: 26rpx;
+  color: #FF8BAB;
+  background: #FFF0F4;
+  border-radius: 100rpx;
+  padding: 6rpx 20rpx;
+}
+
+/* 进度条 */
+.budget-bar-bg {
+  width: 100%;
+  height: 16rpx;
+  background: #EEF8FB;
+  border-radius: 100rpx;
+  overflow: hidden;
+}
+
+.budget-bar-fill {
+  height: 100%;
+  border-radius: 100rpx;
+  transition: width 0.4s ease;
+}
+
+.budget-bar-ok {
+  background: linear-gradient(90deg, #7EC8E3, #4FB8D4);
+}
+
+.budget-bar-over {
+  background: linear-gradient(90deg, #FFB3C6, #FF8BAB);
+}
+
+.budget-percent-row {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.budget-percent-text {
+  font-size: 22rpx;
+  color: #9BAAB8;
+}

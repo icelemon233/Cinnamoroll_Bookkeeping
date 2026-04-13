@@ -40,6 +40,54 @@
     <text class="quick-add-text">记一笔</text>
   </view>
 
+  <!-- 月度预算卡片 -->
+  <view class="card budget-card">
+    <view class="budget-header">
+      <view class="budget-title-row">
+        <text class="budget-icon">🎯</text>
+        <text class="budget-title">本月预算</text>
+      </view>
+      <view class="budget-set-btn" bindtap="onSetBudget">
+        <text class="budget-set-text">{{hasBudget ? '修改' : '设置'}}</text>
+      </view>
+    </view>
+
+    <!-- 未设置预算 -->
+    <view wx:if="{{!hasBudget}}" class="budget-empty">
+      <text class="budget-empty-text">还没有设置预算，点击右上角设置～</text>
+    </view>
+
+    <!-- 已设置预算 -->
+    <view wx:else class="budget-content">
+      <view class="budget-amounts">
+        <view class="budget-used">
+          <text class="budget-label-small">已支出</text>
+          <text class="budget-val {{budgetOver ? 'budget-over-text' : 'budget-normal-text'}}">¥{{monthExpense}}</text>
+        </view>
+        <view class="budget-slash">/</view>
+        <view class="budget-total">
+          <text class="budget-label-small">预算</text>
+          <text class="budget-val budget-total-text">¥{{budget}}</text>
+        </view>
+        <view class="budget-remain-wrap">
+          <text wx:if="{{!budgetOver}}" class="budget-remain-ok">还剩 ¥{{budgetRemain}}</text>
+          <text wx:else class="budget-remain-over">超出 ¥{{-budgetRemain}}</text>
+        </view>
+      </view>
+
+      <!-- 进度条 -->
+      <view class="budget-bar-bg">
+        <view
+          class="budget-bar-fill {{budgetOver ? 'budget-bar-over' : 'budget-bar-ok'}}"
+          style="width: {{budgetPercent}}%;"
+        ></view>
+      </view>
+      <view class="budget-percent-row">
+        <text class="budget-percent-text {{budgetOver ? 'budget-over-text' : ''}}">已用 {{budgetPercent}}%</text>
+      </view>
+    </view>
+  </view>
+
   <!-- 最近账单 -->
   <view class="card recent-section">
     <view class="flex-between section-header">
