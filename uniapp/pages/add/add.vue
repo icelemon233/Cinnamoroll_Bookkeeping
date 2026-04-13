@@ -88,10 +88,10 @@
       </view>
       <view class="keyboard-row">
         <view
-          :class="['key-btn key-save', type === 'income' ? 'key-save-income' : 'key-save-expense']"
-          @tap="saveRecord"
+          :class="['key-btn key-save', type === 'income' ? 'key-save-income' : 'key-save-expense', saving ? 'key-saving' : '']"
+          @tap="handleSave"
         >
-          <text>{{ isEditMode ? '保存修改 ✨' : '保存 🐾' }}</text>
+          <text>{{ saving ? '保存中...' : (isEditMode ? '保存修改 ✨' : '保存 🐾') }}</text>
         </view>
       </view>
     </view>
@@ -100,7 +100,7 @@
 </template>
 
 <script>
-const { saveRecord, updateRecord, getRecordById } = require('../../utils/storage.js')
+import { addRecord, updateRecord, getRecordById } from '../../utils/storage.js'
 
 const EXPENSE_CATEGORIES = [
   { name: '餐饮', emoji: '🍜' },
@@ -129,19 +129,19 @@ const INCOME_CATEGORIES = [
 export default {
   data() {
     return {
-      isEditMode: false,           // 是否为编辑模式
-      editRecordId: null,          // 编辑时的记录 id
-      type: 'expense',             // 'expense' | 'income'
+      isEditMode: false,
+      editRecordId: null,
+      type: 'expense',
       categories: EXPENSE_CATEGORIES,
       selectedCategory: '餐饮',
-      amountStr: '',               // 金额字符串（数字键盘输入）
+      amountStr: '',
       note: '',
-      date: '',                    // YYYY-MM-DD
-      showKeyboard: true
+      date: '',
+      saving: false
     }
   },
 
-  onLoad(options) {
+  async onLoad(options) {
     // 支持从外部携带 type 参数
     if (options.type === 'income') {
       this.type = 'income'
@@ -151,19 +151,24 @@ export default {
 
     // 编辑模式：从 options 中读取 recordId
     if (options.recordId) {
-      const record = getRecordById(options.recordId)
-      if (record) {
-        const cats = record.type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES
-        this.isEditMode = true
-        this.editRecordId = record.id
-        this.type = record.type
-        this.categories = cats
-        this.selectedCategory = record.category
-        this.amountStr = String(record.amount)
-        this.note = record.note || ''
-        this.date = record.date
-        uni.setNavigationBarTitle({ title: '编辑记录' })
-        return
+      uni.showLoading({ title: '加载中' })
+      try {
+        const record = await getRecordById(options.recordId)
+        if (record) {
+          const cats = record.type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES
+          this.isEditMode = true
+          this.editRecordId = record.id
+          this.type = record.type
+          this.categories = cats
+          this.selectedCategory = record.category
+          this.amountStr = String(record.amount)
+          this.note = record.note || ''
+          this.date = record.date
+          uni.setNavigationBarTitle({ title: '编辑记录' })
+          return
+        }
+      } finally {
+        uni.hideLoading()
       }
     }
 
@@ -173,7 +178,6 @@ export default {
   },
 
   methods: {
-    // 切换收入/支出
     switchType(e) {
       const type = e.currentTarget.dataset.type
       const categories = type === 'expense' ? EXPENSE_CATEGORIES : INCOME_CATEGORIES
@@ -183,13 +187,11 @@ export default {
       this.selectedCategory = selectedCategory
     },
 
-    // 选择分类
     selectCategory(e) {
       const category = e.currentTarget.dataset.category
       this.selectedCategory = category
     },
 
-    // 数字键盘点击
     pressKey(e) {
       const key = e.currentTarget.dataset.key
       let amountStr = this.amountStr
@@ -197,19 +199,16 @@ export default {
       if (key === 'del') {
         amountStr = amountStr.slice(0, -1)
       } else if (key === '.') {
-        // 只允许一个小数点，且小数位最多2位
         if (amountStr.includes('.')) return
         if (amountStr === '') amountStr = '0'
         amountStr += '.'
       } else {
-        // 限制整数部分最多7位，小数部分最多2位
         if (amountStr.includes('.')) {
           const parts = amountStr.split('.')
           if (parts[1].length >= 2) return
         } else {
           if (amountStr.length >= 7) return
         }
-        // 防止多个前导零
         if (amountStr === '0') {
           amountStr = key
         } else {
@@ -219,18 +218,16 @@ export default {
       this.amountStr = amountStr
     },
 
-    // 备注输入
     onNoteInput(e) {
       this.note = e.detail.value
     },
 
-    // 日期选择
     onDateChange(e) {
       this.date = e.detail.value
     },
 
-    // 保存/更新记录
-    saveRecord() {
+    async handleSave() {
+      if (this.saving) return
       const { isEditMode, editRecordId, type, selectedCategory, amountStr, note, date } = this
       const amount = parseFloat(amountStr)
 
@@ -239,47 +236,44 @@ export default {
         return
       }
 
-      if (isEditMode && editRecordId) {
-        // 编辑模式：更新已有记录
-        const patch = { type, category: selectedCategory, amount, note: note.trim(), date }
-        const { success } = updateRecord(editRecordId, patch)
-        if (success) {
+      this.saving = true
+      uni.showLoading({ title: '保存中' })
+
+      try {
+        if (isEditMode && editRecordId) {
+          // 编辑模式
+          const patch = { type, category: selectedCategory, amount, note: note.trim(), date }
+          await updateRecord(editRecordId, patch)
           uni.showToast({ title: '修改成功 ✨', icon: 'success', duration: 1200 })
           setTimeout(() => {
             uni.navigateBack({ delta: 1 })
           }, 800)
         } else {
-          uni.showToast({ title: '修改失败，记录不存在', icon: 'none' })
+          // 新增模式
+          await addRecord({
+            type,
+            category: selectedCategory,
+            amount,
+            note: note.trim(),
+            date
+          })
+          uni.showToast({ title: '记录成功 🎉', icon: 'success', duration: 1200 })
+          // 重置表单
+          setTimeout(() => {
+            this.amountStr = ''
+            this.note = ''
+            this.type = 'expense'
+            this.categories = EXPENSE_CATEGORIES
+            this.selectedCategory = '餐饮'
+          }, 500)
         }
-        return
+      } catch (e) {
+        console.error('[add] save error:', e)
+        uni.showToast({ title: '保存失败，请重试', icon: 'none' })
+      } finally {
+        this.saving = false
+        uni.hideLoading()
       }
-
-      // 新增模式
-      const record = {
-        id: Date.now(),
-        type,
-        category: selectedCategory,
-        amount,
-        note: note.trim(),
-        date
-      }
-
-      saveRecord(record)
-
-      uni.showToast({
-        title: '记录成功 🎉',
-        icon: 'success',
-        duration: 1200
-      })
-
-      // 重置表单
-      setTimeout(() => {
-        this.amountStr = ''
-        this.note = ''
-        this.type = 'expense'
-        this.categories = EXPENSE_CATEGORIES
-        this.selectedCategory = '餐饮'
-      }, 500)
     }
   }
 }
@@ -512,5 +506,9 @@ export default {
 
 .key-save:active {
   opacity: 0.88;
+}
+
+.key-saving {
+  opacity: 0.65;
 }
 </style>

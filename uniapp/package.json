@@ -1,0 +1,12 @@
+{
+  "name": "cinnamoroll-bookkeeping",
+  "version": "1.0.0",
+  "description": "Cinnamoroll 风格记账本 - uni-app + Supabase",
+  "scripts": {
+    "dev:h5": "uni",
+    "build:h5": "uni build"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0"
+  }
+}

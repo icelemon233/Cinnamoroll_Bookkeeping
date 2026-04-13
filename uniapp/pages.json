@@ -1,6 +1,15 @@
 {
   "pages": [
     {
+      "path": "pages/login/login",
+      "style": {
+        "navigationBarTitleText": "登录",
+        "navigationBarBackgroundColor": "#A8D8EA",
+        "navigationBarTextStyle": "white",
+        "navigationStyle": "custom"
+      }
+    },
+    {
       "path": "pages/index/index",
       "style": {
         "navigationBarTitleText": "🐾 首页",
@@ -31,6 +40,14 @@
         "navigationBarBackgroundColor": "#A8D8EA",
         "navigationBarTextStyle": "white"
       }
+    },
+    {
+      "path": "pages/profile/profile",
+      "style": {
+        "navigationBarTitleText": "我的",
+        "navigationBarBackgroundColor": "#A8D8EA",
+        "navigationBarTextStyle": "white"
+      }
     }
   ],
   "globalStyle": {
@@ -49,7 +66,8 @@
       { "pagePath": "pages/index/index", "text": "首页" },
       { "pagePath": "pages/add/add", "text": "记账" },
       { "pagePath": "pages/list/list", "text": "账单" },
-      { "pagePath": "pages/stats/stats", "text": "统计" }
+      { "pagePath": "pages/stats/stats", "text": "统计" },
+      { "pagePath": "pages/profile/profile", "text": "我的" }
     ]
   }
 }

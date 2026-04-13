@@ -117,8 +117,8 @@ export default {
     this._initMonth()
   },
 
-  onShow() {
-    this.loadStats()
+  async onShow() {
+    await this.loadStats()
   },
 
   methods: {
@@ -143,7 +143,7 @@ export default {
       this.yearMonth = yearMonth
       this.currentMonth = currentMonth
       this.isCurrentMonth = yearMonth === nowYM
-      this.loadStats()
+      this.loadStats()  // intentionally not awaited here (UI triggered)
     },
 
     nextMonth() {
@@ -162,27 +162,32 @@ export default {
       this.loadStats()
     },
 
-    loadStats() {
-      const { yearMonth, statsType } = this
-      const summary = getMonthSummary(yearMonth)
-      const records = statsType === 'expense'
-        ? summary.records.filter(r => r.type === 'expense')
-        : summary.records.filter(r => r.type === 'income')
+    async loadStats() {
+      uni.showLoading({ title: '加载中...', mask: true })
+      try {
+        const { yearMonth, statsType } = this
+        const summary = await getMonthSummary(yearMonth)
+        const records = statsType === 'expense'
+          ? summary.records.filter(r => r.type === 'expense')
+          : summary.records.filter(r => r.type === 'income')
 
-      const catList = this._buildCatList(records)
-      const categoryList = catList.map((item, i) => ({
-        ...item,
-        color: COLORS[i % COLORS.length],
-        emoji: CATEGORY_EMOJI[item.category] || '📦'
-      }))
+        const catList = this._buildCatList(records)
+        const categoryList = catList.map((item, i) => ({
+          ...item,
+          color: COLORS[i % COLORS.length],
+          emoji: CATEGORY_EMOJI[item.category] || '📦'
+        }))
 
-      this.monthIncome = summary.income
-      this.monthExpense = summary.expense
-      this.categoryList = categoryList
-      this.isEmpty = categoryList.length === 0
+        this.monthIncome = summary.income
+        this.monthExpense = summary.expense
+        this.categoryList = categoryList
+        this.isEmpty = categoryList.length === 0
 
-      if (!this.isEmpty) {
-        this.$nextTick(() => { this.drawPieChart(categoryList) })
+        if (!this.isEmpty) {
+          this.$nextTick(() => { this.drawPieChart(categoryList) })
+        }
+      } finally {
+        uni.hideLoading()
       }
     },
 
@@ -206,7 +211,7 @@ export default {
 
     switchStatsType(e) {
       this.statsType = e.currentTarget.dataset.type
-      this.loadStats()
+      this.loadStats()  // intentionally not awaited (UI triggered)
     },
 
     drawPieChart(categoryList) {

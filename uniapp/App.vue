@@ -1,11 +1,23 @@
 <script>
+import { supabase } from './utils/supabase.js'
+
 export default {
-  onLaunch() {
-    const records = uni.getStorageSync('records')
-    if (!records) {
-      uni.setStorageSync('records', [])
-    }
+  async onLaunch() {
     console.log('Cinnamoroll 记账本启动 🐾')
+
+    // 检查登录状态
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) {
+      uni.reLaunch({ url: '/pages/login/login' })
+      return
+    }
+
+    // 监听 auth 状态变化
+    supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT' || !session) {
+        uni.reLaunch({ url: '/pages/login/login' })
+      }
+    })
   },
   globalData: {
     expenseCategories: [

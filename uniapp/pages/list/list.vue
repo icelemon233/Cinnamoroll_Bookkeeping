@@ -129,8 +129,8 @@ export default {
     this.loadData()
   },
 
-  onShow() {
-    this.loadData()
+  async onShow() {
+    await this.loadData()
   },
 
   methods: {
@@ -183,42 +183,47 @@ export default {
       this.loadData()
     },
 
-    loadData() {
-      const { filterType, filterMonth } = this
-      let records = getRecords()
+    async loadData() {
+      uni.showLoading({ title: '加载中...', mask: true })
+      try {
+        const { filterType, filterMonth } = this
+        let allRecords = await getRecords()
 
-      if (filterMonth) {
-        records = records.filter(r => r.date && r.date.startsWith(filterMonth))
-      }
+        if (filterMonth) {
+          allRecords = allRecords.filter(r => r.date && r.date.startsWith(filterMonth))
+        }
 
-      let filtered = records
-      if (filterType !== 'all') {
-        filtered = records.filter(r => r.type === filterType)
-      }
+        let filtered = allRecords
+        if (filterType !== 'all') {
+          filtered = allRecords.filter(r => r.type === filterType)
+        }
 
-      let totalIncome = 0
-      let totalExpense = 0
-      records.forEach(r => {
-        if (r.type === 'income') totalIncome += Number(r.amount) || 0
-        else totalExpense += Number(r.amount) || 0
-      })
+        let totalIncome = 0
+        let totalExpense = 0
+        allRecords.forEach(r => {
+          if (r.type === 'income') totalIncome += Number(r.amount) || 0
+          else totalExpense += Number(r.amount) || 0
+        })
 
-      const allGroups = groupByDate(filtered).map(group => ({
-        ...group,
-        dateLabel: formatDate(group.date),
-        groupIncome: group.records.filter(r => r.type === 'income').reduce((s, r) => s + Number(r.amount), 0),
-        groupExpense: group.records.filter(r => r.type === 'expense').reduce((s, r) => s + Number(r.amount), 0),
-        records: group.records.map(r => ({
-          ...r,
-          emoji: CATEGORY_EMOJI[r.category] || '📦',
-          amountDisplay: r.type === 'income' ? `+${r.amount}` : `-${r.amount}`
+        const allGroups = groupByDate(filtered).map(group => ({
+          ...group,
+          dateLabel: formatDate(group.date),
+          groupIncome: group.records.filter(r => r.type === 'income').reduce((s, r) => s + Number(r.amount), 0),
+          groupExpense: group.records.filter(r => r.type === 'expense').reduce((s, r) => s + Number(r.amount), 0),
+          records: group.records.map(r => ({
+            ...r,
+            emoji: CATEGORY_EMOJI[r.category] || '📦',
+            amountDisplay: r.type === 'income' ? `+${r.amount}` : `-${r.amount}`
+          }))
         }))
-      }))
 
-      this.allGroups = allGroups
-      this.totalIncome = parseFloat(totalIncome.toFixed(2))
-      this.totalExpense = parseFloat(totalExpense.toFixed(2))
-      this.isEmpty = allGroups.length === 0
+        this.allGroups = allGroups
+        this.totalIncome = parseFloat(totalIncome.toFixed(2))
+        this.totalExpense = parseFloat(totalExpense.toFixed(2))
+        this.isEmpty = allGroups.length === 0
+      } finally {
+        uni.hideLoading()
+      }
     },
 
     switchFilter(e) {
@@ -248,11 +253,15 @@ export default {
         confirmText: '删除',
         confirmColor: '#FF8BAB',
         cancelText: '取消',
-        success: (res) => {
+        success: async (res) => {
           if (res.confirm) {
-            deleteRecord(id)
-            uni.showToast({ title: '已删除', icon: 'success', duration: 800 })
-            this.loadData()
+            try {
+              await deleteRecord(id)
+              uni.showToast({ title: '已删除', icon: 'success', duration: 800 })
+              await this.loadData()
+            } catch (e) {
+              uni.showToast({ title: '删除失败', icon: 'none' })
+            }
           }
         }
       })
