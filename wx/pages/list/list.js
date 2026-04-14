@@ -1,5 +1,5 @@
 // pages/list/list.js - 账单列表页
-const { getRecords, deleteRecord, groupByDate, formatDate, searchRecords } = require('../../utils/storage');
+const { getRecords, deleteRecord, groupByDate, formatDate } = require('../../utils/storage');
 
 // 分类 emoji 映射（与 add 页保持一致）
 const CATEGORY_EMOJI = {
@@ -12,19 +12,18 @@ const CATEGORY_EMOJI = {
 
 Page({
   data: {
-    allGroups: [],        // 全部按日期分组
-    filterType: 'all',    // 'all' | 'expense' | 'income'
+    allGroups: [],
+    filterType: 'all',       // 'all' | 'expense' | 'income'
     totalIncome: 0,
     totalExpense: 0,
     isEmpty: false,
-    filterMonth: '',      // 'YYYY-MM'，空表示全部
-    // 月份导航
-    currentMonthLabel: '',   // '2026年04月'
-    isLatestMonth: true,     // 是否已是最新有记录的月份（或当月）
+    filterMonth: '',          // 'YYYY-MM'
+    currentMonthLabel: '',
+    isLatestMonth: true,
     // 搜索
-    searchKeyword: '',       // 当前搜索关键词
-    isSearchMode: false,     // 是否处于搜索模式
-    searchResultCount: 0     // 搜索结果数量
+    searchKeyword: '',
+    isSearchMode: false,
+    searchResultCount: 0
   },
 
   onLoad() {
@@ -39,7 +38,8 @@ Page({
     this.loadData();
   },
 
-  // 初始化为当前月份
+  // ─── 月份导航 ────────────────────────────────────────
+
   _initMonth() {
     const now = new Date();
     const year = now.getFullYear();
@@ -49,32 +49,23 @@ Page({
     this.setData({ filterMonth, currentMonthLabel, isLatestMonth: true });
   },
 
-  // 上一月
   prevMonth() {
+    if (this.data.isSearchMode) return;
     const { filterMonth } = this.data;
     const [year, m] = filterMonth.split('-').map(Number);
-    let newYear = year;
-    let newMonth = m - 1;
-    if (newMonth < 1) {
-      newMonth = 12;
-      newYear -= 1;
-    }
+    let newYear = year, newMonth = m - 1;
+    if (newMonth < 1) { newMonth = 12; newYear -= 1; }
     this._setMonth(newYear, newMonth);
   },
 
-  // 下一月（不超过当前月）
   nextMonth() {
+    if (this.data.isSearchMode) return;
     const now = new Date();
     const nowYM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
     if (this.data.filterMonth >= nowYM) return;
-
     const [year, m] = this.data.filterMonth.split('-').map(Number);
-    let newYear = year;
-    let newMonth = m + 1;
-    if (newMonth > 12) {
-      newMonth = 1;
-      newYear += 1;
-    }
+    let newYear = year, newMonth = m + 1;
+    if (newMonth > 12) { newMonth = 1; newYear += 1; }
     this._setMonth(newYear, newMonth);
   },
 
@@ -87,63 +78,73 @@ Page({
     this.setData({ filterMonth, currentMonthLabel, isLatestMonth }, () => this.loadData());
   },
 
+  // ─── 搜索 ─────────────────────────────────────────────
+
+  onSearchInput(e) {
+    const keyword = e.detail.value.trim();
+    this.setData({ searchKeyword: keyword, isSearchMode: keyword.length > 0 }, () => this.loadData());
+  },
+
+  clearSearch() {
+    this.setData({ searchKeyword: '', isSearchMode: false }, () => this.loadData());
+  },
+
+  onSearchFocus() {
+    // 聚焦时不切换搜索模式，等有输入才切
+  },
+
+  // ─── 数据加载 ─────────────────────────────────────────
+
   loadData() {
     const { filterType, filterMonth, searchKeyword, isSearchMode } = this.data;
+    let records = getRecords();
 
-    // 搜索模式：跨月全局搜索
-    if (isSearchMode && searchKeyword.trim()) {
-      const matched = searchRecords(searchKeyword, { type: filterType });
-      const allGroups = this._buildGroups(matched);
-      // 搜索模式下统计也基于搜索结果
-      let totalIncome = 0;
-      let totalExpense = 0;
-      matched.forEach(r => {
+    if (isSearchMode && searchKeyword) {
+      // 搜索模式：跨月全局搜索，匹配备注/分类/金额
+      const kw = searchKeyword.toLowerCase();
+      records = records.filter(r =>
+        (r.note && r.note.toLowerCase().includes(kw)) ||
+        (r.category && r.category.toLowerCase().includes(kw)) ||
+        (String(r.amount) && String(r.amount).includes(kw))
+      );
+      // 叠加类型筛选
+      let filtered = records;
+      if (filterType !== 'all') {
+        filtered = records.filter(r => r.type === filterType);
+      }
+      const allGroups = this._buildGroups(filtered);
+      this.setData({
+        allGroups,
+        totalIncome: 0,
+        totalExpense: 0,
+        isEmpty: allGroups.length === 0,
+        searchResultCount: filtered.length
+      });
+    } else {
+      // 月份模式
+      if (filterMonth) {
+        records = records.filter(r => r.date && r.date.startsWith(filterMonth));
+      }
+      let filtered = records;
+      if (filterType !== 'all') {
+        filtered = records.filter(r => r.type === filterType);
+      }
+      let totalIncome = 0, totalExpense = 0;
+      records.forEach(r => {
         if (r.type === 'income') totalIncome += Number(r.amount) || 0;
         else totalExpense += Number(r.amount) || 0;
       });
+      const allGroups = this._buildGroups(filtered);
       this.setData({
         allGroups,
         totalIncome: parseFloat(totalIncome.toFixed(2)),
         totalExpense: parseFloat(totalExpense.toFixed(2)),
         isEmpty: allGroups.length === 0,
-        searchResultCount: matched.length
+        searchResultCount: filtered.length
       });
-      return;
     }
-
-    let records = getRecords();
-
-    // 按月份筛选
-    if (filterMonth) {
-      records = records.filter(r => r.date && r.date.startsWith(filterMonth));
-    }
-
-    // 按类型筛选
-    let filtered = records;
-    if (filterType !== 'all') {
-      filtered = records.filter(r => r.type === filterType);
-    }
-
-    // 计算总收入/总支出（基于月份筛选后的全量，不受 type 筛选影响）
-    let totalIncome = 0;
-    let totalExpense = 0;
-    records.forEach(r => {
-      if (r.type === 'income') totalIncome += Number(r.amount) || 0;
-      else totalExpense += Number(r.amount) || 0;
-    });
-
-    const allGroups = this._buildGroups(filtered);
-
-    this.setData({
-      allGroups,
-      totalIncome: parseFloat(totalIncome.toFixed(2)),
-      totalExpense: parseFloat(totalExpense.toFixed(2)),
-      isEmpty: allGroups.length === 0,
-      searchResultCount: 0
-    });
   },
 
-  // 将账单数组转为按日期分组结构
   _buildGroups(records) {
     return groupByDate(records).map(group => ({
       ...group,
@@ -158,46 +159,22 @@ Page({
     }));
   },
 
-  // 搜索框输入
-  onSearchInput(e) {
-    const keyword = e.detail.value || '';
-    this.setData({ searchKeyword: keyword, isSearchMode: keyword.trim().length > 0 }, () => {
-      this.loadData();
-    });
-  },
+  // ─── 筛选 ─────────────────────────────────────────────
 
-  // 清除搜索
-  clearSearch() {
-    this.setData({ searchKeyword: '', isSearchMode: false }, () => {
-      this.loadData();
-    });
-  },
-
-  // 搜索框聚焦时进入搜索模式
-  onSearchFocus() {
-    const { searchKeyword } = this.data;
-    if (searchKeyword.trim()) {
-      this.setData({ isSearchMode: true }, () => this.loadData());
-    }
-  },
-
-  // 切换筛选类型
   switchFilter(e) {
     const filterType = e.currentTarget.dataset.type;
     this.setData({ filterType }, () => this.loadData());
   },
 
-  // 长按弹出编辑/删除菜单
+  // ─── 长按操作 ─────────────────────────────────────────
+
   onLongPress(e) {
     const id = e.currentTarget.dataset.id;
     wx.showActionSheet({
       itemList: ['✏️ 编辑', '🗑️ 删除'],
       success: (res) => {
         if (res.tapIndex === 0) {
-          // 跳转到编辑页
-          wx.navigateTo({
-            url: `/pages/add/add?recordId=${id}`
-          });
+          wx.navigateTo({ url: `/pages/add/add?recordId=${id}` });
         } else if (res.tapIndex === 1) {
           this._confirmDelete(id);
         }
@@ -205,7 +182,6 @@ Page({
     });
   },
 
-  // 确认删除
   _confirmDelete(id) {
     wx.showModal({
       title: '确认删除',
@@ -223,7 +199,6 @@ Page({
     });
   },
 
-  // 跳转记账
   goToAdd() {
     wx.switchTab({ url: '/pages/add/add' });
   }

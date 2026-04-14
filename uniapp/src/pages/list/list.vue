@@ -1,8 +1,32 @@
 <template>
   <view class="container">
 
-    <!-- 月份切换导航 -->
-    <view class="month-nav">
+    <!-- 搜索框 -->
+    <view class="search-bar">
+      <view class="search-inner">
+        <text class="search-icon">🔍</text>
+        <input
+          class="search-input"
+          placeholder="搜索备注、分类、金额"
+          placeholder-class="search-placeholder"
+          :value="searchKeyword"
+          @input="onSearchInput"
+          @focus="onSearchFocus"
+          confirm-type="search"
+        />
+        <view v-if="searchKeyword" class="search-clear" @tap="clearSearch">
+          <text class="clear-icon">✕</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 搜索模式：结果数提示 -->
+    <view v-if="isSearchMode" class="search-result-hint">
+      <text class="hint-text">找到 {{ searchResultCount }} 条结果</text>
+    </view>
+
+    <!-- 月份切换导航（搜索模式下隐藏） -->
+    <view v-if="!isSearchMode" class="month-nav">
       <view class="month-arrow" @tap="prevMonth">
         <text class="arrow-text">‹</text>
       </view>
@@ -12,8 +36,8 @@
       </view>
     </view>
 
-    <!-- 顶部汇总 -->
-    <view class="summary-bar">
+    <!-- 顶部汇总（搜索模式下隐藏） -->
+    <view v-if="!isSearchMode" class="summary-bar">
       <view class="summary-bar-item">
         <text class="bar-label">收入</text>
         <text class="bar-amount income-text">+{{ totalIncome }}</text>
@@ -45,15 +69,15 @@
     </view>
 
     <!-- 操作提示 -->
-    <view v-if="!isEmpty" class="hint-bar">
+    <view v-if="!isEmpty && !isSearchMode" class="hint-bar">
       <text class="hint-text">长按账单可编辑或删除 ✨</text>
     </view>
 
     <!-- 空状态 -->
     <view v-if="isEmpty" class="empty-state">
-      <text class="empty-emoji">🌸</text>
-      <text class="empty-text">{{ currentMonthLabel }}暂无账单</text>
-      <view class="add-btn" @tap="goToAdd">
+      <text class="empty-emoji">{{ isSearchMode ? '🔍' : '🌸' }}</text>
+      <text class="empty-text">{{ isSearchMode ? '没找到相关账单' : currentMonthLabel + '暂无账单' }}</text>
+      <view v-if="!isSearchMode" class="add-btn" @tap="goToAdd">
         <text>去记账 ✏️</text>
       </view>
     </view>
@@ -61,7 +85,6 @@
     <!-- 账单列表（按日期分组） -->
     <view v-else>
       <view class="date-group card" v-for="item in allGroups" :key="item.date">
-        <!-- 日期头 -->
         <view class="group-header">
           <text class="group-date">{{ item.dateLabel }} ({{ item.date }})</text>
           <view class="group-subtotal">
@@ -69,8 +92,6 @@
             <text v-if="item.groupExpense > 0" class="subtotal-expense"> -{{ item.groupExpense }}</text>
           </view>
         </view>
-
-        <!-- 每条记录 -->
         <view
           class="record-item"
           v-for="record in item.records"
@@ -78,9 +99,7 @@
           :data-id="record.id"
           @longpress="onLongPress"
         >
-          <view class="record-icon">
-            <text>{{ record.emoji }}</text>
-          </view>
+          <view class="record-icon"><text>{{ record.emoji }}</text></view>
           <view class="record-body">
             <text class="record-category">{{ record.category }}</text>
             <text class="record-note" v-if="record.note">{{ record.note }}</text>
@@ -92,7 +111,6 @@
             <text class="record-edit-hint">长按</text>
           </view>
         </view>
-
       </view>
     </view>
 
@@ -101,6 +119,7 @@
 
 <script>
 import { getRecords, deleteRecord, groupByDate, formatDate } from '../../utils/storage.js'
+import { supabase } from '../../utils/supabase.js'
 
 const CATEGORY_EMOJI = {
   '餐饮': '🍜', '交通': '🚌', '购物': '🛍️', '娱乐': '🎮',
@@ -120,7 +139,11 @@ export default {
       isEmpty: false,
       filterMonth: '',
       currentMonthLabel: '',
-      isLatestMonth: true
+      isLatestMonth: true,
+      // 搜索
+      searchKeyword: '',
+      isSearchMode: false,
+      searchResultCount: 0
     }
   },
 
@@ -134,6 +157,8 @@ export default {
   },
 
   methods: {
+    // ─── 月份导航 ──────────────────────────────────────────
+
     _initMonth() {
       const now = new Date()
       const year = now.getFullYear()
@@ -146,28 +171,22 @@ export default {
     },
 
     prevMonth() {
+      if (this.isSearchMode) return
       const { filterMonth } = this
       const [year, m] = filterMonth.split('-').map(Number)
-      let newYear = year
-      let newMonth = m - 1
-      if (newMonth < 1) {
-        newMonth = 12
-        newYear -= 1
-      }
+      let newYear = year, newMonth = m - 1
+      if (newMonth < 1) { newMonth = 12; newYear -= 1 }
       this._setMonth(newYear, newMonth)
     },
 
     nextMonth() {
+      if (this.isSearchMode) return
       const now = new Date()
       const nowYM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
       if (this.filterMonth >= nowYM) return
       const [year, m] = this.filterMonth.split('-').map(Number)
-      let newYear = year
-      let newMonth = m + 1
-      if (newMonth > 12) {
-        newMonth = 1
-        newYear += 1
-      }
+      let newYear = year, newMonth = m + 1
+      if (newMonth > 12) { newMonth = 1; newYear += 1 }
       this._setMonth(newYear, newMonth)
     },
 
@@ -183,54 +202,137 @@ export default {
       this.loadData()
     },
 
+    // ─── 搜索（Supabase ilike 查询）────────────────────────
+
+    onSearchInput(e) {
+      const keyword = e.detail.value.trim()
+      this.searchKeyword = keyword
+      this.isSearchMode = keyword.length > 0
+      this.loadData()
+    },
+
+    clearSearch() {
+      this.searchKeyword = ''
+      this.isSearchMode = false
+      this.loadData()
+    },
+
+    onSearchFocus() {
+      // 聚焦时等待输入
+    },
+
+    // ─── 数据加载 ───────────────────────────────────────────
+
     async loadData() {
       uni.showLoading({ title: '加载中...', mask: true })
       try {
-        const { filterType, filterMonth } = this
-        let allRecords = await getRecords()
+        const { isSearchMode, searchKeyword, filterType, filterMonth } = this
 
-        if (filterMonth) {
-          allRecords = allRecords.filter(r => r.date && r.date.startsWith(filterMonth))
+        if (isSearchMode && searchKeyword) {
+          // 搜索模式：Supabase 跨月模糊查询（备注、分类）+ 客户端金额过滤
+          let query = supabase
+            .from('records')
+            .select('*')
+            .or(`note.ilike.%${searchKeyword}%,category.ilike.%${searchKeyword}%`)
+            .order('date', { ascending: false })
+            .order('created_at', { ascending: false })
+
+          if (filterType !== 'all') {
+            query = query.eq('type', filterType)
+          }
+
+          const { data, error } = await query
+          if (error) {
+            console.error('[list] search error:', error.message)
+            uni.showToast({ title: '搜索失败', icon: 'none' })
+            return
+          }
+
+          // 金额关键词客户端过滤（补充 Supabase or 查询）
+          let records = data || []
+          const isNumericKw = /^\d+(\.\d+)?$/.test(searchKeyword)
+          if (isNumericKw) {
+            const numRecords = (data || []).filter(r => String(r.amount).includes(searchKeyword))
+            // 合并去重
+            const merged = [...records]
+            numRecords.forEach(r => {
+              if (!merged.find(m => m.id === r.id)) merged.push(r)
+            })
+            records = merged
+          }
+
+          const allGroups = this._buildGroups(records)
+          this.allGroups = allGroups
+          this.totalIncome = 0
+          this.totalExpense = 0
+          this.isEmpty = allGroups.length === 0
+          this.searchResultCount = records.length
+
+        } else {
+          // 月份模式：Supabase 按月查询
+          let query = supabase
+            .from('records')
+            .select('*')
+            .order('date', { ascending: false })
+            .order('created_at', { ascending: false })
+
+          if (filterMonth) {
+            query = query.like('date', `${filterMonth}%`)
+          }
+
+          const { data: allData, error } = await query
+          if (error) {
+            console.error('[list] loadData error:', error.message)
+            return
+          }
+
+          const allRecords = allData || []
+          let filtered = allRecords
+          if (filterType !== 'all') {
+            filtered = allRecords.filter(r => r.type === filterType)
+          }
+
+          let totalIncome = 0, totalExpense = 0
+          allRecords.forEach(r => {
+            if (r.type === 'income') totalIncome += Number(r.amount) || 0
+            else totalExpense += Number(r.amount) || 0
+          })
+
+          const allGroups = this._buildGroups(filtered)
+          this.allGroups = allGroups
+          this.totalIncome = parseFloat(totalIncome.toFixed(2))
+          this.totalExpense = parseFloat(totalExpense.toFixed(2))
+          this.isEmpty = allGroups.length === 0
+          this.searchResultCount = filtered.length
         }
-
-        let filtered = allRecords
-        if (filterType !== 'all') {
-          filtered = allRecords.filter(r => r.type === filterType)
-        }
-
-        let totalIncome = 0
-        let totalExpense = 0
-        allRecords.forEach(r => {
-          if (r.type === 'income') totalIncome += Number(r.amount) || 0
-          else totalExpense += Number(r.amount) || 0
-        })
-
-        const allGroups = groupByDate(filtered).map(group => ({
-          ...group,
-          dateLabel: formatDate(group.date),
-          groupIncome: group.records.filter(r => r.type === 'income').reduce((s, r) => s + Number(r.amount), 0),
-          groupExpense: group.records.filter(r => r.type === 'expense').reduce((s, r) => s + Number(r.amount), 0),
-          records: group.records.map(r => ({
-            ...r,
-            emoji: CATEGORY_EMOJI[r.category] || '📦',
-            amountDisplay: r.type === 'income' ? `+${r.amount}` : `-${r.amount}`
-          }))
-        }))
-
-        this.allGroups = allGroups
-        this.totalIncome = parseFloat(totalIncome.toFixed(2))
-        this.totalExpense = parseFloat(totalExpense.toFixed(2))
-        this.isEmpty = allGroups.length === 0
       } finally {
         uni.hideLoading()
       }
     },
+
+    _buildGroups(records) {
+      return groupByDate(records).map(group => ({
+        ...group,
+        dateLabel: formatDate(group.date),
+        groupIncome: group.records.filter(r => r.type === 'income').reduce((s, r) => s + Number(r.amount), 0),
+        groupExpense: group.records.filter(r => r.type === 'expense').reduce((s, r) => s + Number(r.amount), 0),
+        records: group.records.map(r => ({
+          ...r,
+          emoji: CATEGORY_EMOJI[r.category] || '📦',
+          amountDisplay: r.type === 'income' ? `+${r.amount}` : `-${r.amount}`
+        }))
+      }))
+    },
+
+    // ─── 筛选 ───────────────────────────────────────────────
 
     switchFilter(e) {
       const filterType = e.currentTarget.dataset.type
       this.filterType = filterType
       this.loadData()
     },
+
+    // ─── 长按操作 ───────────────────────────────────────────
 
     onLongPress(e) {
       const id = e.currentTarget.dataset.id
@@ -275,6 +377,61 @@ export default {
 </script>
 
 <style scoped>
+/* ─── 搜索框 ─────────────────────────────────────────────── */
+.search-bar {
+  margin-bottom: 16rpx;
+}
+
+.search-inner {
+  display: flex;
+  align-items: center;
+  background: #FFFFFF;
+  border-radius: 100rpx;
+  padding: 18rpx 28rpx;
+  box-shadow: 0 2rpx 12rpx rgba(79, 184, 212, 0.08);
+}
+
+.search-icon {
+  font-size: 30rpx;
+  margin-right: 16rpx;
+  flex-shrink: 0;
+}
+
+.search-input {
+  flex: 1;
+  font-size: 28rpx;
+  color: #3D5A6E;
+  height: 48rpx;
+  line-height: 48rpx;
+}
+
+.search-placeholder {
+  color: #C8D8E4;
+}
+
+.search-clear {
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 50%;
+  background: #E8F4F8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-left: 12rpx;
+}
+
+.clear-icon {
+  font-size: 22rpx;
+  color: #9BAAB8;
+}
+
+.search-result-hint {
+  text-align: center;
+  margin-bottom: 16rpx;
+}
+
+/* ─── 月份切换导航栏 ──────────────────────────────────────── */
 .month-nav {
   display: flex;
   align-items: center;
@@ -310,6 +467,7 @@ export default {
   color: #3D5A6E;
 }
 
+/* ─── 顶部汇总 ───────────────────────────────────────────── */
 .summary-bar {
   display: flex;
   background: #FFFFFF;
@@ -349,6 +507,7 @@ export default {
 .income-text { color: #4FB8D4; }
 .expense-text { color: #FF8BAB; }
 
+/* ─── 筛选行 ─────────────────────────────────────────────── */
 .filter-row {
   display: flex;
   gap: 16rpx;
@@ -380,6 +539,7 @@ export default {
   border-color: #FFB3C8;
 }
 
+/* ─── 日期分组卡片 ────────────────────────────────────────── */
 .date-group {
   padding: 20rpx 28rpx;
   margin-bottom: 20rpx;
@@ -415,6 +575,7 @@ export default {
   color: #FF8BAB;
 }
 
+/* ─── 账单条目 ───────────────────────────────────────────── */
 .record-item {
   display: flex;
   align-items: center;
@@ -476,6 +637,7 @@ export default {
   margin-top: 4rpx;
 }
 
+/* ─── 空状态 ─────────────────────────────────────────────── */
 .empty-state {
   display: flex;
   flex-direction: column;
@@ -503,6 +665,7 @@ export default {
   font-weight: 600;
 }
 
+/* ─── 提示栏 ─────────────────────────────────────────────── */
 .hint-bar {
   text-align: center;
   margin-bottom: 16rpx;

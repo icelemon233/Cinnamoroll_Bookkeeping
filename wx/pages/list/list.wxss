@@ -1,8 +1,8 @@
 /* pages/list/list.wxss */
 
-/* 搜索框 */
+/* ─── 搜索框 ─────────────────────────────────────────────── */
 .search-bar {
-  margin-bottom: 20rpx;
+  margin-bottom: 16rpx;
 }
 
 .search-inner {
@@ -11,12 +11,11 @@
   background: #FFFFFF;
   border-radius: 100rpx;
   padding: 18rpx 28rpx;
-  box-shadow: 0 2rpx 12rpx rgba(79, 184, 212, 0.1);
-  border: 2rpx solid #EBF7FB;
+  box-shadow: 0 2rpx 12rpx rgba(79, 184, 212, 0.08);
 }
 
 .search-icon {
-  font-size: 32rpx;
+  font-size: 30rpx;
   margin-right: 16rpx;
   flex-shrink: 0;
 }
@@ -25,20 +24,19 @@
   flex: 1;
   font-size: 28rpx;
   color: #3D5A6E;
-  height: 56rpx;
-  line-height: 56rpx;
+  height: 48rpx;
+  line-height: 48rpx;
 }
 
 .search-placeholder {
   color: #C8D8E4;
-  font-size: 28rpx;
 }
 
 .search-clear {
   width: 44rpx;
   height: 44rpx;
   border-radius: 50%;
-  background: #D0E8EF;
+  background: #E8F4F8;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -46,23 +44,17 @@
   margin-left: 12rpx;
 }
 
-.search-clear-icon {
+.clear-icon {
   font-size: 22rpx;
-  color: #7FABBE;
-  font-weight: 700;
-}
-
-.search-result-tip {
-  margin-bottom: 16rpx;
-  padding: 0 8rpx;
-}
-
-.search-result-text {
-  font-size: 24rpx;
   color: #9BAAB8;
 }
 
-/* 月份切换导航栏 */
+.search-result-hint {
+  text-align: center;
+  margin-bottom: 16rpx;
+}
+
+/* ─── 月份切换导航栏 ──────────────────────────────────────── */
 .month-nav {
   display: flex;
   align-items: center;
@@ -98,7 +90,7 @@
   color: #3D5A6E;
 }
 
-/* 顶部汇总 */
+/* ─── 顶部汇总 ───────────────────────────────────────────── */
 .summary-bar {
   display: flex;
   background: #FFFFFF;
@@ -138,7 +130,7 @@
 .income-text { color: #4FB8D4; }
 .expense-text { color: #FF8BAB; }
 
-/* 筛选行 */
+/* ─── 筛选行 ─────────────────────────────────────────────── */
 .filter-row {
   display: flex;
   gap: 16rpx;
@@ -171,7 +163,7 @@
   border-color: #FFB3C8;
 }
 
-/* 日期分组卡片 */
+/* ─── 日期分组卡片 ────────────────────────────────────────── */
 .date-group {
   padding: 20rpx 28rpx;
   margin-bottom: 20rpx;
@@ -207,7 +199,7 @@
   color: #FF8BAB;
 }
 
-/* 账单条目 */
+/* ─── 账单条目 ───────────────────────────────────────────── */
 .record-item {
   display: flex;
   align-items: center;
@@ -269,7 +261,7 @@
   margin-top: 4rpx;
 }
 
-/* 空状态 */
+/* ─── 空状态 ─────────────────────────────────────────────── */
 .empty-state {
   display: flex;
   flex-direction: column;
@@ -301,7 +293,7 @@
   opacity: 0.85;
 }
 
-/* 长按提示 */
+/* ─── 提示栏 ─────────────────────────────────────────────── */
 .hint-bar {
   text-align: center;
   margin-bottom: 16rpx;

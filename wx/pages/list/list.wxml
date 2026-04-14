@@ -7,7 +7,7 @@
       <text class="search-icon">🔍</text>
       <input
         class="search-input"
-        placeholder="搜索备注、分类或金额"
+        placeholder="搜索备注、分类、金额"
         placeholder-class="search-placeholder"
         value="{{searchKeyword}}"
         bindinput="onSearchInput"
@@ -15,16 +15,14 @@
         confirm-type="search"
       />
       <view wx:if="{{searchKeyword}}" class="search-clear" bindtap="clearSearch">
-        <text class="search-clear-icon">✕</text>
+        <text class="clear-icon">✕</text>
       </view>
     </view>
   </view>
 
-  <!-- 搜索结果提示 -->
-  <view wx:if="{{isSearchMode}}" class="search-result-tip">
-    <text class="search-result-text">
-      搜索 "{{searchKeyword}}" · 共 {{searchResultCount}} 条结果
-    </text>
+  <!-- 搜索模式：结果数提示 -->
+  <view wx:if="{{isSearchMode}}" class="search-result-hint">
+    <text class="hint-text">找到 {{searchResultCount}} 条结果</text>
   </view>
 
   <!-- 月份切换导航（搜索模式下隐藏） -->
@@ -38,8 +36,8 @@
     </view>
   </view>
 
-  <!-- 顶部汇总 -->
-  <view class="summary-bar">
+  <!-- 顶部汇总（搜索模式下隐藏） -->
+  <view wx:if="{{!isSearchMode}}" class="summary-bar">
     <view class="summary-bar-item">
       <text class="bar-label">收入</text>
       <text class="bar-amount income-text">+{{totalIncome}}</text>
@@ -53,33 +51,21 @@
 
   <!-- 类型筛选 -->
   <view class="filter-row">
-    <view
-      class="filter-btn {{filterType === 'all' ? 'filter-active' : ''}}"
-      data-type="all"
-      bindtap="switchFilter"
-    >全部</view>
-    <view
-      class="filter-btn {{filterType === 'expense' ? 'filter-active filter-expense' : ''}}"
-      data-type="expense"
-      bindtap="switchFilter"
-    >支出</view>
-    <view
-      class="filter-btn {{filterType === 'income' ? 'filter-active filter-income' : ''}}"
-      data-type="income"
-      bindtap="switchFilter"
-    >收入</view>
+    <view class="filter-btn {{filterType === 'all' ? 'filter-active' : ''}}" data-type="all" bindtap="switchFilter">全部</view>
+    <view class="filter-btn {{filterType === 'expense' ? 'filter-active filter-expense' : ''}}" data-type="expense" bindtap="switchFilter">支出</view>
+    <view class="filter-btn {{filterType === 'income' ? 'filter-active filter-income' : ''}}" data-type="income" bindtap="switchFilter">收入</view>
   </view>
 
   <!-- 操作提示 -->
-  <view wx:if="{{!isEmpty}}" class="hint-bar">
+  <view wx:if="{{!isEmpty && !isSearchMode}}" class="hint-bar">
     <text class="hint-text">长按账单可编辑或删除 ✨</text>
   </view>
 
   <!-- 空状态 -->
   <view wx:if="{{isEmpty}}" class="empty-state">
-    <text class="empty-emoji">🌸</text>
-    <text class="empty-text">{{currentMonthLabel}}暂无账单</text>
-    <view class="add-btn" bindtap="goToAdd">
+    <text class="empty-emoji">{{isSearchMode ? '🔍' : '🌸'}}</text>
+    <text class="empty-text">{{isSearchMode ? '没找到相关账单' : currentMonthLabel + '暂无账单'}}</text>
+    <view wx:if="{{!isSearchMode}}" class="add-btn" bindtap="goToAdd">
       <text>去记账 ✏️</text>
     </view>
   </view>
@@ -87,7 +73,6 @@
   <!-- 账单列表（按日期分组） -->
   <view wx:else>
     <view class="date-group card" wx:for="{{allGroups}}" wx:key="date">
-      <!-- 日期头 -->
       <view class="group-header">
         <text class="group-date">{{item.dateLabel}} ({{item.date}})</text>
         <view class="group-subtotal">
@@ -95,8 +80,6 @@
           <text wx:if="{{item.groupExpense > 0}}" class="subtotal-expense"> -{{item.groupExpense}}</text>
         </view>
       </view>
-
-      <!-- 每条记录 -->
       <view
         class="record-item"
         wx:for="{{item.records}}"
@@ -105,21 +88,16 @@
         data-id="{{record.id}}"
         bindlongpress="onLongPress"
       >
-        <view class="record-icon">
-          <text>{{record.emoji}}</text>
-        </view>
+        <view class="record-icon"><text>{{record.emoji}}</text></view>
         <view class="record-body">
           <text class="record-category">{{record.category}}</text>
           <text class="record-note" wx:if="{{record.note}}">{{record.note}}</text>
         </view>
         <view class="record-right">
-          <text class="record-amount {{record.type === 'income' ? 'income-text' : 'expense-text'}}">
-            {{record.amountDisplay}}
-          </text>
+          <text class="record-amount {{record.type === 'income' ? 'income-text' : 'expense-text'}}">{{record.amountDisplay}}</text>
           <text class="record-edit-hint">长按</text>
         </view>
       </view>
-
     </view>
   </view>
 
