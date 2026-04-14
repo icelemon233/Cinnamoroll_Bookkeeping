@@ -1,5 +1,67 @@
 /* pages/list/list.wxss */
 
+/* 搜索框 */
+.search-bar {
+  margin-bottom: 20rpx;
+}
+
+.search-inner {
+  display: flex;
+  align-items: center;
+  background: #FFFFFF;
+  border-radius: 100rpx;
+  padding: 18rpx 28rpx;
+  box-shadow: 0 2rpx 12rpx rgba(79, 184, 212, 0.1);
+  border: 2rpx solid #EBF7FB;
+}
+
+.search-icon {
+  font-size: 32rpx;
+  margin-right: 16rpx;
+  flex-shrink: 0;
+}
+
+.search-input {
+  flex: 1;
+  font-size: 28rpx;
+  color: #3D5A6E;
+  height: 56rpx;
+  line-height: 56rpx;
+}
+
+.search-placeholder {
+  color: #C8D8E4;
+  font-size: 28rpx;
+}
+
+.search-clear {
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 50%;
+  background: #D0E8EF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-left: 12rpx;
+}
+
+.search-clear-icon {
+  font-size: 22rpx;
+  color: #7FABBE;
+  font-weight: 700;
+}
+
+.search-result-tip {
+  margin-bottom: 16rpx;
+  padding: 0 8rpx;
+}
+
+.search-result-text {
+  font-size: 24rpx;
+  color: #9BAAB8;
+}
+
 /* 月份切换导航栏 */
 .month-nav {
   display: flex;

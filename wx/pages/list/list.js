@@ -1,5 +1,5 @@
 // pages/list/list.js - 账单列表页
-const { getRecords, deleteRecord, groupByDate, formatDate } = require('../../utils/storage');
+const { getRecords, deleteRecord, groupByDate, formatDate, searchRecords } = require('../../utils/storage');
 
 // 分类 emoji 映射（与 add 页保持一致）
 const CATEGORY_EMOJI = {
@@ -20,7 +20,11 @@ Page({
     filterMonth: '',      // 'YYYY-MM'，空表示全部
     // 月份导航
     currentMonthLabel: '',   // '2026年04月'
-    isLatestMonth: true      // 是否已是最新有记录的月份（或当月）
+    isLatestMonth: true,     // 是否已是最新有记录的月份（或当月）
+    // 搜索
+    searchKeyword: '',       // 当前搜索关键词
+    isSearchMode: false,     // 是否处于搜索模式
+    searchResultCount: 0     // 搜索结果数量
   },
 
   onLoad() {
@@ -84,7 +88,29 @@ Page({
   },
 
   loadData() {
-    const { filterType, filterMonth } = this.data;
+    const { filterType, filterMonth, searchKeyword, isSearchMode } = this.data;
+
+    // 搜索模式：跨月全局搜索
+    if (isSearchMode && searchKeyword.trim()) {
+      const matched = searchRecords(searchKeyword, { type: filterType });
+      const allGroups = this._buildGroups(matched);
+      // 搜索模式下统计也基于搜索结果
+      let totalIncome = 0;
+      let totalExpense = 0;
+      matched.forEach(r => {
+        if (r.type === 'income') totalIncome += Number(r.amount) || 0;
+        else totalExpense += Number(r.amount) || 0;
+      });
+      this.setData({
+        allGroups,
+        totalIncome: parseFloat(totalIncome.toFixed(2)),
+        totalExpense: parseFloat(totalExpense.toFixed(2)),
+        isEmpty: allGroups.length === 0,
+        searchResultCount: matched.length
+      });
+      return;
+    }
+
     let records = getRecords();
 
     // 按月份筛选
@@ -106,11 +132,22 @@ Page({
       else totalExpense += Number(r.amount) || 0;
     });
 
-    // 按日期分组
-    const allGroups = groupByDate(filtered).map(group => ({
+    const allGroups = this._buildGroups(filtered);
+
+    this.setData({
+      allGroups,
+      totalIncome: parseFloat(totalIncome.toFixed(2)),
+      totalExpense: parseFloat(totalExpense.toFixed(2)),
+      isEmpty: allGroups.length === 0,
+      searchResultCount: 0
+    });
+  },
+
+  // 将账单数组转为按日期分组结构
+  _buildGroups(records) {
+    return groupByDate(records).map(group => ({
       ...group,
       dateLabel: formatDate(group.date),
-      // 计算每组的收支小计
       groupIncome: group.records.filter(r => r.type === 'income').reduce((s, r) => s + Number(r.amount), 0),
       groupExpense: group.records.filter(r => r.type === 'expense').reduce((s, r) => s + Number(r.amount), 0),
       records: group.records.map(r => ({
@@ -119,13 +156,29 @@ Page({
         amountDisplay: r.type === 'income' ? `+${r.amount}` : `-${r.amount}`
       }))
     }));
+  },
 
-    this.setData({
-      allGroups,
-      totalIncome: parseFloat(totalIncome.toFixed(2)),
-      totalExpense: parseFloat(totalExpense.toFixed(2)),
-      isEmpty: allGroups.length === 0
+  // 搜索框输入
+  onSearchInput(e) {
+    const keyword = e.detail.value || '';
+    this.setData({ searchKeyword: keyword, isSearchMode: keyword.trim().length > 0 }, () => {
+      this.loadData();
     });
+  },
+
+  // 清除搜索
+  clearSearch() {
+    this.setData({ searchKeyword: '', isSearchMode: false }, () => {
+      this.loadData();
+    });
+  },
+
+  // 搜索框聚焦时进入搜索模式
+  onSearchFocus() {
+    const { searchKeyword } = this.data;
+    if (searchKeyword.trim()) {
+      this.setData({ isSearchMode: true }, () => this.loadData());
+    }
   },
 
   // 切换筛选类型

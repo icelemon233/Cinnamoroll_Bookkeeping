@@ -1,8 +1,34 @@
 <!-- pages/list/list.wxml - 账单列表页 -->
 <view class="container">
 
-  <!-- 月份切换导航 -->
-  <view class="month-nav">
+  <!-- 搜索框 -->
+  <view class="search-bar">
+    <view class="search-inner">
+      <text class="search-icon">🔍</text>
+      <input
+        class="search-input"
+        placeholder="搜索备注、分类或金额"
+        placeholder-class="search-placeholder"
+        value="{{searchKeyword}}"
+        bindinput="onSearchInput"
+        bindfocus="onSearchFocus"
+        confirm-type="search"
+      />
+      <view wx:if="{{searchKeyword}}" class="search-clear" bindtap="clearSearch">
+        <text class="search-clear-icon">✕</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 搜索结果提示 -->
+  <view wx:if="{{isSearchMode}}" class="search-result-tip">
+    <text class="search-result-text">
+      搜索 "{{searchKeyword}}" · 共 {{searchResultCount}} 条结果
+    </text>
+  </view>
+
+  <!-- 月份切换导航（搜索模式下隐藏） -->
+  <view wx:if="{{!isSearchMode}}" class="month-nav">
     <view class="month-arrow" bindtap="prevMonth">
       <text class="arrow-text">‹</text>
     </view>

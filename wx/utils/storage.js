@@ -195,6 +195,39 @@ function setMonthBudget(yearMonth, amount) {
   wx.setStorageSync(BUDGET_KEY, budgets);
 }
 
+/**
+ * 搜索账单记录
+ * @param {string} keyword - 搜索关键词（匹配备注、分类）
+ * @param {Object} options - 可选过滤条件 { type, yearMonth }
+ * @returns {Array} 匹配的账单记录，按时间倒序
+ */
+function searchRecords(keyword, options = {}) {
+  let records = getRecords();
+  const kw = (keyword || '').trim().toLowerCase();
+
+  // 按月份筛选
+  if (options.yearMonth) {
+    records = records.filter(r => r.date && r.date.startsWith(options.yearMonth));
+  }
+
+  // 按类型筛选
+  if (options.type && options.type !== 'all') {
+    records = records.filter(r => r.type === options.type);
+  }
+
+  // 关键词匹配（空关键词返回全部）
+  if (kw) {
+    records = records.filter(r => {
+      const note = (r.note || '').toLowerCase();
+      const category = (r.category || '').toLowerCase();
+      const amount = String(r.amount);
+      return note.includes(kw) || category.includes(kw) || amount.includes(kw);
+    });
+  }
+
+  return records;
+}
+
 module.exports = {
   getRecords,
   saveRecord,
@@ -206,5 +239,6 @@ module.exports = {
   getCategoryStats,
   formatDate,
   getMonthBudget,
-  setMonthBudget
+  setMonthBudget,
+  searchRecords
 };
