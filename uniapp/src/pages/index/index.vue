@@ -111,8 +111,8 @@
 
       <!-- 账单列表 -->
       <view v-else>
-        <template v-for="item in recentGroups">
-          <view class="date-group" :key="item.date">
+        <template v-for="item in recentGroups" :key="item.date">
+          <view class="date-group">
             <text class="date-label">{{ item.dateLabel }}</text>
             <view
               class="record-item"
