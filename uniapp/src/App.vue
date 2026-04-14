@@ -1,4 +1,5 @@
 <script lang="ts">
+/// <reference types="@dcloudio/types" />
 import { supabase } from './utils/supabase'
 
 export default {
