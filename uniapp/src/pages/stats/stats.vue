@@ -53,7 +53,6 @@
           id="pieCanvas"
           type="2d"
           class="pie-canvas"
-          style="width: 300px; height: 300px;"
         ></canvas>
       </view>
 
@@ -518,10 +517,12 @@ export default {
   padding: 32rpx;
   margin-bottom: 24rpx;
   box-shadow: 0 4rpx 20rpx rgba(79, 184, 212, 0.12);
+  overflow: hidden;
 }
 
 .pie-canvas {
-  border-radius: 50%;
+  width: 100%;
+  height: 300px;
 }
 
 .category-list {
