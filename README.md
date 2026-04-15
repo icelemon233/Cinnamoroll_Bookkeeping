@@ -33,19 +33,24 @@
 ### uni-app 版（`uniapp/`）
 
 ```bash
-# 安装依赖（需先安装 HBuilderX 或 Vue CLI）
 cd uniapp
-
-# 使用 HBuilderX 打开 uniapp/ 目录，运行到微信小程序 / H5 / App 等
+npm install
+npm run dev:h5
 ```
+
+> 需在 `src/utils/supabase.js` 中填入自己的 Supabase URL 和 Key。  
+> 部署到 Vercel 时，直接连接 GitHub 仓库即可自动构建。
 
 ## 🛠 技术栈
 
 | | 微信原生版 | uni-app 版 |
 |---|---|---|
-| 框架 | 原生小程序 | uni-app (Vue 3) |
+| 框架 | 原生小程序 | uni-app + Vue 3 |
+| 构建工具 | — | Vite |
 | 样式 | WXSS / rpx | WXSS / rpx |
-| 数据 | `wx.Storage` | `uni.Storage` |
+| 数据库 | — | Supabase |
+| 认证 | — | Supabase Auth |
+| 部署 | — | Vercel |
 | 多端 | 仅微信 | 微信 / H5 / App |
 
 ## 📦 目录说明
