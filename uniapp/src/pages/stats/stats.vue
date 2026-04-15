@@ -54,6 +54,7 @@
           id="pieCanvas"
           type="2d"
           class="pie-canvas"
+          :style="{ width: pieSize + 'px', height: pieSize + 'px' }"
         ></canvas>
       </view>
 
@@ -150,6 +151,7 @@ export default {
       statsType: 'expense',
       categoryList: [],
       isEmpty: false,
+      pieSize: 260,
       // 每日热力图
       dailyCells: [],
       firstWeekdayOffset: 0,
@@ -350,13 +352,13 @@ export default {
           if (!res || !res[0] || !res[0].node) return
           const canvas = res[0].node
           const ctx = canvas.getContext('2d')
+          // 使用固定逻辑尺寸，避免 DPR 二次放大导致坐标偏移
+          const logicSize = this.pieSize
           const dpr = uni.getWindowInfo ? uni.getWindowInfo().pixelRatio : (uni.getSystemInfoSync().pixelRatio || 2)
-          const w = res[0].width
-          const h = res[0].height
-          canvas.width = w * dpr
-          canvas.height = h * dpr
+          canvas.width = logicSize * dpr
+          canvas.height = logicSize * dpr
           ctx.scale(dpr, dpr)
-          this._renderPie(ctx, w, h, categoryList)
+          this._renderPie(ctx, logicSize, logicSize, categoryList)
         })
     },
 
@@ -518,12 +520,10 @@ export default {
   padding: 32rpx;
   margin-bottom: 24rpx;
   box-shadow: 0 4rpx 20rpx rgba(79, 184, 212, 0.12);
-  overflow: hidden;
 }
 
 .pie-canvas {
-  width: 100%;
-  height: 300px;
+  display: block;
 }
 
 .category-list {
