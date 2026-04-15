@@ -1,5 +1,6 @@
 <template>
   <view class="container">
+    <custom-tab-bar :selected="4"></custom-tab-bar>
 
     <!-- 顶部头像区域 -->
     <view class="profile-header">

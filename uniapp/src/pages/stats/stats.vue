@@ -1,5 +1,6 @@
 <template>
   <view class="container">
+    <custom-tab-bar :selected="3"></custom-tab-bar>
 
     <!-- 月份切换栏 -->
     <view class="month-nav">

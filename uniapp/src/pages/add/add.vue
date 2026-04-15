@@ -1,5 +1,6 @@
 <template>
   <view class="container">
+    <custom-tab-bar :selected="1"></custom-tab-bar>
 
     <!-- 收入/支出切换（编辑模式下仍可切换） -->
     <view class="type-switcher">

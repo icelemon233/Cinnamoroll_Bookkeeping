@@ -1,5 +1,6 @@
 <template>
   <view class="container">
+    <custom-tab-bar :selected="2"></custom-tab-bar>
 
     <!-- 搜索框 -->
     <view class="search-bar">

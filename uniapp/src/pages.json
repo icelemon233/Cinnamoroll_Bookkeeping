@@ -1,4 +1,10 @@
 {
+  "easycom": {
+    "autoscan": true,
+    "custom": {
+      "^custom-tab-bar$": "@/components/custom-tab-bar/index.vue"
+    }
+  },
   "pages": [
     {
       "path": "pages/login/login",
@@ -67,6 +73,7 @@
     "backgroundColor": "#F0F8FF"
   },
   "tabBar": {
+    "custom": true,
     "color": "#9BAAB8",
     "selectedColor": "#4FB8D4",
     "backgroundColor": "#FFFFFF",

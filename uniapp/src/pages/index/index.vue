@@ -1,5 +1,6 @@
 <template>
   <view class="container">
+    <custom-tab-bar :selected="0"></custom-tab-bar>
 
     <!-- 顶部月份收支卡片 -->
     <view class="summary-card">
