@@ -1,5 +1,5 @@
 // pages/list/list.js - 账单列表页
-const { getRecords, deleteRecord, groupByDate, formatDate } = require('../../utils/storage');
+const { getRecords, deleteRecord, groupByDate, formatDate, exportToCSV, downloadCSV } = require('../../utils/storage');
 
 // 分类 emoji 映射（与 add 页保持一致）
 const CATEGORY_EMOJI = {
@@ -201,5 +201,48 @@ Page({
 
   goToAdd() {
     wx.switchTab({ url: '/pages/add/add' });
+  },
+
+  // ─── 导出功能 ─────────────────────────────────────────
+
+  onExport() {
+    wx.showActionSheet({
+      itemList: ['📊 导出为 CSV'],
+      success: (res) => {
+        if (res.tapIndex === 0) {
+          this._exportCSV();
+        }
+      }
+    });
+  },
+
+  _exportCSV() {
+    const { filterType, filterMonth, isSearchMode, searchKeyword } = this.data;
+    let records = getRecords();
+
+    // 应用筛选条件
+    if (isSearchMode && searchKeyword) {
+      const kw = searchKeyword.toLowerCase();
+      records = records.filter(r =>
+        (r.note && r.note.toLowerCase().includes(kw)) ||
+        (r.category && r.category.toLowerCase().includes(kw)) ||
+        (String(r.amount) && String(r.amount).includes(kw))
+      );
+    } else if (filterMonth) {
+      records = records.filter(r => r.date && r.date.startsWith(filterMonth));
+    }
+
+    if (filterType !== 'all') {
+      records = records.filter(r => r.type === filterType);
+    }
+
+    if (!records || records.length === 0) {
+      wx.showToast({ title: '没有可导出的数据', icon: 'none' });
+      return;
+    }
+
+    const csvContent = exportToCSV(records);
+    const filename = `账单_${filterMonth || '全部'}_${Date.now()}.csv`;
+    downloadCSV(csvContent, filename);
   }
 });

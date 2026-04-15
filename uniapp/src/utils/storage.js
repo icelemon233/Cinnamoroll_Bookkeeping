@@ -266,3 +266,55 @@ export async function saveRecord(record) {
   }
   return addRecord(record)
 }
+
+// ─── 导出功能 ───────────────────────────────────────────────
+
+/**
+ * 导出账单为 CSV 格式
+ * @param {Array} records - 账单记录数组
+ * @returns {string} CSV 字符串
+ */
+export function exportToCSV(records) {
+  const headers = ['日期', '类型', '分类', '金额', '备注']
+  const rows = records.map(r => [
+    r.date || '',
+    r.type === 'income' ? '收入' : '支出',
+    r.category || '',
+    r.amount || '0',
+    r.note || ''
+  ])
+  
+  // 处理备注中的特殊字符
+  const escapeCSV = (str) => {
+    if (!str) return ''
+    const s = String(str)
+    if (s.includes(',') || s.includes('"') || s.includes('\n')) {
+      return '"' + s.replace(/"/g, '""') + '"'
+    }
+    return s
+  }
+  
+  const csvContent = [
+    headers.map(escapeCSV).join(','),
+    ...rows.map(row => row.map(escapeCSV).join(','))
+  ].join('\n')
+  
+  return '\uFEFF' + csvContent // BOM for Excel
+}
+
+/**
+ * 下载 CSV 文件
+ * @param {string} csvContent
+ * @param {string} filename
+ */
+export function downloadCSV(csvContent, filename) {
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}

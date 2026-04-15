@@ -228,6 +228,69 @@ function searchRecords(keyword, options = {}) {
   return records;
 }
 
+// ─── 导出功能 ──────────────────────────────────────────
+
+/**
+ * 导出账单为 CSV 格式
+ * @param {Array} records - 账单记录数组
+ * @returns {string} CSV 字符串
+ */
+function exportToCSV(records) {
+  const headers = ['日期', '类型', '分类', '金额', '备注'];
+  const rows = records.map(r => [
+    r.date || '',
+    r.type === 'income' ? '收入' : '支出',
+    r.category || '',
+    r.amount || '0',
+    r.note || ''
+  ]);
+
+  // 处理备注中的特殊字符
+  const escapeCSV = (str) => {
+    if (!str) return '';
+    const s = String(str);
+    if (s.includes(',') || s.includes('"') || s.includes('\n')) {
+      return '"' + s.replace(/"/g, '""') + '"';
+    }
+    return s;
+  };
+
+  const csvContent = [
+    headers.map(escapeCSV).join(','),
+    ...rows.map(row => row.map(escapeCSV).join(','))
+  ].join('\n');
+
+  return '\uFEFF' + csvContent; // BOM for Excel
+}
+
+/**
+ * 下载 CSV 文件（微信小程序环境）
+ * @param {string} csvContent
+ * @param {string} filename
+ */
+function downloadCSV(csvContent, filename) {
+  const fs = wx.getFileSystemManager();
+  const filePath = `${wx.env.USER_DATA_PATH}/${filename}`;
+
+  fs.writeFile({
+    filePath,
+    data: csvContent,
+    encoding: 'utf8',
+    success: () => {
+      wx.showModal({
+        title: '导出成功',
+        content: `文件已保存到: ${filename}`,
+        showCancel: false,
+        confirmText: '知道啦'
+      });
+    },
+    fail: (err) => {
+      console.error('downloadCSV error:', err);
+      wx.showToast({ title: '导出失败', icon: 'none' });
+    }
+  });
+}
+
 module.exports = {
   getRecords,
   saveRecord,
@@ -240,5 +303,7 @@ module.exports = {
   formatDate,
   getMonthBudget,
   setMonthBudget,
-  searchRecords
+  searchRecords,
+  exportToCSV,
+  downloadCSV
 };

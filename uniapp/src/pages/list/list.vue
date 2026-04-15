@@ -66,6 +66,9 @@
         :data-type="'income'"
         @tap="switchFilter"
       >收入</view>
+      <view class="export-btn" @tap="onExport">
+        <text class="export-icon">📤</text>
+      </view>
     </view>
 
     <!-- 操作提示 -->
@@ -118,7 +121,7 @@
 </template>
 
 <script>
-import { getRecords, deleteRecord, groupByDate, formatDate } from '../../utils/storage.js'
+import { getRecords, deleteRecord, groupByDate, formatDate, exportToCSV, downloadCSV } from '../../utils/storage.js'
 import { supabase } from '../../utils/supabase.js'
 
 const CATEGORY_EMOJI = {
@@ -371,6 +374,86 @@ export default {
 
     goToAdd() {
       uni.switchTab({ url: '/pages/add/add' })
+    },
+
+    // ─── 导出功能 ──────────────────────────────────────────
+
+    onExport() {
+      uni.showActionSheet({
+        itemList: ['📊 导出为 CSV'],
+        success: (res) => {
+          if (res.tapIndex === 0) {
+            this._exportCSV()
+          }
+        }
+      })
+    },
+
+    async _exportCSV() {
+      uni.showLoading({ title: '导出中...', mask: true })
+      try {
+        // 获取当前筛选条件下的所有记录
+        const { isSearchMode, searchKeyword, filterType, filterMonth } = this
+
+        let query = supabase
+          .from('records')
+          .select('*')
+          .order('date', { ascending: false })
+
+        if (isSearchMode && searchKeyword) {
+          query = query.or(`note.ilike.%${searchKeyword}%,category.ilike.%${searchKeyword}%`)
+        } else if (filterMonth) {
+          query = query.like('date', `${filterMonth}%`)
+        }
+
+        const { data, error } = await query
+
+        if (error || !data || data.length === 0) {
+          uni.showToast({ title: '没有可导出的数据', icon: 'none' })
+          return
+        }
+
+        // 应用类型筛选
+        let records = data
+        if (filterType !== 'all') {
+          records = records.filter(r => r.type === filterType)
+        }
+
+        // 生成 CSV
+        const csvContent = exportToCSV(records)
+        const filename = `账单_${filterMonth || '全部'}_${Date.now()}.csv`
+        
+        // #ifdef H5
+        downloadCSV(csvContent, filename)
+        uni.showToast({ title: '导出成功', icon: 'success' })
+        // #endif
+
+        // #ifndef H5
+        // 小程序环境：保存到本地文件
+        const fs = uni.getFileSystemManager()
+        const filePath = `${wx.env.USER_DATA_PATH}/${filename}`
+        fs.writeFile({
+          filePath,
+          data: csvContent,
+          encoding: 'utf8',
+          success: () => {
+            uni.showModal({
+              title: '导出成功',
+              content: `文件已保存到: ${filename}`,
+              showCancel: false,
+              confirmText: '知道啦'
+            })
+          },
+          fail: (err) => {
+            console.error('_exportCSV writeFile error:', err)
+            uni.showToast({ title: '导出失败', icon: 'none' })
+          }
+        })
+        // #endif
+
+      } finally {
+        uni.hideLoading()
+      }
     }
   }
 }
@@ -512,6 +595,7 @@ export default {
   display: flex;
   gap: 16rpx;
   margin-bottom: 24rpx;
+  align-items: center;
 }
 
 .filter-btn {
@@ -537,6 +621,28 @@ export default {
   background: #FFE0E8;
   color: #FF8BAB;
   border-color: #FFB3C8;
+}
+
+.filter-income.filter-active {
+  background: #E0F5FA;
+  color: #4FB8D4;
+  border-color: #A8D8EA;
+}
+
+.export-btn {
+  width: 72rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #FFFFFF;
+  border: 2rpx solid #E8F4F8;
+  flex-shrink: 0;
+}
+
+.export-icon {
+  font-size: 32rpx;
 }
 
 /* ─── 日期分组卡片 ────────────────────────────────────────── */
