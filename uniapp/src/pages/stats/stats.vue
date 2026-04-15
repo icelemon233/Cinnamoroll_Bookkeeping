@@ -51,8 +51,8 @@
       <!-- Canvas 饼图 -->
       <view class="chart-card">
         <canvas
+          canvas-id="pieCanvas"
           id="pieCanvas"
-          type="2d"
           class="pie-canvas"
           :style="{ width: pieSize + 'px', height: pieSize + 'px' }"
         ></canvas>
@@ -345,28 +345,16 @@ export default {
     },
 
     drawPieChart(categoryList) {
-      const query = uni.createSelectorQuery().in(this)
-      query.select('#pieCanvas')
-        .fields({ node: true, size: true })
-        .exec((res) => {
-          if (!res || !res[0] || !res[0].node) return
-          const canvas = res[0].node
-          const ctx = canvas.getContext('2d')
-          // 使用固定逻辑尺寸，避免 DPR 二次放大导致坐标偏移
-          const logicSize = this.pieSize
-          const dpr = uni.getWindowInfo ? uni.getWindowInfo().pixelRatio : (uni.getSystemInfoSync().pixelRatio || 2)
-          canvas.width = logicSize * dpr
-          canvas.height = logicSize * dpr
-          ctx.scale(dpr, dpr)
-          this._renderPie(ctx, logicSize, logicSize, categoryList)
-        })
+      const size = this.pieSize
+      const ctx = uni.createCanvasContext('pieCanvas', this)
+      this._renderPieCompat(ctx, size, size, categoryList)
+      ctx.draw()
     },
 
-    _renderPie(ctx, w, h, categoryList) {
+    _renderPieCompat(ctx, w, h, categoryList) {
       const cx = w / 2
       const cy = h / 2
-      const radius = Math.min(w, h) / 2 - 20
-      ctx.clearRect(0, 0, w, h)
+      const radius = Math.min(w, h) / 2 - 16
       let startAngle = -Math.PI / 2
       const total = categoryList.reduce((s, i) => s + i.amount, 0)
 
@@ -377,14 +365,14 @@ export default {
         ctx.moveTo(cx, cy)
         ctx.arc(cx, cy, radius, startAngle, endAngle)
         ctx.closePath()
-        ctx.fillStyle = COLORS[i % COLORS.length]
+        ctx.setFillStyle(COLORS[i % COLORS.length])
         ctx.fill()
         ctx.beginPath()
         ctx.moveTo(cx, cy)
         ctx.arc(cx, cy, radius, startAngle, endAngle)
         ctx.closePath()
-        ctx.strokeStyle = '#FFFFFF'
-        ctx.lineWidth = 3
+        ctx.setStrokeStyle('#FFFFFF')
+        ctx.setLineWidth(3)
         ctx.stroke()
         startAngle = endAngle
       })
@@ -392,18 +380,18 @@ export default {
       // 甜甜圈挖空
       ctx.beginPath()
       ctx.arc(cx, cy, radius * 0.48, 0, 2 * Math.PI)
-      ctx.fillStyle = '#F0F8FF'
+      ctx.setFillStyle('#F0F8FF')
       ctx.fill()
 
-      // 中心文字
-      ctx.fillStyle = '#3D5A6E'
-      ctx.font = `bold ${Math.floor(radius * 0.22)}px sans-serif`
-      ctx.textAlign = 'center'
-      ctx.textBaseline = 'middle'
+      // 中心爪印文字
+      ctx.setFontSize(Math.floor(radius * 0.22))
+      ctx.setFillStyle('#3D5A6E')
+      ctx.setTextAlign('center')
+      ctx.setTextBaseline('middle')
       ctx.fillText('🐾', cx, cy - radius * 0.08)
-      ctx.font = `${Math.floor(radius * 0.14)}px sans-serif`
-      ctx.fillStyle = '#9BAAB8'
-      ctx.fillText(`${categoryList.length} 分类`, cx, cy + radius * 0.15)
+      ctx.setFontSize(Math.floor(radius * 0.14))
+      ctx.setFillStyle('#9BAAB8')
+      ctx.fillText(`${categoryList.length} 分类`, cx, cy + radius * 0.18)
     }
   }
 }
