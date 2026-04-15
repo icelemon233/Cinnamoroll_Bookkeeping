@@ -48,6 +48,15 @@
         "navigationBarBackgroundColor": "#A8D8EA",
         "navigationBarTextStyle": "white"
       }
+    },
+    {
+      "path": "pages/verify/verify",
+      "style": {
+        "navigationBarTitleText": "邮箱验证",
+        "navigationBarBackgroundColor": "#A8D8EA",
+        "navigationBarTextStyle": "white",
+        "navigationStyle": "custom"
+      }
     }
   ],
   "globalStyle": {

@@ -44,14 +44,19 @@
       <!-- 密码 -->
       <view class="input-group">
         <text class="input-label">🔒 密码</text>
-        <input
-          class="input-field"
-          type="password"
-          :placeholder="mode === 'register' ? '请设置密码（至少6位）' : '请输入密码'"
-          placeholder-class="input-placeholder"
-          :value="password"
-          @input="e => password = e.detail.value"
-        />
+        <view class="input-wrapper">
+          <input
+            class="input-field input-field-with-icon"
+            :type="showPassword ? 'text' : 'password'"
+            :placeholder="mode === 'register' ? '请设置密码（至少6位）' : '请输入密码'"
+            placeholder-class="input-placeholder"
+            :value="password"
+            @input="e => password = e.detail.value"
+          />
+          <view class="eye-icon" @tap.stop="showPassword = !showPassword">
+            <text class="eye-text">{{ showPassword ? '🙈' : '👁️' }}</text>
+          </view>
+        </view>
       </view>
 
       <!-- 错误提示 -->
@@ -92,6 +97,7 @@ export default {
       mode: 'login',        // 'login' | 'register'
       email: '',
       password: '',
+      showPassword: false,
       loading: false,
       errorMsg: '',
       registerSuccess: false
@@ -150,7 +156,13 @@ export default {
     },
 
     async doRegister(email, password) {
-      const { data, error } = await supabase.auth.signUp({ email, password })
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: 'https://icelemon.top/#/pages/verify/verify'
+        }
+      })
       if (error) {
         this.errorMsg = this._translateError(error.message)
         return
@@ -286,6 +298,34 @@ export default {
 .input-field:focus {
   border-color: #4FB8D4;
   background: #EEF8FB;
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-field-with-icon {
+  padding-right: 80rpx;
+}
+
+.eye-icon {
+  position: absolute;
+  right: 20rpx;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 56rpx;
+  height: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.eye-text {
+  font-size: 36rpx;
+  line-height: 1;
 }
 
 .input-placeholder {
