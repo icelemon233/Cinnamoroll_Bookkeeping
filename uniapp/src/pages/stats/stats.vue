@@ -78,6 +78,46 @@
           </view>
         </view>
       </view>
+
+      <!-- 每日消费热力图 -->
+      <view class="card daily-heatmap">
+        <view class="heatmap-header">
+          <text class="list-title">每日消费热力</text>
+          <text class="heatmap-sub">颜色越深消费越高</text>
+        </view>
+        <!-- 星期标签 -->
+        <view class="weekday-row">
+          <text class="weekday-label" v-for="wd in weekdays" :key="wd">{{ wd }}</text>
+        </view>
+        <!-- 日历格子 -->
+        <view class="heatmap-grid">
+          <!-- 月首空格补位 -->
+          <view
+            class="heatmap-cell empty-cell"
+            v-for="n in firstWeekdayOffset"
+            :key="'empty-' + n"
+          ></view>
+          <!-- 每天格子 -->
+          <view
+            v-for="day in dailyCells"
+            :key="day.date"
+            :class="['heatmap-cell', 'day-cell', day.level > 0 ? 'has-data' : '']"
+            :style="{ background: day.bg }"
+            @tap="onDayCellTap(day)"
+          >
+            <text class="day-num" :style="{ color: day.level >= 3 ? '#fff' : '#3D5A6E' }">{{ day.dayNum }}</text>
+            <text v-if="day.amount > 0" class="day-amount" :style="{ color: day.level >= 3 ? 'rgba(255,255,255,0.85)' : '#9BAAB8' }">
+              {{ day.amountShort }}
+            </text>
+          </view>
+        </view>
+        <!-- 图例 -->
+        <view class="heatmap-legend">
+          <text class="legend-label">少</text>
+          <view class="legend-dot" v-for="lv in heatLevels" :key="lv.level" :style="{ background: lv.color }"></view>
+          <text class="legend-label">多</text>
+        </view>
+      </view>
     </view>
 
   </view>
@@ -109,7 +149,18 @@ export default {
       monthExpense: 0,
       statsType: 'expense',
       categoryList: [],
-      isEmpty: false
+      isEmpty: false,
+      // 每日热力图
+      dailyCells: [],
+      firstWeekdayOffset: 0,
+      weekdays: ['日', '一', '二', '三', '四', '五', '六'],
+      heatLevels: [
+        { level: 0, color: '#EEF8FB' },
+        { level: 1, color: '#B8E0FF' },
+        { level: 2, color: '#7EC8E3' },
+        { level: 3, color: '#4FB8D4' },
+        { level: 4, color: '#2A8FAD' }
+      ]
     }
   },
 
@@ -183,6 +234,9 @@ export default {
         this.categoryList = categoryList
         this.isEmpty = categoryList.length === 0
 
+        // 构建每日热力图（始终基于全部记录，按 statsType 筛选）
+        this._buildDailyHeatmap(summary.records)
+
         if (!this.isEmpty) {
           this.$nextTick(() => { this.drawPieChart(categoryList) })
         }
@@ -207,6 +261,80 @@ export default {
           percent: parseFloat((map[category] / total * 100).toFixed(1))
         }))
         .sort((a, b) => b.amount - a.amount)
+    },
+
+    /**
+     * 构建当月每日热力图数据
+     * @param {Array} allRecords - 当月所有记录
+     */
+    _buildDailyHeatmap(allRecords) {
+      const { yearMonth, statsType } = this
+      const [year, month] = yearMonth.split('-').map(Number)
+
+      // 统计每天的支出/收入金额
+      const filteredRecords = allRecords.filter(r => r.type === statsType)
+      const dayMap = {}
+      filteredRecords.forEach(r => {
+        const day = r.date ? r.date.split('-')[2] : null
+        if (!day) return
+        const d = parseInt(day, 10)
+        dayMap[d] = (dayMap[d] || 0) + (Number(r.amount) || 0)
+      })
+
+      // 找最大值用于归一化热度
+      const maxAmount = Math.max(...Object.values(dayMap), 1)
+
+      // 当月天数
+      const daysInMonth = new Date(year, month, 0).getDate()
+      // 该月1日是星期几（0=日 6=六）
+      const firstDay = new Date(year, month - 1, 1).getDay()
+      this.firstWeekdayOffset = firstDay
+
+      // 今天日期（用于标记）
+      const today = new Date()
+      const todayYM = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`
+      const todayD = today.getDate()
+
+      const cells = []
+      for (let d = 1; d <= daysInMonth; d++) {
+        const amount = parseFloat((dayMap[d] || 0).toFixed(2))
+        const ratio = amount / maxAmount  // 0~1
+
+        // 热度等级 0~4
+        let level = 0
+        if (amount > 0) {
+          if (ratio <= 0.2) level = 1
+          else if (ratio <= 0.45) level = 2
+          else if (ratio <= 0.75) level = 3
+          else level = 4
+        }
+
+        const HEAT_COLORS = ['#EEF8FB', '#B8E0FF', '#7EC8E3', '#4FB8D4', '#2A8FAD']
+        const isToday = yearMonth === todayYM && d === todayD
+
+        cells.push({
+          date: `${yearMonth}-${String(d).padStart(2, '0')}`,
+          dayNum: d,
+          amount,
+          amountShort: amount >= 1000
+            ? `${(amount / 1000).toFixed(1)}k`
+            : amount > 0 ? String(Math.round(amount)) : '',
+          level,
+          bg: isToday && amount === 0 ? '#FFE0E8' : HEAT_COLORS[level],
+          isToday
+        })
+      }
+      this.dailyCells = cells
+    },
+
+    onDayCellTap(day) {
+      if (day.amount === 0) return
+      const typeLabel = this.statsType === 'expense' ? '支出' : '收入'
+      uni.showToast({
+        title: `${day.date} ${typeLabel} ¥${day.amount}`,
+        icon: 'none',
+        duration: 1800
+      })
     },
 
     switchStatsType(e) {
@@ -485,5 +613,97 @@ export default {
 .empty-text {
   font-size: 30rpx;
   color: #9BAAB8;
+}
+
+/* ─── 每日热力图 ─── */
+.daily-heatmap {
+  padding: 28rpx;
+  margin-top: 0;
+}
+
+.heatmap-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+}
+
+.heatmap-sub {
+  font-size: 22rpx;
+  color: #9BAAB8;
+}
+
+.weekday-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6rpx;
+  margin-bottom: 8rpx;
+}
+
+.weekday-label {
+  text-align: center;
+  font-size: 22rpx;
+  color: #9BAAB8;
+  padding: 4rpx 0;
+}
+
+.heatmap-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6rpx;
+}
+
+.heatmap-cell {
+  aspect-ratio: 1;
+  border-radius: 12rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 72rpx;
+}
+
+.empty-cell {
+  background: transparent;
+}
+
+.day-cell {
+  cursor: pointer;
+}
+
+.day-cell:active {
+  opacity: 0.75;
+}
+
+.day-num {
+  font-size: 24rpx;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.day-amount {
+  font-size: 18rpx;
+  line-height: 1.2;
+  margin-top: 2rpx;
+}
+
+/* 图例 */
+.heatmap-legend {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8rpx;
+  margin-top: 20rpx;
+}
+
+.legend-label {
+  font-size: 22rpx;
+  color: #9BAAB8;
+}
+
+.legend-dot {
+  width: 24rpx;
+  height: 24rpx;
+  border-radius: 6rpx;
 }
 </style>
