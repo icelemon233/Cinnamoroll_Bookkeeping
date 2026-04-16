@@ -80,6 +80,45 @@
         </view>
       </view>
 
+      <!-- 近6个月趋势折线图 -->
+      <view class="card trend-card">
+        <view class="trend-header">
+          <text class="list-title">近6个月趋势</text>
+          <view class="trend-legend">
+            <view class="legend-item">
+              <view class="legend-line income-line"></view>
+              <text class="legend-text">收入</text>
+            </view>
+            <view class="legend-item">
+              <view class="legend-line expense-line"></view>
+              <text class="legend-text">支出</text>
+            </view>
+          </view>
+        </view>
+        <view v-if="trendLoading" class="trend-loading">
+          <text class="trend-loading-text">加载中...</text>
+        </view>
+        <view v-else-if="isTrendEmpty" class="trend-empty">
+          <text class="trend-empty-text">暂无历史数据</text>
+        </view>
+        <view v-else>
+          <canvas
+            id="trendCanvas"
+            type="2d"
+            class="trend-canvas"
+            style="width: 320px; height: 200px;"
+          ></canvas>
+          <!-- 月份标签 -->
+          <view class="trend-labels">
+            <text
+              class="trend-month-label"
+              v-for="item in trendData"
+              :key="item.yearMonth"
+            >{{ item.label }}</text>
+          </view>
+        </view>
+      </view>
+
       <!-- 每日消费热力图 -->
       <view class="card daily-heatmap">
         <view class="heatmap-header">
@@ -125,7 +164,7 @@
 </template>
 
 <script>
-import { getMonthSummary } from '../../utils/storage.js'
+import { getMonthSummary, getRecentMonthsTrend } from '../../utils/storage.js'
 
 const COLORS = [
   '#4FB8D4', '#7EC8E3', '#A8D8EA', '#9DC3E6',
@@ -162,7 +201,11 @@ export default {
         { level: 2, color: '#7EC8E3' },
         { level: 3, color: '#4FB8D4' },
         { level: 4, color: '#2A8FAD' }
-      ]
+      ],
+      // 趋势图
+      trendData: [],
+      trendLoading: true,
+      isTrendEmpty: false
     }
   },
 
@@ -172,6 +215,10 @@ export default {
 
   async onShow() {
     await this.loadStats()
+    // 趋势图只在初次加载或月份为当前月时刷新（避免重复请求）
+    if (!this.trendData.length || this.isCurrentMonth) {
+      this.loadTrend()
+    }
   },
 
   methods: {
@@ -245,6 +292,136 @@ export default {
       } finally {
         uni.hideLoading()
       }
+    },
+
+    async loadTrend() {
+      this.trendLoading = true
+      try {
+        const data = await getRecentMonthsTrend(6)
+        this.trendData = data
+        const hasAny = data.some(d => d.income > 0 || d.expense > 0)
+        this.isTrendEmpty = !hasAny
+        if (hasAny) {
+          this.$nextTick(() => { this.drawTrendChart(data) })
+        }
+      } catch (e) {
+        console.error('[stats] loadTrend error:', e)
+        this.isTrendEmpty = true
+      } finally {
+        this.trendLoading = false
+      }
+    },
+
+    drawTrendChart(data) {
+      const query = uni.createSelectorQuery().in(this)
+      query.select('#trendCanvas')
+        .fields({ node: true, size: true })
+        .exec((res) => {
+          if (!res || !res[0] || !res[0].node) return
+          const canvas = res[0].node
+          const ctx = canvas.getContext('2d')
+          const dpr = uni.getWindowInfo ? uni.getWindowInfo().pixelRatio : (uni.getSystemInfoSync().pixelRatio || 2)
+          const w = res[0].width
+          const h = res[0].height
+          canvas.width = w * dpr
+          canvas.height = h * dpr
+          ctx.scale(dpr, dpr)
+          this._renderTrendLine(ctx, w, h, data)
+        })
+    },
+
+    _renderTrendLine(ctx, w, h, data) {
+      const padL = 52, padR = 16, padT = 20, padB = 10
+      const chartW = w - padL - padR
+      const chartH = h - padT - padB
+      const n = data.length
+
+      ctx.clearRect(0, 0, w, h)
+
+      // 找最大值（income/expense）
+      const allValues = data.flatMap(d => [d.income, d.expense])
+      const maxVal = Math.max(...allValues, 1)
+
+      // 计算每个点的 x/y 坐标
+      const xs = data.map((_, i) => padL + (i / (n - 1)) * chartW)
+      const incomeYs = data.map(d => padT + (1 - d.income / maxVal) * chartH)
+      const expenseYs = data.map(d => padT + (1 - d.expense / maxVal) * chartH)
+
+      // 绘制网格线（3条）
+      ctx.strokeStyle = '#EEF8FB'
+      ctx.lineWidth = 1
+      for (let i = 0; i <= 3; i++) {
+        const y = padT + (i / 3) * chartH
+        ctx.beginPath()
+        ctx.moveTo(padL, y)
+        ctx.lineTo(w - padR, y)
+        ctx.stroke()
+        // Y轴标签
+        const val = Math.round(maxVal * (1 - i / 3))
+        ctx.fillStyle = '#9BAAB8'
+        ctx.font = '10px sans-serif'
+        ctx.textAlign = 'right'
+        ctx.textBaseline = 'middle'
+        ctx.fillText(val >= 1000 ? `${(val / 1000).toFixed(1)}k` : String(val), padL - 4, y)
+      }
+
+      // 绘制收入折线（蓝色）- 带填充
+      ctx.beginPath()
+      ctx.moveTo(xs[0], incomeYs[0])
+      for (let i = 1; i < n; i++) {
+        // 贝塞尔曲线平滑
+        const cpX = (xs[i - 1] + xs[i]) / 2
+        ctx.bezierCurveTo(cpX, incomeYs[i - 1], cpX, incomeYs[i], xs[i], incomeYs[i])
+      }
+      ctx.strokeStyle = '#4FB8D4'
+      ctx.lineWidth = 2.5
+      ctx.stroke()
+
+      // 收入区域填充
+      ctx.lineTo(xs[n - 1], padT + chartH)
+      ctx.lineTo(xs[0], padT + chartH)
+      ctx.closePath()
+      ctx.fillStyle = 'rgba(79, 184, 212, 0.12)'
+      ctx.fill()
+
+      // 绘制支出折线（粉色）- 带填充
+      ctx.beginPath()
+      ctx.moveTo(xs[0], expenseYs[0])
+      for (let i = 1; i < n; i++) {
+        const cpX = (xs[i - 1] + xs[i]) / 2
+        ctx.bezierCurveTo(cpX, expenseYs[i - 1], cpX, expenseYs[i], xs[i], expenseYs[i])
+      }
+      ctx.strokeStyle = '#FF8BAB'
+      ctx.lineWidth = 2.5
+      ctx.stroke()
+
+      // 支出区域填充
+      ctx.lineTo(xs[n - 1], padT + chartH)
+      ctx.lineTo(xs[0], padT + chartH)
+      ctx.closePath()
+      ctx.fillStyle = 'rgba(255, 139, 171, 0.1)'
+      ctx.fill()
+
+      // 绘制数据点
+      data.forEach((d, i) => {
+        // 收入点
+        ctx.beginPath()
+        ctx.arc(xs[i], incomeYs[i], 4, 0, Math.PI * 2)
+        ctx.fillStyle = '#4FB8D4'
+        ctx.fill()
+        ctx.strokeStyle = '#FFFFFF'
+        ctx.lineWidth = 1.5
+        ctx.stroke()
+
+        // 支出点
+        ctx.beginPath()
+        ctx.arc(xs[i], expenseYs[i], 4, 0, Math.PI * 2)
+        ctx.fillStyle = '#FF8BAB'
+        ctx.fill()
+        ctx.strokeStyle = '#FFFFFF'
+        ctx.lineWidth = 1.5
+        ctx.stroke()
+      })
     },
 
     _buildCatList(records) {
@@ -603,6 +780,83 @@ export default {
 .empty-text {
   font-size: 30rpx;
   color: #9BAAB8;
+}
+
+/* ─── 近6个月趋势图 ─── */
+.trend-card {
+  padding: 28rpx;
+  margin-bottom: 24rpx;
+}
+
+.trend-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+}
+
+.trend-legend {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.legend-line {
+  width: 28rpx;
+  height: 4rpx;
+  border-radius: 2rpx;
+}
+
+.income-line {
+  background: #4FB8D4;
+}
+
+.expense-line {
+  background: #FF8BAB;
+}
+
+.legend-text {
+  font-size: 22rpx;
+  color: #9BAAB8;
+}
+
+.trend-canvas {
+  display: block;
+  width: 100%;
+}
+
+.trend-labels {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 52rpx 0 104rpx;
+  margin-top: 8rpx;
+}
+
+.trend-month-label {
+  font-size: 20rpx;
+  color: #9BAAB8;
+  text-align: center;
+  flex: 1;
+}
+
+.trend-loading,
+.trend-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60rpx 0;
+}
+
+.trend-loading-text,
+.trend-empty-text {
+  font-size: 26rpx;
+  color: #C8D8E4;
 }
 
 /* ─── 每日热力图 ─── */

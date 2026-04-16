@@ -215,6 +215,64 @@ export function setMonthBudget(yearMonth, amount) {
   }
 }
 
+// ─── 多月趋势数据 ─────────────────────────────────────────────
+
+/**
+ * 获取最近 N 个月的收支汇总（用于趋势图）
+ * @param {number} months - 月份数，默认 6
+ * @returns {Promise<Array<{ yearMonth: string, label: string, income: number, expense: number }>>}
+ */
+export async function getRecentMonthsTrend(months = 6) {
+  const now = new Date()
+  const result = []
+
+  // 生成最近 N 个月的 yearMonth 列表（从远到近）
+  const targets = []
+  for (let i = months - 1; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+    const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+    const label = `${d.getMonth() + 1}月`
+    targets.push({ yearMonth: ym, label })
+  }
+
+  // 构造日期范围：最早月份的1日 到 当前月末
+  const startYM = targets[0].yearMonth
+  const startDate = `${startYM}-01`
+  const endYear = now.getFullYear()
+  const endMonth = now.getMonth() + 1
+  const endDay = new Date(endYear, endMonth, 0).getDate()
+  const endDate = `${endYear}-${String(endMonth).padStart(2, '0')}-${String(endDay).padStart(2, '0')}`
+
+  const { data, error } = await supabase
+    .from('records')
+    .select('type, amount, date')
+    .gte('date', startDate)
+    .lte('date', endDate)
+
+  if (error) {
+    console.error('[storage] getRecentMonthsTrend error:', error.message)
+    // 返回全零数据
+    return targets.map(t => ({ ...t, income: 0, expense: 0 }))
+  }
+
+  // 按月聚合
+  const monthMap = {}
+  targets.forEach(t => { monthMap[t.yearMonth] = { income: 0, expense: 0 } })
+  ;(data || []).forEach(r => {
+    const ym = r.date ? r.date.slice(0, 7) : null
+    if (!ym || !monthMap[ym]) return
+    if (r.type === 'income') monthMap[ym].income += Number(r.amount) || 0
+    else monthMap[ym].expense += Number(r.amount) || 0
+  })
+
+  return targets.map(t => ({
+    yearMonth: t.yearMonth,
+    label: t.label,
+    income: parseFloat((monthMap[t.yearMonth].income).toFixed(2)),
+    expense: parseFloat((monthMap[t.yearMonth].expense).toFixed(2))
+  }))
+}
+
 // ─── 纯工具函数（同步） ───────────────────────────────────────
 
 /**
