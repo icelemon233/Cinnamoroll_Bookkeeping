@@ -1,5 +1,6 @@
 <template>
   <view class="container">
+    <custom-tab-bar :selected="0"></custom-tab-bar>
     <!-- 顶部月份收支卡片 -->
     <view class="summary-card">
       <view class="summary-header">
@@ -193,9 +194,8 @@ export default {
     };
   },
 
-  onShow() {
-    uni.$emit('tab-selected', 0)
-    this.loadData();
+  async onShow() {
+    await this.loadData();
   },
 
   methods: {

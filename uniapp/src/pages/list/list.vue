@@ -1,5 +1,6 @@
 <template>
   <view class="container">
+    <custom-tab-bar :selected="2"></custom-tab-bar>
     <!-- 搜索框 -->
     <view class="search-bar">
       <view class="search-inner">
@@ -133,9 +134,8 @@ export default {
     this.loadData()
   },
 
-  onShow() {
-    uni.$emit('tab-selected', 2)
-    this.loadData()
+  async onShow() {
+    await this.loadData()
   },
 
   methods: {

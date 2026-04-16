@@ -12,16 +12,10 @@
 
     <!-- 切换标签：登录 / 注册 -->
     <view class="tab-switcher">
-      <view
-        :class="['tab-btn', mode === 'login' ? 'tab-active' : '']"
-        @tap="switchMode('login')"
-      >
+      <view :class="['tab-btn', mode === 'login' ? 'tab-active' : '']" @tap="switchMode('login')">
         <text>登录</text>
       </view>
-      <view
-        :class="['tab-btn', mode === 'register' ? 'tab-active' : '']"
-        @tap="switchMode('register')"
-      >
+      <view :class="['tab-btn', mode === 'register' ? 'tab-active' : '']" @tap="switchMode('register')">
         <text>注册</text>
       </view>
     </view>
@@ -31,28 +25,17 @@
       <!-- 邮箱 -->
       <view class="input-group">
         <text class="input-label">📧 邮箱</text>
-        <input
-          class="input-field"
-          type="text"
-          placeholder="请输入邮箱地址"
-          placeholder-class="input-placeholder"
-          :value="email"
-          @input="e => email = e.detail.value"
-        />
+        <input class="input-field" type="text" placeholder="请输入邮箱地址" placeholder-class="input-placeholder"
+          :value="email" @input="e => email = e.detail.value" />
       </view>
 
       <!-- 密码 -->
       <view class="input-group">
         <text class="input-label">🔒 密码</text>
         <view class="input-wrapper">
-          <input
-            class="input-field input-field-with-icon"
-            :type="showPassword ? 'text' : 'password'"
-            :placeholder="mode === 'register' ? '请设置密码（至少6位）' : '请输入密码'"
-            placeholder-class="input-placeholder"
-            :value="password"
-            @input="e => password = e.detail.value"
-          />
+          <input class="input-field input-field-with-icon" :type="showPassword ? 'text' : 'password'"
+            :placeholder="mode === 'register' ? '请设置密码（至少6位）' : '请输入密码'" placeholder-class="input-placeholder"
+            :value="password" @input="e => password = e.detail.value" />
           <view class="eye-icon" @tap.stop="showPassword = !showPassword">
             <text class="eye-text">{{ showPassword ? '🙈' : '👁️' }}</text>
           </view>
@@ -65,10 +48,7 @@
       </view>
 
       <!-- 提交按钮 -->
-      <view
-        :class="['submit-btn', loading ? 'submit-btn-disabled' : '']"
-        @tap="handleSubmit"
-      >
+      <view :class="['submit-btn', loading ? 'submit-btn-disabled' : '']" @tap="handleSubmit">
         <text class="submit-text">
           {{ loading ? '处理中...' : (mode === 'login' ? '登录' : '注册') }}
         </text>

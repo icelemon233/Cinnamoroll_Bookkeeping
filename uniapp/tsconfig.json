@@ -9,7 +9,9 @@
     "types": ["@dcloudio/types"],
     "strict": true,
     "moduleResolution": "node",
-    "jsx": "preserve"
+    "jsx": "preserve",
+    "allowJs": true,
+    "noEmit": true
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue"]
 }
