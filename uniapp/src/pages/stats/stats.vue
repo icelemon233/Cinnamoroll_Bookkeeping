@@ -178,9 +178,7 @@ export default {
   },
 
   onShow() {
-    const tabBar = typeof uni.getTabBar === 'function' ? uni.getTabBar(this) : null
-    if (tabBar && typeof tabBar.setData === 'function') tabBar.setData({ selected: 3 })
-    else if (tabBar && typeof tabBar.setSelected === 'function') tabBar.setSelected(3)
+    uni.$emit('tab-selected', 3)
     this.loadStats()
     // 趋势图只在初次加载或月份为当前月时刷新（避免重复请求）
     if (!this.trendData.length || this.isCurrentMonth) {

@@ -134,9 +134,7 @@ export default {
   },
 
   onShow() {
-    const tabBar = typeof uni.getTabBar === 'function' ? uni.getTabBar(this) : null
-    if (tabBar && typeof tabBar.setData === 'function') tabBar.setData({ selected: 2 })
-    else if (tabBar && typeof tabBar.setSelected === 'function') tabBar.setSelected(2)
+    uni.$emit('tab-selected', 2)
     this.loadData()
   },
 

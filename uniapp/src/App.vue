@@ -47,6 +47,12 @@ export default {
 <style>
 /* 全局样式 Cinnamoroll 蓝白风格 */
 
+/* 防止滚动条出现时引起水平布局偏移 */
+html, body {
+  overflow-x: hidden;
+  scrollbar-gutter: stable;
+}
+
 /* 全局重置 */
 page {
   font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif;
@@ -57,11 +63,25 @@ page {
   padding-bottom: 120rpx;
 }
 
-.color-primary { color: #4FB8D4; }
-.color-income { color: #4FB8D4; }
-.color-expense { color: #FF8BAB; }
-.color-text { color: #3D5A6E; }
-.color-muted { color: #9BAAB8; }
+.color-primary {
+  color: #4FB8D4;
+}
+
+.color-income {
+  color: #4FB8D4;
+}
+
+.color-expense {
+  color: #FF8BAB;
+}
+
+.color-text {
+  color: #3D5A6E;
+}
+
+.color-muted {
+  color: #9BAAB8;
+}
 
 /* 通用容器 */
 .container {
@@ -169,11 +189,30 @@ page {
 }
 
 /* flex 工具类 */
-.flex { display: flex; }
-.flex-col { display: flex; flex-direction: column; }
-.flex-center { display: flex; align-items: center; justify-content: center; }
-.flex-between { display: flex; align-items: center; justify-content: space-between; }
-.flex-1 { flex: 1; }
+.flex {
+  display: flex;
+}
+
+.flex-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.flex-1 {
+  flex: 1;
+}
 
 /* 圆角图片占位 */
 .avatar-placeholder {

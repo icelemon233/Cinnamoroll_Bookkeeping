@@ -31,12 +31,16 @@ export default {
       ]
     }
   },
-  methods: {
-    // 供各页面 onShow 调用：this.$scope.$getTabBar?.().setData?.({ selected: N })
-    // 也可通过 uni.getTabBar(this).setData() 调用
-    setSelected(index) {
+  mounted() {
+    // 监听页面发出的 tab-selected 事件来更新高亮
+    uni.$on('tab-selected', (index) => {
       this.selected = index
-    },
+    })
+  },
+  beforeDestroy() {
+    uni.$off('tab-selected')
+  },
+  methods: {
     onTabTap(index) {
       if (index === this.selected) return
       this.selected = index
@@ -52,6 +56,8 @@ export default {
   bottom: 0;
   left: 0;
   right: 0;
+  width: 100%;
+  box-sizing: border-box;
   height: 110rpx;
   background: #FFFFFF;
   display: flex;
