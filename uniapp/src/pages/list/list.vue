@@ -1,20 +1,11 @@
 <template>
   <view class="container">
-    <custom-tab-bar :selected="2"></custom-tab-bar>
-
     <!-- 搜索框 -->
     <view class="search-bar">
       <view class="search-inner">
         <text class="search-icon">🔍</text>
-        <input
-          class="search-input"
-          placeholder="搜索备注、分类、金额"
-          placeholder-class="search-placeholder"
-          :value="searchKeyword"
-          @input="onSearchInput"
-          @focus="onSearchFocus"
-          confirm-type="search"
-        />
+        <input class="search-input" placeholder="搜索备注、分类、金额" placeholder-class="search-placeholder"
+          :value="searchKeyword" @input="onSearchInput" @focus="onSearchFocus" confirm-type="search" />
         <view v-if="searchKeyword" class="search-clear" @tap="clearSearch">
           <text class="clear-icon">✕</text>
         </view>
@@ -52,21 +43,12 @@
 
     <!-- 类型筛选 -->
     <view class="filter-row">
-      <view
-        :class="['filter-btn', filterType === 'all' ? 'filter-active' : '']"
-        :data-type="'all'"
-        @tap="switchFilter"
-      >全部</view>
-      <view
-        :class="['filter-btn', filterType === 'expense' ? 'filter-active filter-expense' : '']"
-        :data-type="'expense'"
-        @tap="switchFilter"
-      >支出</view>
-      <view
-        :class="['filter-btn', filterType === 'income' ? 'filter-active filter-income' : '']"
-        :data-type="'income'"
-        @tap="switchFilter"
-      >收入</view>
+      <view :class="['filter-btn', filterType === 'all' ? 'filter-active' : '']" :data-type="'all'" @tap="switchFilter">
+        全部</view>
+      <view :class="['filter-btn', filterType === 'expense' ? 'filter-active filter-expense' : '']"
+        :data-type="'expense'" @tap="switchFilter">支出</view>
+      <view :class="['filter-btn', filterType === 'income' ? 'filter-active filter-income' : '']" :data-type="'income'"
+        @tap="switchFilter">收入</view>
       <view class="export-btn" @tap="onExport">
         <text class="export-icon">📤</text>
       </view>
@@ -96,13 +78,8 @@
             <text v-if="item.groupExpense > 0" class="subtotal-expense"> -{{ item.groupExpense }}</text>
           </view>
         </view>
-        <view
-          class="record-item"
-          v-for="record in item.records"
-          :key="record.id"
-          :data-id="record.id"
-          @longpress="onLongPress"
-        >
+        <view class="record-item" v-for="record in item.records" :key="record.id" :data-id="record.id"
+          @longpress="onLongPress">
           <view class="record-icon"><text>{{ record.emoji }}</text></view>
           <view class="record-body">
             <text class="record-category">{{ record.category }}</text>
@@ -156,8 +133,11 @@ export default {
     this.loadData()
   },
 
-  async onShow() {
-    await this.loadData()
+  onShow() {
+    const tabBar = typeof uni.getTabBar === 'function' ? uni.getTabBar(this) : null
+    if (tabBar && typeof tabBar.setData === 'function') tabBar.setData({ selected: 2 })
+    else if (tabBar && typeof tabBar.setSelected === 'function') tabBar.setSelected(2)
+    this.loadData()
   },
 
   methods: {
@@ -423,7 +403,7 @@ export default {
         // 生成 CSV
         const csvContent = exportToCSV(records)
         const filename = `账单_${filterMonth || '全部'}_${Date.now()}.csv`
-        
+
         // #ifdef H5
         downloadCSV(csvContent, filename)
         uni.showToast({ title: '导出成功', icon: 'success' })
@@ -588,8 +568,13 @@ export default {
   margin: 0 20rpx;
 }
 
-.income-text { color: #4FB8D4; }
-.expense-text { color: #FF8BAB; }
+.income-text {
+  color: #4FB8D4;
+}
+
+.expense-text {
+  color: #FF8BAB;
+}
 
 /* ─── 筛选行 ─────────────────────────────────────────────── */
 .filter-row {

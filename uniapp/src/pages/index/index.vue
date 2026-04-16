@@ -1,7 +1,5 @@
 <template>
   <view class="container">
-    <custom-tab-bar :selected="0"></custom-tab-bar>
-
     <!-- 顶部月份收支卡片 -->
     <view class="summary-card">
       <view class="summary-header">
@@ -12,7 +10,7 @@
       <view class="net-amount">
         <text class="net-label">结余</text>
         <text :class="['net-value', monthNet >= 0 ? 'positive' : 'negative']">
-          {{ monthNet >= 0 ? '+' : '' }}{{ monthNet }}
+          {{ monthNet >= 0 ? "+" : "" }}{{ monthNet }}
         </text>
       </view>
 
@@ -49,7 +47,7 @@
           <text class="budget-title">本月预算</text>
         </view>
         <view class="budget-set-btn" @tap="onSetBudget">
-          <text class="budget-set-text">{{ hasBudget ? '修改' : '设置' }}</text>
+          <text class="budget-set-text">{{ hasBudget ? "修改" : "设置" }}</text>
         </view>
       </view>
 
@@ -63,7 +61,10 @@
         <view class="budget-amounts">
           <view class="budget-used">
             <text class="budget-label-small">已支出</text>
-            <text :class="['budget-val', budgetOver ? 'budget-over-text' : 'budget-normal-text']">¥{{ monthExpense }}</text>
+            <text :class="[
+              'budget-val',
+              budgetOver ? 'budget-over-text' : 'budget-normal-text',
+            ]">¥{{ monthExpense }}</text>
           </view>
           <view class="budget-slash">/</view>
           <view class="budget-total">
@@ -78,13 +79,16 @@
 
         <!-- 进度条 -->
         <view class="budget-bar-bg">
-          <view
-            :class="['budget-bar-fill', budgetOver ? 'budget-bar-over' : 'budget-bar-ok']"
-            :style="'width: ' + budgetPercent + '%;'"
-          ></view>
+          <view :class="[
+            'budget-bar-fill',
+            budgetOver ? 'budget-bar-over' : 'budget-bar-ok',
+          ]" :style="'width: ' + budgetPercent + '%;'"></view>
         </view>
         <view class="budget-percent-row">
-          <text :class="['budget-percent-text', budgetOver ? 'budget-over-text' : '']">已用 {{ budgetPercent }}%</text>
+          <text :class="[
+            'budget-percent-text',
+            budgetOver ? 'budget-over-text' : '',
+          ]">已用 {{ budgetPercent }}%</text>
         </view>
       </view>
     </view>
@@ -112,52 +116,68 @@
 
       <!-- 账单列表 -->
       <view v-else>
-        <template v-for="item in recentGroups" :key="item.date">
-          <view class="date-group">
-            <text class="date-label">{{ item.dateLabel }}</text>
-            <view
-              class="record-item"
-              v-for="record in item.records"
-              :key="record.id"
-            >
-              <view class="record-left">
-                <view class="record-category-icon">
-                  <text>{{ record.emoji }}</text>
-                </view>
-                <view class="record-info">
-                  <text class="record-category">{{ record.category }}</text>
-                  <text class="record-note" v-if="record.note">{{ record.note }}</text>
-                </view>
+        <view v-for="item in recentGroups" :key="item.date" class="date-group">
+          <text class="date-label">{{ item.dateLabel }}</text>
+          <view class="record-item" v-for="record in item.records" :key="record.id">
+            <view class="record-left">
+              <view class="record-category-icon">
+                <text>{{ record.emoji }}</text>
               </view>
-              <text :class="['record-amount', record.type === 'income' ? 'amount-income' : 'amount-expense']">
-                {{ record.amountDisplay }}
-              </text>
+              <view class="record-info">
+                <text class="record-category">{{ record.category }}</text>
+                <text class="record-note" v-if="record.note">{{
+                  record.note
+                  }}</text>
+              </view>
             </view>
+            <text :class="[
+              'record-amount',
+              record.type === 'income' ? 'amount-income' : 'amount-expense',
+            ]">
+              {{ record.amountDisplay }}
+            </text>
           </view>
-        </template>
+        </view>
       </view>
     </view>
-
   </view>
 </template>
 
 <script>
-import { getMonthSummary, groupByDate, formatDate, getMonthBudget, setMonthBudget } from '../../utils/storage.js'
+import {
+  getMonthSummary,
+  groupByDate,
+  formatDate,
+  getMonthBudget,
+  setMonthBudget,
+} from "../../utils/storage.js";
 
 // 分类 emoji 映射
 const CATEGORY_EMOJI = {
-  '餐饮': '🍜', '交通': '🚌', '购物': '🛍️', '娱乐': '🎮',
-  '住房': '🏠', '医疗': '💊', '教育': '📚', '运动': '🏃',
-  '旅行': '✈️', '宠物': '🐾', '日用': '🧴',
-  '工资': '💼', '奖金': '🎁', '副业': '💡', '理财': '📈', '红包': '🧧',
-  '其他': '📦'
-}
+  餐饮: "🍜",
+  交通: "🚌",
+  购物: "🛍️",
+  娱乐: "🎮",
+  住房: "🏠",
+  医疗: "💊",
+  教育: "📚",
+  运动: "🏃",
+  旅行: "✈️",
+  宠物: "🐾",
+  日用: "🧴",
+  工资: "💼",
+  奖金: "🎁",
+  副业: "💡",
+  理财: "📈",
+  红包: "🧧",
+  其他: "📦",
+};
 
 export default {
   data() {
     return {
-      currentMonth: '',
-      yearMonth: '',
+      currentMonth: "",
+      yearMonth: "",
       monthIncome: 0,
       monthExpense: 0,
       monthNet: 0,
@@ -169,124 +189,134 @@ export default {
       budgetPercent: 0,
       budgetOver: false,
       budgetRemain: 0,
-      hasBudget: false
-    }
+      hasBudget: false,
+    };
   },
 
-  async onShow() {
-    await this.loadData()
+  onShow() {
+    const tabBar = typeof uni.getTabBar === 'function' ? uni.getTabBar(this) : null
+    if (tabBar && typeof tabBar.setData === 'function') tabBar.setData({ selected: 0 })
+    else if (tabBar && typeof tabBar.setSelected === 'function') tabBar.setSelected(0)
+    this.loadData();
   },
 
   methods: {
     async loadData() {
-      this.loading = true
-      uni.showLoading({ title: '加载中', mask: false })
+      this.loading = true;
+      uni.showLoading({ title: "加载中", mask: false });
       try {
-        const now = new Date()
-        const year = now.getFullYear()
-        const month = now.getMonth() + 1
-        const yearMonth = `${year}-${month < 10 ? '0' + month : month}`
-        const monthLabel = `${year}年${month < 10 ? '0' + month : month}月`
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = now.getMonth() + 1;
+        const yearMonth = `${year}-${month < 10 ? "0" + month : month}`;
+        const monthLabel = `${year}年${month < 10 ? "0" + month : month}月`;
 
-        const summary = await getMonthSummary(yearMonth)
+        const summary = await getMonthSummary(yearMonth);
 
         // 最近5条账单，按日期分组
-        const allRecentRecords = summary.records
-          .slice(0, 5)
+        const allRecentRecords = summary.records.slice(0, 5);
 
-        const recentGroups = groupByDate(allRecentRecords).map(group => ({
+        const recentGroups = groupByDate(allRecentRecords).map((group) => ({
           ...group,
           dateLabel: formatDate(group.date),
-          records: group.records.map(r => ({
+          records: group.records.map((r) => ({
             ...r,
-            emoji: CATEGORY_EMOJI[r.category] || '📦',
-            amountDisplay: r.type === 'income' ? `+${r.amount}` : `-${r.amount}`
-          }))
-        }))
+            emoji: CATEGORY_EMOJI[r.category] || "📦",
+            amountDisplay:
+              r.type === "income" ? `+${r.amount}` : `-${r.amount}`,
+          })),
+        }));
 
         // 预算计算（本地存储）
-        const budget = getMonthBudget(yearMonth)
-        const hasBudget = budget > 0
-        let budgetPercent = 0
-        let budgetOver = false
-        let budgetRemain = 0
+        const budget = getMonthBudget(yearMonth);
+        const hasBudget = budget > 0;
+        let budgetPercent = 0;
+        let budgetOver = false;
+        let budgetRemain = 0;
         if (hasBudget) {
-          budgetPercent = Math.min(100, parseFloat((summary.expense / budget * 100).toFixed(1)))
-          budgetOver = summary.expense > budget
-          budgetRemain = parseFloat((budget - summary.expense).toFixed(2))
+          budgetPercent = Math.min(
+            100,
+            parseFloat(((summary.expense / budget) * 100).toFixed(1))
+          );
+          budgetOver = summary.expense > budget;
+          budgetRemain = parseFloat((budget - summary.expense).toFixed(2));
         }
 
-        this.currentMonth = monthLabel
-        this.yearMonth = yearMonth
-        this.monthIncome = summary.income
-        this.monthExpense = summary.expense
-        this.monthNet = summary.net
-        this.recentGroups = recentGroups
-        this.isEmpty = summary.records.length === 0
-        this.budget = budget
-        this.hasBudget = hasBudget
-        this.budgetPercent = budgetPercent
-        this.budgetOver = budgetOver
-        this.budgetRemain = budgetRemain
+        this.currentMonth = monthLabel;
+        this.yearMonth = yearMonth;
+        this.monthIncome = summary.income;
+        this.monthExpense = summary.expense;
+        this.monthNet = summary.net;
+        this.recentGroups = recentGroups;
+        this.isEmpty = summary.records.length === 0;
+        this.budget = budget;
+        this.hasBudget = hasBudget;
+        this.budgetPercent = budgetPercent;
+        this.budgetOver = budgetOver;
+        this.budgetRemain = budgetRemain;
       } catch (e) {
-        console.error('[index] loadData error:', e)
-        uni.showToast({ title: '加载失败，请重试', icon: 'none' })
+        console.error("[index] loadData error:", e);
+        uni.showToast({ title: "加载失败，请重试", icon: "none" });
       } finally {
-        this.loading = false
-        uni.hideLoading()
+        this.loading = false;
+        uni.hideLoading();
       }
     },
 
     // 设置/修改预算
     onSetBudget() {
-      const { yearMonth, budget, currentMonth } = this
+      const { yearMonth, budget, currentMonth } = this;
       uni.showModal({
         title: `设置 ${currentMonth} 预算`,
         editable: true,
-        placeholderText: budget > 0 ? String(budget) : '请输入本月支出预算',
-        content: '',
-        confirmText: '确定',
-        cancelText: '取消',
+        placeholderText: budget > 0 ? String(budget) : "请输入本月支出预算",
+        content: "",
+        confirmText: "确定",
+        cancelText: "取消",
         success: (res) => {
-          if (!res.confirm) return
-          const input = res.content ? res.content.trim() : ''
-          if (input === '') {
-            setMonthBudget(yearMonth, 0)
-            uni.showToast({ title: '预算已清除', icon: 'none' })
-            this.loadData()
-            return
+          if (!res.confirm) return;
+          const input = res.content ? res.content.trim() : "";
+          if (input === "") {
+            setMonthBudget(yearMonth, 0);
+            uni.showToast({ title: "预算已清除", icon: "none" });
+            this.loadData();
+            return;
           }
-          const amount = parseFloat(input)
+          const amount = parseFloat(input);
           if (isNaN(amount) || amount <= 0) {
-            uni.showToast({ title: '请输入有效金额 🐾', icon: 'none' })
-            return
+            uni.showToast({ title: "请输入有效金额 🐾", icon: "none" });
+            return;
           }
-          setMonthBudget(yearMonth, amount)
-          uni.showToast({ title: '预算已设置 ✨', icon: 'success', duration: 1200 })
-          this.loadData()
-        }
-      })
+          setMonthBudget(yearMonth, amount);
+          uni.showToast({
+            title: "预算已设置 ✨",
+            icon: "success",
+            duration: 1200,
+          });
+          this.loadData();
+        },
+      });
     },
 
     goToAdd() {
-      uni.switchTab({ url: '/pages/add/add' })
+      uni.switchTab({ url: "/pages/add/add" });
     },
 
     goToList() {
-      uni.switchTab({ url: '/pages/list/list' })
-    }
-  }
-}
+      uni.switchTab({ url: "/pages/list/list" });
+    },
+  },
+};
 </script>
 
 <style scoped>
 /* 月度汇总卡片 */
 .summary-card {
-  background: linear-gradient(145deg, #7EC8E3, #4FB8D4);
+  background: linear-gradient(145deg, #7ec8e3, #4fb8d4);
   border-radius: 32rpx;
   padding: 40rpx 36rpx;
   margin-bottom: 24rpx;
-  color: #FFFFFF;
+  color: #ffffff;
   box-shadow: 0 8rpx 32rpx rgba(79, 184, 212, 0.35);
 }
 
@@ -300,7 +330,7 @@ export default {
 .month-label {
   font-size: 34rpx;
   font-weight: 700;
-  color: #FFFFFF;
+  color: #ffffff;
 }
 
 .summary-subtitle {
@@ -324,12 +354,12 @@ export default {
 .net-value {
   font-size: 72rpx;
   font-weight: 700;
-  color: #FFFFFF;
+  color: #ffffff;
   line-height: 1.1;
 }
 
 .net-value.negative {
-  color: #FFE0E8;
+  color: #ffe0e8;
 }
 
 .summary-row {
@@ -367,7 +397,7 @@ export default {
 .summary-amount {
   font-size: 34rpx;
   font-weight: 600;
-  color: #FFFFFF;
+  color: #ffffff;
 }
 
 .summary-divider {
@@ -383,12 +413,12 @@ export default {
   align-items: center;
   justify-content: center;
   gap: 12rpx;
-  background: #FFFFFF;
+  background: #ffffff;
   border-radius: 100rpx;
   padding: 28rpx;
   margin-bottom: 24rpx;
   box-shadow: 0 4rpx 20rpx rgba(79, 184, 212, 0.15);
-  border: 2rpx solid #E8F4F8;
+  border: 2rpx solid #e8f4f8;
   cursor: pointer;
 }
 
@@ -404,7 +434,7 @@ export default {
 .quick-add-text {
   font-size: 32rpx;
   font-weight: 600;
-  color: #4FB8D4;
+  color: #4fb8d4;
 }
 
 /* 最近账单区域 */
@@ -422,12 +452,12 @@ export default {
 .section-title {
   font-size: 32rpx;
   font-weight: 700;
-  color: #3D5A6E;
+  color: #3d5a6e;
 }
 
 .view-all {
   font-size: 26rpx;
-  color: #4FB8D4;
+  color: #4fb8d4;
 }
 
 /* 日期分组 */
@@ -437,7 +467,7 @@ export default {
 
 .date-label {
   font-size: 24rpx;
-  color: #9BAAB8;
+  color: #9baab8;
   padding: 8rpx 0;
   display: block;
 }
@@ -448,7 +478,7 @@ export default {
   align-items: center;
   justify-content: space-between;
   padding: 20rpx 0;
-  border-bottom: 1rpx solid #F0F8FF;
+  border-bottom: 1rpx solid #f0f8ff;
 }
 
 .record-item:last-child {
@@ -465,7 +495,7 @@ export default {
   width: 72rpx;
   height: 72rpx;
   border-radius: 50%;
-  background: #EEF8FB;
+  background: #eef8fb;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -480,12 +510,12 @@ export default {
 .record-category {
   font-size: 30rpx;
   font-weight: 500;
-  color: #3D5A6E;
+  color: #3d5a6e;
 }
 
 .record-note {
   font-size: 24rpx;
-  color: #9BAAB8;
+  color: #9baab8;
   margin-top: 4rpx;
 }
 
@@ -495,11 +525,11 @@ export default {
 }
 
 .amount-income {
-  color: #4FB8D4;
+  color: #4fb8d4;
 }
 
 .amount-expense {
-  color: #FF8BAB;
+  color: #ff8bab;
 }
 
 /* 空状态 */
@@ -517,7 +547,7 @@ export default {
 
 .empty-text {
   font-size: 28rpx;
-  color: #9BAAB8;
+  color: #9baab8;
 }
 
 /* ─── 月度预算卡片 ─── */
@@ -546,18 +576,18 @@ export default {
 .budget-title {
   font-size: 32rpx;
   font-weight: 700;
-  color: #3D5A6E;
+  color: #3d5a6e;
 }
 
 .budget-set-btn {
-  background: #EEF8FB;
+  background: #eef8fb;
   border-radius: 100rpx;
   padding: 8rpx 28rpx;
 }
 
 .budget-set-text {
   font-size: 26rpx;
-  color: #4FB8D4;
+  color: #4fb8d4;
   font-weight: 500;
 }
 
@@ -568,7 +598,7 @@ export default {
 
 .budget-empty-text {
   font-size: 26rpx;
-  color: #B8CCD8;
+  color: #b8ccd8;
 }
 
 /* 已设置预算 */
@@ -592,7 +622,7 @@ export default {
 
 .budget-label-small {
   font-size: 22rpx;
-  color: #9BAAB8;
+  color: #9baab8;
   margin-bottom: 4rpx;
 }
 
@@ -603,20 +633,20 @@ export default {
 }
 
 .budget-normal-text {
-  color: #3D5A6E;
+  color: #3d5a6e;
 }
 
 .budget-over-text {
-  color: #FF8BAB;
+  color: #ff8bab;
 }
 
 .budget-total-text {
-  color: #9BAAB8;
+  color: #9baab8;
 }
 
 .budget-slash {
   font-size: 36rpx;
-  color: #C8D8E4;
+  color: #c8d8e4;
   padding-bottom: 4rpx;
 }
 
@@ -628,16 +658,16 @@ export default {
 
 .budget-remain-ok {
   font-size: 26rpx;
-  color: #4FB8D4;
-  background: #EEF8FB;
+  color: #4fb8d4;
+  background: #eef8fb;
   border-radius: 100rpx;
   padding: 6rpx 20rpx;
 }
 
 .budget-remain-over {
   font-size: 26rpx;
-  color: #FF8BAB;
-  background: #FFF0F4;
+  color: #ff8bab;
+  background: #fff0f4;
   border-radius: 100rpx;
   padding: 6rpx 20rpx;
 }
@@ -646,7 +676,7 @@ export default {
 .budget-bar-bg {
   width: 100%;
   height: 16rpx;
-  background: #EEF8FB;
+  background: #eef8fb;
   border-radius: 100rpx;
   overflow: hidden;
 }
@@ -658,11 +688,11 @@ export default {
 }
 
 .budget-bar-ok {
-  background: linear-gradient(90deg, #7EC8E3, #4FB8D4);
+  background: linear-gradient(90deg, #7ec8e3, #4fb8d4);
 }
 
 .budget-bar-over {
-  background: linear-gradient(90deg, #FFB3C6, #FF8BAB);
+  background: linear-gradient(90deg, #ffb3c6, #ff8bab);
 }
 
 .budget-percent-row {
@@ -672,6 +702,6 @@ export default {
 
 .budget-percent-text {
   font-size: 22rpx;
-  color: #9BAAB8;
+  color: #9baab8;
 }
 </style>

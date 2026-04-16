@@ -1,7 +1,5 @@
 <template>
   <view class="container">
-    <custom-tab-bar :selected="4"></custom-tab-bar>
-
     <!-- 顶部头像区域 -->
     <view class="profile-header">
       <view class="avatar-circle">
@@ -69,8 +67,11 @@ export default {
     }
   },
 
-  async onShow() {
-    await this.loadUser()
+  onShow() {
+    const tabBar = typeof uni.getTabBar === 'function' ? uni.getTabBar(this) : null
+    if (tabBar && typeof tabBar.setData === 'function') tabBar.setData({ selected: 4 })
+    else if (tabBar && typeof tabBar.setSelected === 'function') tabBar.setSelected(4)
+    this.loadUser()
   },
 
   methods: {
