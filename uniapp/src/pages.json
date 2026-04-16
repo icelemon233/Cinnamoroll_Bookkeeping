@@ -16,9 +16,9 @@
       }
     },
     {
-      "path": "pages/index/index",
+      "path": "pages/main/main",
       "style": {
-        "navigationBarTitleText": "🐾 首页",
+        "navigationBarTitleText": "🐾 Cinnamoroll 记账本",
         "navigationBarBackgroundColor": "#A8D8EA",
         "navigationBarTextStyle": "white"
       }
@@ -26,31 +26,7 @@
     {
       "path": "pages/add/add",
       "style": {
-        "navigationBarTitleText": "记账",
-        "navigationBarBackgroundColor": "#A8D8EA",
-        "navigationBarTextStyle": "white"
-      }
-    },
-    {
-      "path": "pages/list/list",
-      "style": {
-        "navigationBarTitleText": "账单",
-        "navigationBarBackgroundColor": "#A8D8EA",
-        "navigationBarTextStyle": "white"
-      }
-    },
-    {
-      "path": "pages/stats/stats",
-      "style": {
-        "navigationBarTitleText": "统计",
-        "navigationBarBackgroundColor": "#A8D8EA",
-        "navigationBarTextStyle": "white"
-      }
-    },
-    {
-      "path": "pages/profile/profile",
-      "style": {
-        "navigationBarTitleText": "我的",
+        "navigationBarTitleText": "编辑记录",
         "navigationBarBackgroundColor": "#A8D8EA",
         "navigationBarTextStyle": "white"
       }

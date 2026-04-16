@@ -130,7 +130,7 @@ export default {
       if (data.session) {
         uni.showToast({ title: '登录成功 🐾', icon: 'success', duration: 1000 })
         setTimeout(() => {
-          uni.reLaunch({ url: '/pages/index/index' })
+          uni.reLaunch({ url: '/pages/main/main' })
         }, 800)
       }
     },

@@ -12,6 +12,8 @@ export default {
       uni.reLaunch({ url: '/pages/login/login' })
       return
     }
+    // 已登录，跳转到主页面
+    uni.reLaunch({ url: '/pages/main/main' })
 
     // 监听 auth 状态变化
     supabase.auth.onAuthStateChange((event, session) => {
