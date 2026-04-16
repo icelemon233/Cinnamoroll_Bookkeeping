@@ -6,8 +6,8 @@
       class="tab-item"
       @tap="onTabTap(index)"
     >
-      <text class="tab-emoji">{{ item.emoji }}</text>
-      <text :class="['tab-text', selected === index ? 'tab-text-active' : '']">
+      <text class="tab-emoji" style="font-size:36rpx;line-height:1.2;min-height:44rpx;display:flex;align-items:center;">{{ item.emoji }}</text>
+      <text :class="['tab-text', selected === index ? 'tab-text-active' : '']" style="font-size:24rpx;line-height:1.2;min-height:30rpx;">
         {{ item.text }}
       </text>
       <!-- 选中指示条 -->
@@ -52,6 +52,7 @@ export default {
   left: 0;
   right: 0;
   height: 110rpx;
+  min-height: 110rpx;
   background: #FFFFFF;
   display: flex;
   align-items: stretch;
@@ -59,6 +60,9 @@ export default {
   /* 安全区适配 */
   padding-bottom: env(safe-area-inset-bottom);
   z-index: 999;
+  /* 触发合成层，避免首帧闪烁 */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
 }
 
 .tab-item {
@@ -69,6 +73,7 @@ export default {
   justify-content: center;
   position: relative;
   padding: 12rpx 0 8rpx;
+  min-height: 110rpx;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
@@ -80,11 +85,15 @@ export default {
 .tab-emoji {
   font-size: 36rpx;
   line-height: 1.2;
+  min-height: 44rpx;
+  display: flex;
+  align-items: center;
   margin-bottom: 4rpx;
 }
 
 .tab-text {
   font-size: 24rpx;
+  min-height: 30rpx;
   color: #9BAAB8;
   line-height: 1.2;
   font-weight: 500;
@@ -94,15 +103,22 @@ export default {
 @media screen and (min-width: 600px) {
   .tab-bar {
     height: 64px;
+    min-height: 64px;
+  }
+
+  .tab-item {
+    min-height: 64px;
   }
 
   .tab-emoji {
     font-size: 20px;
+    min-height: 26px;
     margin-bottom: 3px;
   }
 
   .tab-text {
     font-size: 14px;
+    min-height: 18px;
   }
 }
 
