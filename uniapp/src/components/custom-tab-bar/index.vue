@@ -38,7 +38,7 @@ export default {
   methods: {
     onTabTap(index) {
       if (index === this.selected) return
-      uni.switchTab({ url: this.tabs[index].path })
+      uni.reLaunch({ url: this.tabs[index].path })
     }
   }
 }
