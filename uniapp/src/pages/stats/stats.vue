@@ -88,11 +88,7 @@
           <text class="trend-empty-text">暂无历史数据</text>
         </view>
         <view v-else>
-          <canvas canvas-id="trendCanvas" id="trendCanvas" class="trend-canvas" style="width: 100%; height: 200px;"></canvas>
-          <!-- 月份标签 -->
-          <view class="trend-labels">
-            <text class="trend-month-label" v-for="item in trendData" :key="item.yearMonth">{{ item.label }}</text>
-          </view>
+          <canvas canvas-id="trendCanvas" id="trendCanvas" class="trend-canvas" style="width: 100%; height: 220px;"></canvas>
         </view>
       </view>
 
@@ -294,7 +290,7 @@ export default {
       const rpxRatio = sysInfo.windowWidth / 750
       const padding = Math.round(28 * 2 * rpxRatio)
       const w = sysInfo.windowWidth - padding
-      const h = 200
+      const h = 220
 
       const ctx = uni.createCanvasContext('trendCanvas', this)
       this._renderTrendLine(ctx, w, h, data)
@@ -302,7 +298,7 @@ export default {
     },
 
     _renderTrendLine(ctx, w, h, data) {
-      const padL = 52, padR = 16, padT = 20, padB = 10
+      const padL = 52, padR = 16, padT = 20, padB = 24
       const chartW = w - padL - padR
       const chartH = h - padT - padB
       const n = data.length
@@ -384,6 +380,15 @@ export default {
       ctx.setStrokeStyle('#FF8BAB')
       ctx.setLineWidth(2.5)
       ctx.stroke()
+
+      // 绘制 X 轴月份标签（直接在 canvas 内，与数据点 x 坐标精确对齐）
+      ctx.setFillStyle('#9BAAB8')
+      ctx.setFontSize(10)
+      ctx.setTextAlign('center')
+      ctx.setTextBaseline('top')
+      data.forEach((d, i) => {
+        ctx.fillText(d.label, xs[i], padT + chartH + 6)
+      })
 
       // 绘制数据点
       data.forEach((d, i) => {
@@ -819,19 +824,6 @@ export default {
   width: 100%;
 }
 
-.trend-labels {
-  display: flex;
-  justify-content: space-between;
-  padding: 0 52rpx 0 104rpx;
-  margin-top: 8rpx;
-}
-
-.trend-month-label {
-  font-size: 20rpx;
-  color: #9BAAB8;
-  text-align: center;
-  flex: 1;
-}
 
 .trend-loading,
 .trend-empty {
