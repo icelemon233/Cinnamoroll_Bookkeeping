@@ -15,16 +15,10 @@
 
     <!-- 收支切换 -->
     <view class="type-switcher">
-      <view
-        :class="['type-btn', statsType === 'expense' ? 'active-expense' : '']"
-        :data-type="'expense'"
-        @tap="switchStatsType"
-      >💸 支出</view>
-      <view
-        :class="['type-btn', statsType === 'income' ? 'active-income' : '']"
-        :data-type="'income'"
-        @tap="switchStatsType"
-      >💰 收入</view>
+      <view :class="['type-btn', statsType === 'expense' ? 'active-expense' : '']" :data-type="'expense'"
+        @tap="switchStatsType">💸 支出</view>
+      <view :class="['type-btn', statsType === 'income' ? 'active-income' : '']" :data-type="'income'"
+        @tap="switchStatsType">💰 收入</view>
     </view>
 
     <!-- 本月收支概览 -->
@@ -50,22 +44,14 @@
     <view v-else>
       <!-- Canvas 饼图 -->
       <view class="chart-card">
-        <canvas
-          canvas-id="pieCanvas"
-          id="pieCanvas"
-          class="pie-canvas"
-          :style="{ width: pieSize + 'px', height: pieSize + 'px' }"
-        ></canvas>
+        <canvas canvas-id="pieCanvas" id="pieCanvas" class="pie-canvas"
+          :style="{ width: pieSize + 'px', height: pieSize + 'px' }"></canvas>
       </view>
 
       <!-- 分类列表 -->
       <view class="card category-list">
         <text class="list-title">分类明细</text>
-        <view
-          class="category-row"
-          v-for="item in categoryList"
-          :key="item.category"
-        >
+        <view class="category-row" v-for="item in categoryList" :key="item.category">
           <view class="cat-color-dot" :style="{ background: item.color }"></view>
           <view class="cat-info">
             <text class="cat-name">{{ item.emoji }} {{ item.category }}</text>
@@ -102,19 +88,10 @@
           <text class="trend-empty-text">暂无历史数据</text>
         </view>
         <view v-else>
-          <canvas
-            id="trendCanvas"
-            type="2d"
-            class="trend-canvas"
-            style="width: 320px; height: 200px;"
-          ></canvas>
+          <canvas canvas-id="trendCanvas" id="trendCanvas" class="trend-canvas" style="width: 100%; height: 200px;"></canvas>
           <!-- 月份标签 -->
           <view class="trend-labels">
-            <text
-              class="trend-month-label"
-              v-for="item in trendData"
-              :key="item.yearMonth"
-            >{{ item.label }}</text>
+            <text class="trend-month-label" v-for="item in trendData" :key="item.yearMonth">{{ item.label }}</text>
           </view>
         </view>
       </view>
@@ -132,21 +109,14 @@
         <!-- 日历格子 -->
         <view class="heatmap-grid">
           <!-- 月首空格补位 -->
-          <view
-            class="heatmap-cell empty-cell"
-            v-for="n in firstWeekdayOffset"
-            :key="'empty-' + n"
-          ></view>
+          <view class="heatmap-cell empty-cell" v-for="n in firstWeekdayOffset" :key="'empty-' + n"></view>
           <!-- 每天格子 -->
-          <view
-            v-for="day in dailyCells"
-            :key="day.date"
-            :class="['heatmap-cell', 'day-cell', day.level > 0 ? 'has-data' : '']"
-            :style="{ background: day.bg }"
-            @tap="onDayCellTap(day)"
-          >
+          <view v-for="day in dailyCells" :key="day.date"
+            :class="['heatmap-cell', 'day-cell', day.level > 0 ? 'has-data' : '']" :style="{ background: day.bg }"
+            @tap="onDayCellTap(day)">
             <text class="day-num" :style="{ color: day.level >= 3 ? '#fff' : '#3D5A6E' }">{{ day.dayNum }}</text>
-            <text v-if="day.amount > 0" class="day-amount" :style="{ color: day.level >= 3 ? 'rgba(255,255,255,0.85)' : '#9BAAB8' }">
+            <text v-if="day.amount > 0" class="day-amount"
+              :style="{ color: day.level >= 3 ? 'rgba(255,255,255,0.85)' : '#9BAAB8' }">
               {{ day.amountShort }}
             </text>
           </view>
@@ -302,32 +272,33 @@ export default {
         const hasAny = data.some(d => d.income > 0 || d.expense > 0)
         this.isTrendEmpty = !hasAny
         if (hasAny) {
-          this.$nextTick(() => { this.drawTrendChart(data) })
+          // 先将 trendLoading 置为 false，等 v-else 块渲染到 DOM 后再绘制
+          this.trendLoading = false
+          this.$nextTick(() => {
+            setTimeout(() => { this.drawTrendChart(data) }, 50)
+          })
+          return
         }
       } catch (e) {
         console.error('[stats] loadTrend error:', e)
         this.isTrendEmpty = true
-      } finally {
-        this.trendLoading = false
       }
+      this.trendLoading = false
     },
 
     drawTrendChart(data) {
-      const query = uni.createSelectorQuery().in(this)
-      query.select('#trendCanvas')
-        .fields({ node: true, size: true })
-        .exec((res) => {
-          if (!res || !res[0] || !res[0].node) return
-          const canvas = res[0].node
-          const ctx = canvas.getContext('2d')
-          const dpr = uni.getWindowInfo ? uni.getWindowInfo().pixelRatio : (uni.getSystemInfoSync().pixelRatio || 2)
-          const w = res[0].width
-          const h = res[0].height
-          canvas.width = w * dpr
-          canvas.height = h * dpr
-          ctx.scale(dpr, dpr)
-          this._renderTrendLine(ctx, w, h, data)
-        })
+      // 使用旧式 Canvas API（兼容 H5 和小程序）
+      const sysInfo = uni.getSystemInfoSync()
+      // trend-card padding 28rpx*2，card 本身有 margin，约减去 56rpx
+      // rpx -> px：sysInfo.windowWidth / 750
+      const rpxRatio = sysInfo.windowWidth / 750
+      const padding = Math.round(28 * 2 * rpxRatio)
+      const w = sysInfo.windowWidth - padding
+      const h = 200
+
+      const ctx = uni.createCanvasContext('trendCanvas', this)
+      this._renderTrendLine(ctx, w, h, data)
+      ctx.draw()
     },
 
     _renderTrendLine(ctx, w, h, data) {
@@ -336,11 +307,12 @@ export default {
       const chartH = h - padT - padB
       const n = data.length
 
-      ctx.clearRect(0, 0, w, h)
-
       // 找最大值（income/expense）
-      const allValues = data.flatMap(d => [d.income, d.expense])
-      const maxVal = Math.max(...allValues, 1)
+      let maxVal = 1
+      data.forEach(d => {
+        if (d.income > maxVal) maxVal = d.income
+        if (d.expense > maxVal) maxVal = d.expense
+      })
 
       // 计算每个点的 x/y 坐标
       const xs = data.map((_, i) => padL + (i / (n - 1)) * chartW)
@@ -348,78 +320,89 @@ export default {
       const expenseYs = data.map(d => padT + (1 - d.expense / maxVal) * chartH)
 
       // 绘制网格线（3条）
-      ctx.strokeStyle = '#EEF8FB'
-      ctx.lineWidth = 1
       for (let i = 0; i <= 3; i++) {
         const y = padT + (i / 3) * chartH
         ctx.beginPath()
+        ctx.setStrokeStyle('#EEF8FB')
+        ctx.setLineWidth(1)
         ctx.moveTo(padL, y)
         ctx.lineTo(w - padR, y)
         ctx.stroke()
         // Y轴标签
         const val = Math.round(maxVal * (1 - i / 3))
-        ctx.fillStyle = '#9BAAB8'
-        ctx.font = '10px sans-serif'
-        ctx.textAlign = 'right'
-        ctx.textBaseline = 'middle'
+        ctx.setFillStyle('#9BAAB8')
+        ctx.setFontSize(10)
+        ctx.setTextAlign('right')
+        ctx.setTextBaseline('middle')
         ctx.fillText(val >= 1000 ? `${(val / 1000).toFixed(1)}k` : String(val), padL - 4, y)
       }
 
-      // 绘制收入折线（蓝色）- 带填充
+      // 绘制收入区域填充
       ctx.beginPath()
       ctx.moveTo(xs[0], incomeYs[0])
       for (let i = 1; i < n; i++) {
-        // 贝塞尔曲线平滑
         const cpX = (xs[i - 1] + xs[i]) / 2
         ctx.bezierCurveTo(cpX, incomeYs[i - 1], cpX, incomeYs[i], xs[i], incomeYs[i])
       }
-      ctx.strokeStyle = '#4FB8D4'
-      ctx.lineWidth = 2.5
-      ctx.stroke()
-
-      // 收入区域填充
       ctx.lineTo(xs[n - 1], padT + chartH)
       ctx.lineTo(xs[0], padT + chartH)
       ctx.closePath()
-      ctx.fillStyle = 'rgba(79, 184, 212, 0.12)'
+      ctx.setFillStyle('rgba(79, 184, 212, 0.12)')
       ctx.fill()
 
-      // 绘制支出折线（粉色）- 带填充
+      // 绘制收入折线（蓝色）
+      ctx.beginPath()
+      ctx.moveTo(xs[0], incomeYs[0])
+      for (let i = 1; i < n; i++) {
+        const cpX = (xs[i - 1] + xs[i]) / 2
+        ctx.bezierCurveTo(cpX, incomeYs[i - 1], cpX, incomeYs[i], xs[i], incomeYs[i])
+      }
+      ctx.setStrokeStyle('#4FB8D4')
+      ctx.setLineWidth(2.5)
+      ctx.stroke()
+
+      // 绘制支出区域填充
       ctx.beginPath()
       ctx.moveTo(xs[0], expenseYs[0])
       for (let i = 1; i < n; i++) {
         const cpX = (xs[i - 1] + xs[i]) / 2
         ctx.bezierCurveTo(cpX, expenseYs[i - 1], cpX, expenseYs[i], xs[i], expenseYs[i])
       }
-      ctx.strokeStyle = '#FF8BAB'
-      ctx.lineWidth = 2.5
-      ctx.stroke()
-
-      // 支出区域填充
       ctx.lineTo(xs[n - 1], padT + chartH)
       ctx.lineTo(xs[0], padT + chartH)
       ctx.closePath()
-      ctx.fillStyle = 'rgba(255, 139, 171, 0.1)'
+      ctx.setFillStyle('rgba(255, 139, 171, 0.1)')
       ctx.fill()
+
+      // 绘制支出折线（粉色）
+      ctx.beginPath()
+      ctx.moveTo(xs[0], expenseYs[0])
+      for (let i = 1; i < n; i++) {
+        const cpX = (xs[i - 1] + xs[i]) / 2
+        ctx.bezierCurveTo(cpX, expenseYs[i - 1], cpX, expenseYs[i], xs[i], expenseYs[i])
+      }
+      ctx.setStrokeStyle('#FF8BAB')
+      ctx.setLineWidth(2.5)
+      ctx.stroke()
 
       // 绘制数据点
       data.forEach((d, i) => {
         // 收入点
         ctx.beginPath()
         ctx.arc(xs[i], incomeYs[i], 4, 0, Math.PI * 2)
-        ctx.fillStyle = '#4FB8D4'
+        ctx.setFillStyle('#4FB8D4')
         ctx.fill()
-        ctx.strokeStyle = '#FFFFFF'
-        ctx.lineWidth = 1.5
+        ctx.setStrokeStyle('#FFFFFF')
+        ctx.setLineWidth(1.5)
         ctx.stroke()
 
         // 支出点
         ctx.beginPath()
         ctx.arc(xs[i], expenseYs[i], 4, 0, Math.PI * 2)
-        ctx.fillStyle = '#FF8BAB'
+        ctx.setFillStyle('#FF8BAB')
         ctx.fill()
-        ctx.strokeStyle = '#FFFFFF'
-        ctx.lineWidth = 1.5
+        ctx.setStrokeStyle('#FFFFFF')
+        ctx.setLineWidth(1.5)
         ctx.stroke()
       })
     },
@@ -643,8 +626,13 @@ export default {
   font-weight: 700;
 }
 
-.income-text { color: #4FB8D4; }
-.expense-text { color: #FF8BAB; }
+.income-text {
+  color: #4FB8D4;
+}
+
+.expense-text {
+  color: #FF8BAB;
+}
 
 .type-switcher {
   display: flex;
