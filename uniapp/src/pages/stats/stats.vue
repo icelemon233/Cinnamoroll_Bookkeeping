@@ -182,7 +182,12 @@ export default {
     await this.loadStats()
     // 趋势图只在初次加载或月份为当前月时刷新（避免重复请求）
     if (!this.trendData.length || this.isCurrentMonth) {
-      this.loadTrend()
+      await this.loadTrend()
+    } else if (!this.isTrendEmpty) {
+      // 已有数据但切换月份回来，重新绘制趋势图
+      this.$nextTick(() => {
+        setTimeout(() => { this.drawTrendChart(this.trendData) }, 100)
+      })
     }
   },
 
@@ -252,7 +257,9 @@ export default {
         this._buildDailyHeatmap(summary.records)
 
         if (!this.isEmpty) {
-          this.$nextTick(() => { this.drawPieChart(categoryList) })
+          this.$nextTick(() => {
+            setTimeout(() => { this.drawPieChart(categoryList) }, 50)
+          })
         }
       } finally {
         uni.hideLoading()
@@ -269,9 +276,9 @@ export default {
         if (hasAny) {
           // 先将 trendLoading 置为 false，等 v-else 块渲染到 DOM 后再绘制
           this.trendLoading = false
-          this.$nextTick(() => {
-            setTimeout(() => { this.drawTrendChart(data) }, 50)
-          })
+          await this.$nextTick()
+          // 等待 canvas 节点真正挂载到 DOM
+          setTimeout(() => { this.drawTrendChart(data) }, 100)
           return
         }
       } catch (e) {
@@ -284,12 +291,24 @@ export default {
     drawTrendChart(data) {
       // 使用旧式 Canvas API（兼容 H5 和小程序）
       const sysInfo = uni.getSystemInfoSync()
-      // trend-card padding 28rpx*2，card 本身有 margin，约减去 56rpx
+      // trend-card: card padding 24rpx*2 + trend-card padding 28rpx*2
       // rpx -> px：sysInfo.windowWidth / 750
       const rpxRatio = sysInfo.windowWidth / 750
-      const padding = Math.round(28 * 2 * rpxRatio)
-      const w = sysInfo.windowWidth - padding
+      const cardPadding = Math.round((24 + 28) * 2 * rpxRatio)
+      const w = sysInfo.windowWidth - cardPadding
       const h = 220
+
+      // 在 H5 下需要通过原生 DOM 设置 canvas 的 width/height 属性
+      // 否则 CSS width:100% 不影响画布分辨率，绘制内容会错位
+      // #ifdef H5
+      try {
+        const canvasEl = document.getElementById('trendCanvas')
+        if (canvasEl) {
+          canvasEl.width = w
+          canvasEl.height = h
+        }
+      } catch (e) { /* 非 H5 环境忽略 */ }
+      // #endif
 
       const ctx = uni.createCanvasContext('trendCanvas', this)
       this._renderTrendLine(ctx, w, h, data)
