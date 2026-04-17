@@ -325,6 +325,43 @@ export async function saveRecord(record) {
   return addRecord(record)
 }
 
+// ─── 全量统计 ────────────────────────────────────────────────
+
+/**
+ * 获取当前用户的全量记账统计（用于个人中心展示）
+ * @returns {Promise<{ totalCount: number, totalIncome: number, totalExpense: number, recordDays: number, firstDate: string|null }>}
+ */
+export async function getAllTimeSummary() {
+  const { data, error } = await supabase
+    .from('records')
+    .select('type, amount, date')
+    .order('date', { ascending: true })
+
+  if (error) {
+    console.error('[storage] getAllTimeSummary error:', error.message)
+    return { totalCount: 0, totalIncome: 0, totalExpense: 0, recordDays: 0, firstDate: null }
+  }
+
+  const records = data || []
+  let totalIncome = 0
+  let totalExpense = 0
+  const dateSet = new Set()
+
+  records.forEach(r => {
+    if (r.type === 'income') totalIncome += Number(r.amount) || 0
+    else totalExpense += Number(r.amount) || 0
+    if (r.date) dateSet.add(r.date)
+  })
+
+  return {
+    totalCount: records.length,
+    totalIncome: parseFloat(totalIncome.toFixed(2)),
+    totalExpense: parseFloat(totalExpense.toFixed(2)),
+    recordDays: dateSet.size,
+    firstDate: records.length > 0 ? records[0].date : null
+  }
+}
+
 // ─── 导出功能 ───────────────────────────────────────────────
 
 /**
