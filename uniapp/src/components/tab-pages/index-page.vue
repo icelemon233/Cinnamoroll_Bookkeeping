@@ -116,9 +116,13 @@
 
       <!-- 账单列表 -->
       <view v-else>
+        <view class="hint-bar">
+          <text class="hint-text">长按账单可编辑或删除 ✨</text>
+        </view>
         <view v-for="item in recentGroups" :key="item.date" class="date-group">
           <text class="date-label">{{ item.dateLabel }}</text>
-          <view class="record-item" v-for="record in item.records" :key="record.id">
+          <view class="record-item" v-for="record in item.records" :key="record.id"
+            :data-id="record.id" @longpress="onRecordLongPress">
             <view class="record-left">
               <view class="record-category-icon">
                 <text>{{ record.emoji }}</text>
@@ -130,12 +134,15 @@
                   }}</text>
               </view>
             </view>
-            <text :class="[
-              'record-amount',
-              record.type === 'income' ? 'amount-income' : 'amount-expense',
-            ]">
-              {{ record.amountDisplay }}
-            </text>
+            <view class="record-right">
+              <text :class="[
+                'record-amount',
+                record.type === 'income' ? 'amount-income' : 'amount-expense',
+              ]">
+                {{ record.amountDisplay }}
+              </text>
+              <text class="record-edit-hint">长按</text>
+            </view>
           </view>
         </view>
       </view>
@@ -150,6 +157,7 @@ import {
   formatDate,
   getMonthBudget,
   setMonthBudget,
+  deleteRecord,
 } from "../../utils/storage.js";
 
 // 分类 emoji 映射
@@ -211,8 +219,8 @@ export default {
 
         const summary = await getMonthSummary(yearMonth);
 
-        // 最近5条账单，按日期分组
-        const allRecentRecords = summary.records.slice(0, 5);
+        // 最近8条账单，按日期分组
+        const allRecentRecords = summary.records.slice(0, 8);
 
         const recentGroups = groupByDate(allRecentRecords).map((group) => ({
           ...group,
@@ -294,6 +302,44 @@ export default {
           this.loadData();
         },
       });
+    },
+
+    // ─── 长按操作（编辑 / 删除）────────────────────────────────
+
+    onRecordLongPress(e) {
+      const id = e.currentTarget.dataset.id
+      const self = this
+      uni.showActionSheet({
+        itemList: ['✏️ 编辑', '🗑️ 删除'],
+        success: (res) => {
+          if (res.tapIndex === 0) {
+            uni.navigateTo({ url: `/pages/add/add?recordId=${id}` })
+          } else if (res.tapIndex === 1) {
+            self._confirmDelete(id)
+          }
+        }
+      })
+    },
+
+    _confirmDelete(id) {
+      uni.showModal({
+        title: '确认删除',
+        content: '删除这条账单记录？',
+        confirmText: '删除',
+        confirmColor: '#FF8BAB',
+        cancelText: '取消',
+        success: async (res) => {
+          if (res.confirm) {
+            try {
+              await deleteRecord(id)
+              uni.showToast({ title: '已删除', icon: 'success', duration: 800 })
+              await this.loadData()
+            } catch (e) {
+              uni.showToast({ title: '删除失败', icon: 'none' })
+            }
+          }
+        }
+      })
     },
 
     goToAdd() {
@@ -470,6 +516,17 @@ export default {
   display: block;
 }
 
+/* 操作提示栏 */
+.hint-bar {
+  text-align: center;
+  margin-bottom: 12rpx;
+}
+
+.hint-text {
+  font-size: 24rpx;
+  color: #b8d8e4;
+}
+
 /* 账单条目 */
 .record-item {
   display: flex;
@@ -517,9 +574,22 @@ export default {
   margin-top: 4rpx;
 }
 
+.record-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+
 .record-amount {
   font-size: 32rpx;
   font-weight: 600;
+}
+
+.record-edit-hint {
+  font-size: 20rpx;
+  color: #c8d8e4;
+  margin-top: 4rpx;
 }
 
 .amount-income {
