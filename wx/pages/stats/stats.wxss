@@ -223,3 +223,118 @@
   font-size: 30rpx;
   color: #9BAAB8;
 }
+
+/* ─── 视图模式切换（分类 / 趋势） ─────────────────────── */
+
+.view-mode-switcher {
+  display: flex;
+  background: #FFFFFF;
+  border-radius: 100rpx;
+  padding: 8rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(79, 184, 212, 0.1);
+}
+
+.view-mode-btn {
+  flex: 1;
+  text-align: center;
+  padding: 20rpx 0;
+  border-radius: 100rpx;
+  font-size: 30rpx;
+  color: #9BAAB8;
+  transition: all 0.2s;
+}
+
+.view-mode-active {
+  background: #E0F5FA;
+  color: #4FB8D4;
+  font-weight: 600;
+}
+
+/* ─── 趋势柱状图 ──────────────────────────────────────── */
+
+.trend-header {
+  padding: 4rpx 4rpx 20rpx;
+}
+
+.trend-title {
+  display: block;
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #3D5A6E;
+  margin-bottom: 8rpx;
+}
+
+.trend-subtitle {
+  font-size: 24rpx;
+  color: #9BAAB8;
+}
+
+.trend-chart-card {
+  padding: 28rpx 16rpx;
+}
+
+.trend-canvas {
+  display: block;
+}
+
+.trend-canvas-legacy {
+  display: block;
+}
+
+/* ─── 趋势月度明细列表 ─────────────────────────────────── */
+
+.trend-detail-list {
+  padding: 28rpx;
+  margin-bottom: 24rpx;
+}
+
+.trend-detail-row {
+  display: flex;
+  align-items: center;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #F0F8FF;
+}
+
+.trend-detail-row:last-child {
+  border-bottom: none;
+}
+
+.trend-detail-month {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #3D5A6E;
+  width: 72rpx;
+  flex-shrink: 0;
+}
+
+.trend-detail-amounts {
+  flex: 1;
+  display: flex;
+  justify-content: space-around;
+}
+
+.trend-amount-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.trend-amount-label {
+  font-size: 22rpx;
+  color: #9BAAB8;
+  margin-bottom: 6rpx;
+}
+
+.expense-label {
+  color: #FFB3C4;
+}
+
+.income-label {
+  color: #88C8D8;
+}
+
+.trend-amount-val {
+  font-size: 28rpx;
+  font-weight: 600;
+}
