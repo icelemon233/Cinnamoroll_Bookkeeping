@@ -67,7 +67,7 @@
         <view class="key-btn" :data-key="'4'" @tap="pressKey"><text>4</text></view>
         <view class="key-btn" :data-key="'5'" @tap="pressKey"><text>5</text></view>
         <view class="key-btn" :data-key="'6'" @tap="pressKey"><text>6</text></view>
-        <view class="key-btn key-clear" :data-key="'0'" @tap="pressKey"><text>0</text></view>
+        <view class="key-btn key-zero" :data-key="'0'" @tap="pressKey"><text>0</text></view>
       </view>
       <view class="keyboard-row">
         <view class="key-btn" :data-key="'1'" @tap="pressKey"><text>1</text></view>
@@ -525,6 +525,10 @@ export default {
 
 .key-del:active {
   background: #ffe0e8;
+}
+
+.key-zero {
+  background: #f8fcfe;
 }
 
 .key-dot {
