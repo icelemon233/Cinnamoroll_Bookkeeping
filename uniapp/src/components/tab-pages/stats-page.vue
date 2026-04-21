@@ -249,6 +249,8 @@ export default {
         this.monthExpense = summary.expense
         this.categoryList = categoryList
         this.isEmpty = categoryList.length === 0
+        // 保存当月全量记录供热力图点击详情使用
+        this._dayDetailRecords = summary.records
 
         // 构建每日热力图（始终基于全部记录，按 statsType 筛选）
         this._buildDailyHeatmap(summary.records)
@@ -498,10 +500,40 @@ export default {
     onDayCellTap(day) {
       if (day.amount === 0) return
       const typeLabel = this.statsType === 'expense' ? '支出' : '收入'
-      uni.showToast({
-        title: `${day.date} ${typeLabel} ¥${day.amount}`,
-        icon: 'none',
-        duration: 1800
+      // 从当月记录中提取当天的分类明细
+      const { yearMonth, statsType } = this
+      const allMonthRecords = this._dayDetailRecords || []
+      const dayRecords = allMonthRecords.filter(r => r.date === day.date && r.type === statsType)
+
+      if (dayRecords.length === 0) {
+        uni.showToast({ title: `${day.date} 暂无${typeLabel}记录`, icon: 'none', duration: 1800 })
+        return
+      }
+
+      // 按分类聚合
+      const CATEGORY_EMOJI_MAP = {
+        '餐饮': '🍜', '交通': '🚌', '购物': '🛍️', '娱乐': '🎮',
+        '住房': '🏠', '医疗': '💊', '教育': '📚', '运动': '🏃',
+        '旅行': '✈️', '宠物': '🐾', '日用': '🧴',
+        '工资': '💼', '奖金': '🎁', '副业': '💡', '理财': '📈', '红包': '🧧',
+        '其他': '📦'
+      }
+      const catMap = {}
+      dayRecords.forEach(r => {
+        if (!catMap[r.category]) catMap[r.category] = 0
+        catMap[r.category] += Number(r.amount) || 0
+      })
+      const catLines = Object.entries(catMap)
+        .sort((a, b) => b[1] - a[1])
+        .map(([cat, amt]) => `${CATEGORY_EMOJI_MAP[cat] || '📦'} ${cat}  ¥${parseFloat(amt.toFixed(2))}`)
+        .join('\n')
+
+      const dateDisplay = day.date.slice(5).replace('-', '月') + '日'
+      uni.showModal({
+        title: `${dateDisplay} ${typeLabel}明细`,
+        content: `共 ${dayRecords.length} 笔  合计 ¥${day.amount}\n\n${catLines}`,
+        showCancel: false,
+        confirmText: '知道了'
       })
     },
 

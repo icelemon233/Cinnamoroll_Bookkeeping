@@ -34,9 +34,30 @@
     </view>
 
     <!-- 快速记账按钮 -->
-    <view class="quick-add" @tap="goToAdd">
-      <text class="quick-add-icon">✏️</text>
-      <text class="quick-add-text">记一笔</text>
+    <view class="quick-add-row">
+      <view class="quick-add" @tap="goToAdd">
+        <text class="quick-add-icon">✏️</text>
+        <text class="quick-add-text">记一笔</text>
+      </view>
+      <view class="quick-add quick-add-income" @tap="goToAddIncome">
+        <text class="quick-add-icon">💰</text>
+        <text class="quick-add-text-income">记收入</text>
+      </view>
+    </view>
+
+    <!-- 今日消费速览 -->
+    <view v-if="todayExpense > 0 || todayCount > 0" class="today-streak-card">
+      <view class="today-streak-left">
+        <text class="today-streak-emoji">☀️</text>
+        <view class="today-streak-info">
+          <text class="today-streak-title">今日已记账</text>
+          <text class="today-streak-sub">共 {{ todayCount }} 笔支出</text>
+        </view>
+      </view>
+      <view class="today-streak-right">
+        <text class="today-streak-amount">-¥{{ todayExpense }}</text>
+        <text v-if="todayIncome > 0" class="today-streak-income">+¥{{ todayIncome }} 收入</text>
+      </view>
     </view>
 
     <!-- 月度预算卡片 -->
@@ -199,6 +220,10 @@ export default {
       budgetOver: false,
       budgetRemain: 0,
       hasBudget: false,
+      // 今日速览
+      todayExpense: 0,
+      todayIncome: 0,
+      todayCount: 0,
     };
   },
 
@@ -248,6 +273,20 @@ export default {
           budgetRemain = parseFloat((budget - summary.expense).toFixed(2));
         }
 
+        // 今日速览统计
+        const todayStr = `${year}-${month < 10 ? "0" + month : month}-${String(now.getDate()).padStart(2, "0")}`;
+        let todayExpense = 0, todayIncome = 0, todayCount = 0;
+        summary.records.forEach(r => {
+          if (r.date === todayStr) {
+            if (r.type === 'expense') {
+              todayExpense += Number(r.amount) || 0;
+              todayCount++;
+            } else if (r.type === 'income') {
+              todayIncome += Number(r.amount) || 0;
+            }
+          }
+        });
+
         this.currentMonth = monthLabel;
         this.yearMonth = yearMonth;
         this.monthIncome = summary.income;
@@ -260,6 +299,9 @@ export default {
         this.budgetPercent = budgetPercent;
         this.budgetOver = budgetOver;
         this.budgetRemain = budgetRemain;
+        this.todayExpense = parseFloat(todayExpense.toFixed(2));
+        this.todayIncome = parseFloat(todayIncome.toFixed(2));
+        this.todayCount = todayCount;
       } catch (e) {
         console.error("[index] loadData error:", e);
         uni.showToast({ title: "加载失败，请重试", icon: "none" });
@@ -344,6 +386,10 @@ export default {
 
     goToAdd() {
       this.$emit('switch-tab', 1);
+    },
+
+    goToAddIncome() {
+      this.$emit('switch-tab', 1, { type: 'income' });
     },
 
     goToList() {
@@ -452,7 +498,14 @@ export default {
 }
 
 /* 快速记账 */
+.quick-add-row {
+  display: flex;
+  gap: 16rpx;
+  margin-bottom: 24rpx;
+}
+
 .quick-add {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -460,7 +513,6 @@ export default {
   background: #ffffff;
   border-radius: 100rpx;
   padding: 28rpx;
-  margin-bottom: 24rpx;
   box-shadow: 0 4rpx 20rpx rgba(79, 184, 212, 0.15);
   border: 2rpx solid #e8f4f8;
   cursor: pointer;
@@ -471,6 +523,12 @@ export default {
   transform: scale(0.99);
 }
 
+.quick-add-income {
+  background: #fff5f7;
+  border-color: #ffd6e4;
+  box-shadow: 0 4rpx 20rpx rgba(255, 139, 171, 0.12);
+}
+
 .quick-add-icon {
   font-size: 36rpx;
 }
@@ -479,6 +537,70 @@ export default {
   font-size: 32rpx;
   font-weight: 600;
   color: #4fb8d4;
+}
+
+.quick-add-text-income {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #ff8bab;
+}
+
+/* 今日速览卡片 */
+.today-streak-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, #fffaf0, #fff3e0);
+  border-radius: 24rpx;
+  padding: 24rpx 32rpx;
+  margin-bottom: 24rpx;
+  border: 1rpx solid #ffe0b2;
+  box-shadow: 0 2rpx 12rpx rgba(255, 167, 38, 0.1);
+}
+
+.today-streak-left {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.today-streak-emoji {
+  font-size: 44rpx;
+}
+
+.today-streak-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.today-streak-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #e65100;
+}
+
+.today-streak-sub {
+  font-size: 22rpx;
+  color: #bf6e00;
+  margin-top: 4rpx;
+}
+
+.today-streak-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.today-streak-amount {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #ff8bab;
+}
+
+.today-streak-income {
+  font-size: 22rpx;
+  color: #4fb8d4;
+  margin-top: 4rpx;
 }
 
 /* 最近账单区域 */

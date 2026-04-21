@@ -65,15 +65,20 @@ export default {
     })
   },
   methods: {
-    switchTab(index) {
-      if (index === this.currentTab) return
+    switchTab(index, options) {
+      if (index === this.currentTab && !options) return
       this.currentTab = index
-      // 触发子组件的 onShow 生命周期
+      // 触发子组件的 onShow 生命周期，并传递可选参数（如快速记收入）
       this.$nextTick(() => {
         const refs = ['indexPage', 'addPage', 'listPage', 'statsPage', 'profilePage']
         const ref = refs[index]
-        if (this.$refs[ref] && typeof this.$refs[ref].onShow === 'function') {
-          this.$refs[ref].onShow()
+        if (this.$refs[ref]) {
+          // 如果传了 options（如 { type: 'income' }），调用 onLoad 初始化状态
+          if (options && index === 1 && typeof this.$refs[ref].onLoad === 'function') {
+            this.$refs[ref].onLoad(options)
+          } else if (typeof this.$refs[ref].onShow === 'function') {
+            this.$refs[ref].onShow()
+          }
         }
       })
     }
