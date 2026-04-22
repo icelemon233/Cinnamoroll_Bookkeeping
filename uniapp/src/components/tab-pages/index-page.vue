@@ -3,7 +3,15 @@
     <!-- 顶部月份收支卡片 -->
     <view class="summary-card">
       <view class="summary-header">
-        <text class="month-label">{{ currentMonth }}</text>
+        <view class="month-nav-row">
+          <view class="month-arrow-btn" @tap="prevMonth">
+            <text class="month-arrow-text">‹</text>
+          </view>
+          <text class="month-label">{{ currentMonth }}</text>
+          <view :class="['month-arrow-btn', isCurrentMonth ? 'month-arrow-disabled' : '']" @tap="nextMonth">
+            <text class="month-arrow-text">›</text>
+          </view>
+        </view>
         <text class="summary-subtitle">收支概览 🐾</text>
       </view>
 
@@ -208,6 +216,7 @@ export default {
     return {
       currentMonth: "",
       yearMonth: "",
+      isCurrentMonth: true,
       monthIncome: 0,
       monthExpense: 0,
       monthNet: 0,
@@ -228,19 +237,53 @@ export default {
   },
 
   async onShow() {
-    await this.loadData();
+    // 每次显示时若当前浏览月非今月，重置回今月
+    if (!this.yearMonth) {
+      await this.loadData();
+    } else {
+      await this.loadData(this.yearMonth);
+    }
   },
 
   methods: {
-    async loadData() {
+    // ─── 月份导航 ───────────────────────────────────────────────
+
+    prevMonth() {
+      const [year, month] = this.yearMonth.split('-').map(Number);
+      let newYear = year, newMonth = month - 1;
+      if (newMonth < 1) { newMonth = 12; newYear -= 1; }
+      const ym = `${newYear}-${String(newMonth).padStart(2, '0')}`;
+      this.loadData(ym);
+    },
+
+    nextMonth() {
+      if (this.isCurrentMonth) return;
+      const [year, month] = this.yearMonth.split('-').map(Number);
+      let newYear = year, newMonth = month + 1;
+      if (newMonth > 12) { newMonth = 1; newYear += 1; }
+      const ym = `${newYear}-${String(newMonth).padStart(2, '0')}`;
+      this.loadData(ym);
+    },
+
+    async loadData(targetYearMonth) {
       this.loading = true;
       uni.showLoading({ title: "加载中", mask: false });
       try {
         const now = new Date();
-        const year = now.getFullYear();
-        const month = now.getMonth() + 1;
-        const yearMonth = `${year}-${month < 10 ? "0" + month : month}`;
-        const monthLabel = `${year}年${month < 10 ? "0" + month : month}月`;
+        const nowYM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+        let yearMonth, year, month;
+        if (targetYearMonth) {
+          yearMonth = targetYearMonth;
+          [year, month] = targetYearMonth.split('-').map(Number);
+        } else {
+          year = now.getFullYear();
+          month = now.getMonth() + 1;
+          yearMonth = nowYM;
+        }
+
+        const monthLabel = `${year}年${String(month).padStart(2, '0')}月`;
+        const isCurrentMonth = yearMonth >= nowYM;
 
         const summary = await getMonthSummary(yearMonth);
 
@@ -273,22 +316,25 @@ export default {
           budgetRemain = parseFloat((budget - summary.expense).toFixed(2));
         }
 
-        // 今日速览统计
-        const todayStr = `${year}-${month < 10 ? "0" + month : month}-${String(now.getDate()).padStart(2, "0")}`;
+        // 今日速览统计（仅当月才显示）
+        const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
         let todayExpense = 0, todayIncome = 0, todayCount = 0;
-        summary.records.forEach(r => {
-          if (r.date === todayStr) {
-            if (r.type === 'expense') {
-              todayExpense += Number(r.amount) || 0;
-              todayCount++;
-            } else if (r.type === 'income') {
-              todayIncome += Number(r.amount) || 0;
+        if (isCurrentMonth) {
+          summary.records.forEach(r => {
+            if (r.date === todayStr) {
+              if (r.type === 'expense') {
+                todayExpense += Number(r.amount) || 0;
+                todayCount++;
+              } else if (r.type === 'income') {
+                todayIncome += Number(r.amount) || 0;
+              }
             }
-          }
-        });
+          });
+        }
 
         this.currentMonth = monthLabel;
         this.yearMonth = yearMonth;
+        this.isCurrentMonth = isCurrentMonth;
         this.monthIncome = summary.income;
         this.monthExpense = summary.expense;
         this.monthNet = summary.net;
@@ -417,10 +463,45 @@ export default {
   margin-bottom: 28rpx;
 }
 
+/* 月份导航行 */
+.month-nav-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.month-arrow-btn {
+  width: 56rpx;
+  height: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.month-arrow-btn:active {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.month-arrow-disabled {
+  opacity: 0.3;
+}
+
+.month-arrow-text {
+  font-size: 44rpx;
+  color: #ffffff;
+  font-weight: 700;
+  line-height: 1;
+  margin-top: -4rpx;
+}
+
 .month-label {
   font-size: 34rpx;
   font-weight: 700;
   color: #ffffff;
+  min-width: 180rpx;
+  text-align: center;
 }
 
 .summary-subtitle {
