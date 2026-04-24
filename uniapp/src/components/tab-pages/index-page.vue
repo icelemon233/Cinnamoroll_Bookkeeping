@@ -146,12 +146,12 @@
       <!-- 账单列表 -->
       <view v-else>
         <view class="hint-bar">
-          <text class="hint-text">长按账单可编辑或删除 ✨</text>
+          <text class="hint-text">点击查看详情，长按可编辑或删除 ✨</text>
         </view>
         <view v-for="item in recentGroups" :key="item.date" class="date-group">
           <text class="date-label">{{ item.dateLabel }}</text>
           <view class="record-item" v-for="record in item.records" :key="record.id"
-            :data-id="record.id" @longpress="onRecordLongPress">
+            :data-id="record.id" @tap="onRecordTap" @longpress="onRecordLongPress">
             <view class="record-left">
               <view class="record-category-icon">
                 <text>{{ record.emoji }}</text>
@@ -170,13 +170,66 @@
               ]">
                 {{ record.amountDisplay }}
               </text>
-              <text class="record-edit-hint">长按</text>
+              <text class="record-edit-hint">点击查看</text>
             </view>
           </view>
         </view>
       </view>
     </view>
   </view>
+
+  <!-- ─── 账单详情弹窗 ─────────────────────────────────────── -->
+  <view v-if="detailVisible" class="detail-overlay" @tap="closeDetail">
+    <view class="detail-sheet" @tap.stop>
+      <!-- 拖拽指示条 -->
+      <view class="detail-drag-bar"></view>
+
+      <!-- 头部：emoji + 分类 + 金额 -->
+      <view class="detail-header">
+        <view :class="['detail-icon-wrap', detailRecord.type === 'income' ? 'detail-icon-income' : 'detail-icon-expense']">
+          <text class="detail-icon-emoji">{{ detailRecord.emoji }}</text>
+        </view>
+        <view class="detail-title-block">
+          <text class="detail-category">{{ detailRecord.category }}</text>
+          <text :class="['detail-amount', detailRecord.type === 'income' ? 'detail-amount-income' : 'detail-amount-expense']">
+            {{ detailRecord.amountDisplay }}
+          </text>
+        </view>
+        <view :class="['detail-type-tag', detailRecord.type === 'income' ? 'tag-income' : 'tag-expense']">
+          <text class="tag-text">{{ detailRecord.type === 'income' ? '收入' : '支出' }}</text>
+        </view>
+      </view>
+
+      <!-- 信息列表 -->
+      <view class="detail-info-list">
+        <view class="detail-info-row">
+          <text class="detail-info-label">📅 日期</text>
+          <text class="detail-info-value">{{ detailRecord.date }}</text>
+        </view>
+        <view class="detail-info-row" v-if="detailRecord.note">
+          <text class="detail-info-label">📝 备注</text>
+          <text class="detail-info-value detail-note">{{ detailRecord.note }}</text>
+        </view>
+        <view class="detail-info-row" v-else>
+          <text class="detail-info-label">📝 备注</text>
+          <text class="detail-info-value detail-empty-note">暂无备注</text>
+        </view>
+      </view>
+
+      <!-- 操作按钮 -->
+      <view class="detail-actions">
+        <view class="detail-action-btn detail-edit-btn" @tap="onDetailEdit">
+          <text class="detail-action-icon">✏️</text>
+          <text class="detail-action-text">编辑</text>
+        </view>
+        <view class="detail-action-btn detail-delete-btn" @tap="onDetailDelete">
+          <text class="detail-action-icon">🗑️</text>
+          <text class="detail-action-text">删除</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
 </template>
 
 <script>
@@ -233,6 +286,9 @@ export default {
       todayExpense: 0,
       todayIncome: 0,
       todayCount: 0,
+      // 详情弹窗
+      detailVisible: false,
+      detailRecord: {},
     };
   },
 
@@ -390,6 +446,37 @@ export default {
           this.loadData();
         },
       });
+    },
+
+    // ─── 点击查看详情 ────────────────────────────────────────
+
+    onRecordTap(e) {
+      const id = e.currentTarget.dataset.id
+      let found = null
+      for (const group of this.recentGroups) {
+        const record = group.records.find(r => r.id === id)
+        if (record) { found = record; break }
+      }
+      if (!found) return
+      this.detailRecord = found
+      this.detailVisible = true
+    },
+
+    closeDetail() {
+      this.detailVisible = false
+      this.detailRecord = {}
+    },
+
+    onDetailEdit() {
+      const id = this.detailRecord.id
+      this.closeDetail()
+      uni.navigateTo({ url: `/pages/add/add?recordId=${id}` })
+    },
+
+    onDetailDelete() {
+      const id = this.detailRecord.id
+      this.closeDetail()
+      this._confirmDelete(id)
     },
 
     // ─── 长按操作（编辑 / 删除）────────────────────────────────
@@ -974,5 +1061,207 @@ export default {
 .budget-percent-text {
   font-size: 22rpx;
   color: #9baab8;
+}
+
+/* ─── 账单详情弹窗 ───────────────────────────────────────── */
+.detail-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(61, 90, 110, 0.45);
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+}
+
+.detail-sheet {
+  width: 100%;
+  background: #ffffff;
+  border-radius: 40rpx 40rpx 0 0;
+  padding: 0 36rpx 60rpx;
+  box-shadow: 0 -8rpx 40rpx rgba(79, 184, 212, 0.15);
+}
+
+.detail-drag-bar {
+  width: 80rpx;
+  height: 8rpx;
+  border-radius: 100rpx;
+  background: #dff0f7;
+  margin: 24rpx auto 32rpx;
+}
+
+.detail-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 32rpx;
+  gap: 24rpx;
+}
+
+.detail-icon-wrap {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.detail-icon-expense {
+  background: #ffe8ef;
+}
+
+.detail-icon-income {
+  background: #e0f5fa;
+}
+
+.detail-icon-emoji {
+  font-size: 48rpx;
+}
+
+.detail-title-block {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.detail-category {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #3d5a6e;
+}
+
+.detail-amount {
+  font-size: 44rpx;
+  font-weight: 700;
+  letter-spacing: -1rpx;
+}
+
+.detail-amount-income {
+  color: #4fb8d4;
+}
+
+.detail-amount-expense {
+  color: #ff8bab;
+}
+
+.detail-type-tag {
+  padding: 10rpx 20rpx;
+  border-radius: 100rpx;
+  flex-shrink: 0;
+}
+
+.tag-expense {
+  background: #ffe8ef;
+}
+
+.tag-income {
+  background: #e0f5fa;
+}
+
+.tag-text {
+  font-size: 24rpx;
+  font-weight: 600;
+}
+
+.tag-expense .tag-text {
+  color: #ff8bab;
+}
+
+.tag-income .tag-text {
+  color: #4fb8d4;
+}
+
+.detail-info-list {
+  background: #f5fbfd;
+  border-radius: 24rpx;
+  padding: 8rpx 28rpx;
+  margin-bottom: 32rpx;
+}
+
+.detail-info-row {
+  display: flex;
+  align-items: center;
+  padding: 24rpx 0;
+  border-bottom: 1rpx solid #e8f4f8;
+}
+
+.detail-info-row:last-child {
+  border-bottom: none;
+}
+
+.detail-info-label {
+  font-size: 28rpx;
+  color: #9baab8;
+  width: 160rpx;
+  flex-shrink: 0;
+}
+
+.detail-info-value {
+  flex: 1;
+  font-size: 28rpx;
+  color: #3d5a6e;
+  font-weight: 500;
+  text-align: right;
+}
+
+.detail-note {
+  color: #5a7a8e;
+}
+
+.detail-empty-note {
+  color: #c8d8e4;
+  font-weight: 400;
+}
+
+.detail-actions {
+  display: flex;
+  gap: 24rpx;
+}
+
+.detail-action-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  padding: 32rpx 0;
+  border-radius: 24rpx;
+}
+
+.detail-edit-btn {
+  background: #e0f5fa;
+}
+
+.detail-edit-btn:active {
+  opacity: 0.8;
+}
+
+.detail-delete-btn {
+  background: #ffe8ef;
+}
+
+.detail-delete-btn:active {
+  opacity: 0.8;
+}
+
+.detail-action-icon {
+  font-size: 36rpx;
+}
+
+.detail-action-text {
+  font-size: 30rpx;
+  font-weight: 600;
+}
+
+.detail-edit-btn .detail-action-text {
+  color: #4fb8d4;
+}
+
+.detail-delete-btn .detail-action-text {
+  color: #ff8bab;
 }
 </style>
