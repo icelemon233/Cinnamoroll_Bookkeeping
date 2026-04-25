@@ -310,6 +310,74 @@
   opacity: 0.85;
 }
 
+/* ─── 分类筛选芯片 ──────────────────────────────────────── */
+.category-chips-wrap {
+  margin-bottom: 20rpx;
+}
+
+.category-chips-scroll {
+  width: 100%;
+  white-space: nowrap;
+}
+
+.category-chips-row {
+  display: inline-flex;
+  gap: 16rpx;
+  padding: 4rpx 4rpx 8rpx;
+}
+
+.category-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 14rpx 24rpx;
+  border-radius: 100rpx;
+  background: #FFFFFF;
+  border: 2rpx solid #E8F4F8;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.category-chip:active {
+  opacity: 0.75;
+}
+
+.chip-active {
+  background: #E0F5FA;
+  border-color: #A8D8EA;
+}
+
+.chip-emoji {
+  font-size: 28rpx;
+  line-height: 1;
+}
+
+.chip-text {
+  font-size: 26rpx;
+  color: #3D5A6E;
+  font-weight: 500;
+}
+
+.chip-active .chip-text {
+  color: #4FB8D4;
+  font-weight: 600;
+}
+
+.chip-count {
+  font-size: 22rpx;
+  color: #9BAAB8;
+  background: #F0F8FF;
+  border-radius: 100rpx;
+  padding: 2rpx 12rpx;
+  min-width: 32rpx;
+  text-align: center;
+}
+
+.chip-active .chip-count {
+  background: #C8EEFA;
+  color: #4FB8D4;
+}
+
 /* ─── 提示栏 ─────────────────────────────────────────────── */
 .hint-bar {
   text-align: center;

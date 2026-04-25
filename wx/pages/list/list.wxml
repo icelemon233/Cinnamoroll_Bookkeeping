@@ -59,6 +59,32 @@
     </view>
   </view>
 
+  <!-- 分类筛选芯片（有分类数据时显示） -->
+  <view wx:if="{{categoryChips.length > 0}}" class="category-chips-wrap">
+    <scroll-view scroll-x class="category-chips-scroll" enhanced="{{true}}" show-scrollbar="{{false}}">
+      <view class="category-chips-row">
+        <view
+          class="category-chip {{filterCategory === '' ? 'chip-active' : ''}}"
+          bindtap="selectCategoryChip"
+          data-name=""
+        >
+          <text class="chip-text">全部</text>
+        </view>
+        <view
+          class="category-chip {{filterCategory === item.name ? 'chip-active' : ''}}"
+          wx:for="{{categoryChips}}"
+          wx:key="name"
+          data-name="{{item.name}}"
+          bindtap="selectCategoryChip"
+        >
+          <text class="chip-emoji">{{item.emoji}}</text>
+          <text class="chip-text">{{item.name}}</text>
+          <text class="chip-count">{{item.count}}</text>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
   <!-- 操作提示 -->
   <view wx:if="{{!isEmpty && !isSearchMode}}" class="hint-bar">
     <text class="hint-text">长按账单可编辑或删除 ✨</text>
