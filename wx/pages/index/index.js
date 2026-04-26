@@ -1,5 +1,5 @@
 // pages/index/index.js - 首页
-const { getMonthSummary, groupByDate, formatDate, getMonthBudget, setMonthBudget } = require('../../utils/storage');
+const { getMonthSummary, groupByDate, formatDate, getMonthBudget, setMonthBudget, getStreakDays } = require('../../utils/storage');
 
 // 分类 emoji 映射（与 add 页保持一致）
 const CATEGORY_EMOJI = {
@@ -24,7 +24,12 @@ Page({
     budgetPercent: 0,        // 已用百分比（0-100，超出时为 100）
     budgetOver: false,       // 是否超预算
     budgetRemain: 0,         // 剩余预算
-    hasBudget: false         // 是否设置了预算
+    hasBudget: false,        // 是否设置了预算
+    // 打卡连击
+    streak: 0,
+    todayDone: false,
+    longestStreak: 0,
+    streakTitle: ''          // 连击称号
   },
 
   onLoad() {
@@ -78,6 +83,10 @@ Page({
       budgetRemain = parseFloat((budget - summary.expense).toFixed(2));
     }
 
+    // 打卡连击
+    const { streak, todayDone, longestStreak } = getStreakDays();
+    const streakTitle = this._getStreakTitle(streak);
+
     this.setData({
       currentMonth: monthLabel,
       yearMonth,
@@ -90,8 +99,24 @@ Page({
       hasBudget,
       budgetPercent,
       budgetOver,
-      budgetRemain
+      budgetRemain,
+      streak,
+      todayDone,
+      longestStreak,
+      streakTitle
     });
+  },
+
+  // 连击称号
+  _getStreakTitle(streak) {
+    if (streak >= 365) return '年度账本达人 🏆';
+    if (streak >= 100) return '记账百日功 💎';
+    if (streak >= 30)  return '月度坚持王 🌟';
+    if (streak >= 14)  return '两周小能手 🎖️';
+    if (streak >= 7)   return '一周打卡达人 🎯';
+    if (streak >= 3)   return '初显坚持 🌱';
+    if (streak >= 1)   return '记账起步 🐾';
+    return '快来记第一笔 ✨';
   },
 
   // 设置/修改预算

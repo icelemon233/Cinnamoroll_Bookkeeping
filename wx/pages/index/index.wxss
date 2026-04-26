@@ -394,3 +394,126 @@
   font-size: 22rpx;
   color: #9BAAB8;
 }
+
+/* ─── 打卡连击卡片 ────────────────────────────────────── */
+.streak-card {
+  margin-bottom: 24rpx;
+}
+
+.streak-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24rpx;
+}
+
+.streak-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.streak-icon {
+  font-size: 36rpx;
+}
+
+.streak-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #3D5A6E;
+}
+
+.streak-badge {
+  font-size: 22rpx;
+  border-radius: 100rpx;
+  padding: 6rpx 20rpx;
+}
+
+.streak-badge-done {
+  background: #EEF8FB;
+  color: #4FB8D4;
+}
+
+.streak-badge-pending {
+  background: #FFF5F0;
+  color: #FFAA88;
+}
+
+.streak-body {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+
+.streak-main {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  flex: 1;
+}
+
+.streak-number {
+  font-size: 80rpx;
+  font-weight: 800;
+  color: #FF8BAB;
+  line-height: 1;
+}
+
+.streak-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.streak-days-label {
+  font-size: 24rpx;
+  color: #9BAAB8;
+}
+
+.streak-sub-title {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #3D5A6E;
+}
+
+.streak-divider {
+  width: 2rpx;
+  height: 80rpx;
+  background: #EEF8FB;
+  margin: 0 32rpx;
+}
+
+.streak-longest {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+  min-width: 100rpx;
+}
+
+.streak-longest-num {
+  font-size: 48rpx;
+  font-weight: 800;
+  color: #4FB8D4;
+  line-height: 1;
+}
+
+.streak-longest-label {
+  font-size: 22rpx;
+  color: #9BAAB8;
+}
+
+.streak-hint {
+  display: block;
+  font-size: 24rpx;
+  color: #FFAA88;
+  background: #FFF5F0;
+  border-radius: 16rpx;
+  padding: 14rpx 20rpx;
+  text-align: center;
+}
+
+.streak-hint-done {
+  color: #4FB8D4;
+  background: #EEF8FB;
+}

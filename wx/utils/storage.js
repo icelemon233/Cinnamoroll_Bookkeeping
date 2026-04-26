@@ -291,6 +291,67 @@ function downloadCSV(csvContent, filename) {
   });
 }
 
+// ─── 连续记账天数 ──────────────────────────────────────
+
+/**
+ * 获取连续记账天数（打卡连击数）
+ * 从今天往前数，每天至少有一条记录算「已记账」，连续不中断的天数即为连击。
+ * 今天如果还没记账，则从昨天开始往前数。
+ * @returns {{ streak: number, todayDone: boolean, longestStreak: number }}
+ */
+function getStreakDays() {
+  const records = getRecords();
+  if (!records || records.length === 0) {
+    return { streak: 0, todayDone: false, longestStreak: 0 };
+  }
+
+  // 收集所有有记账的日期（去重）
+  const datesSet = new Set();
+  records.forEach(r => { if (r.date) datesSet.add(r.date); });
+
+  const today = new Date();
+  const toDateStr = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const todayStr = toDateStr(today);
+
+  const todayDone = datesSet.has(todayStr);
+
+  // 计算当前连击：从今天（或昨天）往前连续数
+  let streak = 0;
+  const startOffset = todayDone ? 0 : 1;
+  for (let i = startOffset; ; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    const ds = toDateStr(d);
+    if (datesSet.has(ds)) {
+      streak++;
+    } else {
+      break;
+    }
+  }
+
+  // 计算历史最长连击
+  const sortedDates = Array.from(datesSet).sort();
+  let longestStreak = 0;
+  let cur = 0;
+  for (let i = 0; i < sortedDates.length; i++) {
+    if (i === 0) {
+      cur = 1;
+    } else {
+      const prev = new Date(sortedDates[i - 1]);
+      const curr = new Date(sortedDates[i]);
+      const diffDays = Math.round((curr - prev) / 86400000);
+      if (diffDays === 1) {
+        cur++;
+      } else {
+        cur = 1;
+      }
+    }
+    if (cur > longestStreak) longestStreak = cur;
+  }
+
+  return { streak, todayDone, longestStreak };
+}
+
 module.exports = {
   getRecords,
   saveRecord,
@@ -305,5 +366,6 @@ module.exports = {
   setMonthBudget,
   searchRecords,
   exportToCSV,
-  downloadCSV
+  downloadCSV,
+  getStreakDays
 };

@@ -88,6 +88,41 @@
     </view>
   </view>
 
+  <!-- 打卡连击卡片 -->
+  <view class="card streak-card">
+    <view class="streak-header">
+      <view class="streak-title-row">
+        <text class="streak-icon">🔥</text>
+        <text class="streak-title">记账打卡</text>
+      </view>
+      <text class="streak-badge {{todayDone ? 'streak-badge-done' : 'streak-badge-pending'}}">
+        {{todayDone ? '今日已打卡 ✓' : '今日未打卡'}}
+      </text>
+    </view>
+
+    <view class="streak-body">
+      <!-- 当前连击 -->
+      <view class="streak-main">
+        <text class="streak-number">{{streak}}</text>
+        <view class="streak-meta">
+          <text class="streak-days-label">连续记账天</text>
+          <text class="streak-sub-title">{{streakTitle}}</text>
+        </view>
+      </view>
+      <!-- 分隔线 -->
+      <view class="streak-divider"></view>
+      <!-- 历史最长 -->
+      <view class="streak-longest">
+        <text class="streak-longest-num">{{longestStreak}}</text>
+        <text class="streak-longest-label">历史最长</text>
+      </view>
+    </view>
+
+    <!-- 打卡提示语 -->
+    <text wx:if="{{!todayDone}}" class="streak-hint">今天还没记账，去 ✏️ 记一笔吧～</text>
+    <text wx:else class="streak-hint streak-hint-done">今天已记账，继续保持！加油 🌸</text>
+  </view>
+
   <!-- 最近账单 -->
   <view class="card recent-section">
     <view class="flex-between section-header">
