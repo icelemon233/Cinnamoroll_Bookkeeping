@@ -294,6 +294,33 @@ function downloadCSV(csvContent, filename) {
 // ─── 连续记账天数 ──────────────────────────────────────
 
 /**
+ * 获取今日收支快速摘要
+ * @returns {{ todayExpense: number, todayIncome: number, todayCount: number }}
+ */
+function getTodaySummary() {
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const records = getRecords();
+  const todayRecords = records.filter(r => r.date === todayStr);
+
+  let todayExpense = 0;
+  let todayIncome = 0;
+  todayRecords.forEach(r => {
+    if (r.type === 'income') {
+      todayIncome += Number(r.amount) || 0;
+    } else {
+      todayExpense += Number(r.amount) || 0;
+    }
+  });
+
+  return {
+    todayExpense: parseFloat(todayExpense.toFixed(2)),
+    todayIncome: parseFloat(todayIncome.toFixed(2)),
+    todayCount: todayRecords.length
+  };
+}
+
+/**
  * 获取连续记账天数（打卡连击数）
  * 从今天往前数，每天至少有一条记录算「已记账」，连续不中断的天数即为连击。
  * 今天如果还没记账，则从昨天开始往前数。
@@ -367,5 +394,6 @@ module.exports = {
   searchRecords,
   exportToCSV,
   downloadCSV,
-  getStreakDays
+  getStreakDays,
+  getTodaySummary
 };

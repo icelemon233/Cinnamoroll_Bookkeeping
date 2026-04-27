@@ -32,6 +32,18 @@
         </view>
       </view>
     </view>
+
+    <!-- 今日速览行 -->
+    <view class="today-row">
+      <text class="today-label">今日</text>
+      <view wx:if="{{hasTodayRecords}}" class="today-amounts">
+        <text wx:if="{{todayExpense > 0}}" class="today-expense">支出 ¥{{todayExpense}}</text>
+        <text wx:if="{{todayExpense > 0 && todayIncome > 0}}" class="today-sep">·</text>
+        <text wx:if="{{todayIncome > 0}}" class="today-income">收入 ¥{{todayIncome}}</text>
+        <text class="today-count">共 {{todayCount}} 笔</text>
+      </view>
+      <text wx:else class="today-empty">今天还没有记录 ~</text>
+    </view>
   </view>
 
   <!-- 快速记账按钮 -->

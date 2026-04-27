@@ -1,5 +1,5 @@
 // pages/index/index.js - 首页
-const { getMonthSummary, groupByDate, formatDate, getMonthBudget, setMonthBudget, getStreakDays } = require('../../utils/storage');
+const { getRecords, getMonthSummary, groupByDate, formatDate, getMonthBudget, setMonthBudget, getStreakDays, getTodaySummary } = require('../../utils/storage');
 
 // 分类 emoji 映射（与 add 页保持一致）
 const CATEGORY_EMOJI = {
@@ -17,8 +17,13 @@ Page({
     monthIncome: 0,
     monthExpense: 0,
     monthNet: 0,
-    recentGroups: [],        // 最近账单（按日期分组，最多5条）
+    recentGroups: [],        // 最近账单（按日期分组，最近8条，跨月全局）
     isEmpty: false,
+    // 今日速览
+    todayExpense: 0,
+    todayIncome: 0,
+    todayCount: 0,
+    hasTodayRecords: false,
     // 预算相关
     budget: 0,               // 当月预算（0 = 未设置）
     budgetPercent: 0,        // 已用百分比（0-100，超出时为 100）
@@ -56,10 +61,10 @@ Page({
 
     const summary = getMonthSummary(yearMonth);
 
-    // 最近5条账单，按日期分组
-    const allRecentRecords = summary.records
+    // 最近8条账单（全局跨月），按日期分组
+    const allRecentRecords = getRecords()
       .sort((a, b) => b.id - a.id)
-      .slice(0, 5);
+      .slice(0, 8);
 
     const recentGroups = groupByDate(allRecentRecords).map(group => ({
       ...group,
@@ -87,6 +92,9 @@ Page({
     const { streak, todayDone, longestStreak } = getStreakDays();
     const streakTitle = this._getStreakTitle(streak);
 
+    // 今日速览
+    const { todayExpense, todayIncome, todayCount } = getTodaySummary();
+
     this.setData({
       currentMonth: monthLabel,
       yearMonth,
@@ -94,7 +102,7 @@ Page({
       monthExpense: summary.expense,
       monthNet: summary.net,
       recentGroups,
-      isEmpty: summary.records.length === 0,
+      isEmpty: allRecentRecords.length === 0,
       budget,
       hasBudget,
       budgetPercent,
@@ -103,7 +111,11 @@ Page({
       streak,
       todayDone,
       longestStreak,
-      streakTitle
+      streakTitle,
+      todayExpense,
+      todayIncome,
+      todayCount,
+      hasTodayRecords: todayCount > 0
     });
   },
 
