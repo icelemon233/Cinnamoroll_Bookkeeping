@@ -1,7 +1,7 @@
 <!-- pages/stats/stats.wxml - 统计页 -->
 <view class="container">
 
-  <!-- 顶部：视图模式切换（饼图 / 趋势） -->
+  <!-- 顶部：视图模式切换（饼图 / 趋势 / 年度） -->
   <view class="view-mode-switcher">
     <view
       class="view-mode-btn {{viewMode === 'pie' ? 'view-mode-active' : ''}}"
@@ -13,6 +13,11 @@
       data-mode="trend"
       bindtap="switchViewMode"
     >📈 趋势</view>
+    <view
+      class="view-mode-btn {{viewMode === 'annual' ? 'view-mode-active' : ''}}"
+      data-mode="annual"
+      bindtap="switchViewMode"
+    >🗓️ 年度</view>
   </view>
 
   <!-- ═══════ 饼图模式 ═══════ -->
@@ -153,6 +158,102 @@
           <view class="trend-amount-item">
             <text class="trend-amount-label">结余</text>
             <text class="trend-amount-val {{item.net >= 0 ? 'income-text' : 'expense-text'}}">{{item.net >= 0 ? '+' : ''}}{{item.net}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+  </block>
+
+  <!-- ═══════ 年度总览模式 ═══════ -->
+  <block wx:elif="{{viewMode === 'annual'}}">
+
+    <!-- 年份切换栏 -->
+    <view class="month-nav">
+      <view class="month-arrow" bindtap="prevYear">
+        <text class="arrow-text">‹</text>
+      </view>
+      <text class="month-title">{{annualYear}} 年度总览</text>
+      <view class="month-arrow {{annualYear >= currentYear ? 'arrow-disabled' : ''}}" bindtap="nextYear">
+        <text class="arrow-text">›</text>
+      </view>
+    </view>
+
+    <!-- 年度汇总卡片 -->
+    <view wx:if="{{annualSummary}}" class="annual-summary-card">
+      <view class="annual-summary-row">
+        <view class="annual-stat-item">
+          <text class="annual-stat-label">年度总收入</text>
+          <text class="annual-stat-val income-text">¥{{annualSummary.totalIncome}}</text>
+        </view>
+        <view class="annual-stat-divider"></view>
+        <view class="annual-stat-item">
+          <text class="annual-stat-label">年度总支出</text>
+          <text class="annual-stat-val expense-text">¥{{annualSummary.totalExpense}}</text>
+        </view>
+      </view>
+      <view class="annual-net-row">
+        <text class="annual-net-label">年度净结余</text>
+        <text class="annual-net-val {{annualSummary.isPositive ? 'income-text' : 'expense-text'}}">
+          {{annualSummary.isPositive ? '+' : ''}}¥{{annualSummary.netSaving}}
+        </text>
+      </view>
+      <view class="annual-highlight-row">
+        <view class="annual-highlight-item">
+          <text class="annual-highlight-emoji">📌</text>
+          <text class="annual-highlight-label">支出最多</text>
+          <text class="annual-highlight-month expense-text">{{annualSummary.bestExpenseMonth}}</text>
+        </view>
+        <view class="annual-highlight-item">
+          <text class="annual-highlight-emoji">🌟</text>
+          <text class="annual-highlight-label">收入最多</text>
+          <text class="annual-highlight-month income-text">{{annualSummary.bestIncomeMonth}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 全年柱状图 -->
+    <view class="chart-card annual-chart-card">
+      <canvas
+        id="annualCanvas"
+        type="2d"
+        class="annual-canvas"
+        style="width: 340px; height: 200px;"
+      ></canvas>
+      <canvas
+        canvas-id="annualCanvasLegacy"
+        class="annual-canvas-legacy"
+        style="width: 340px; height: 200px; display: none;"
+      ></canvas>
+    </view>
+
+    <!-- 全年月度明细 -->
+    <view class="card trend-detail-list annual-detail-list">
+      <text class="list-title">全年月度明细</text>
+      <view
+        class="trend-detail-row"
+        wx:for="{{annualData}}"
+        wx:key="ym"
+      >
+        <text class="trend-detail-month annual-month-label">{{item.label}}</text>
+        <view class="trend-detail-amounts">
+          <view class="trend-amount-item">
+            <text class="trend-amount-label expense-label">支出</text>
+            <text class="trend-amount-val {{item.expense > 0 ? 'expense-text' : 'zero-text'}}">
+              {{item.expense > 0 ? '¥' : ''}}{{item.expense > 0 ? item.expense : '—'}}
+            </text>
+          </view>
+          <view class="trend-amount-item">
+            <text class="trend-amount-label income-label">收入</text>
+            <text class="trend-amount-val {{item.income > 0 ? 'income-text' : 'zero-text'}}">
+              {{item.income > 0 ? '¥' : ''}}{{item.income > 0 ? item.income : '—'}}
+            </text>
+          </view>
+          <view class="trend-amount-item">
+            <text class="trend-amount-label">结余</text>
+            <text class="trend-amount-val {{(item.expense === 0 && item.income === 0) ? 'zero-text' : (item.net >= 0 ? 'income-text' : 'expense-text')}}">
+              {{(item.expense === 0 && item.income === 0) ? '—' : (item.net >= 0 ? '+' : '')}}{{(item.expense === 0 && item.income === 0) ? '' : item.net}}
+            </text>
           </view>
         </view>
       </view>

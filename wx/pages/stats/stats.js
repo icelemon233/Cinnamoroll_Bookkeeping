@@ -1,4 +1,4 @@
-// pages/stats/stats.js - 统计页（饼图 + 趋势柱状图）
+// pages/stats/stats.js - 统计页（饼图 + 趋势柱状图 + 年度总览）
 const { getCategoryStats, getMonthSummary } = require('../../utils/storage');
 
 // 饼图颜色（Cinnamoroll 蓝色系列）
@@ -49,16 +49,22 @@ Page({
     categoryList: [],         // [{ category, amount, percent, color, emoji }]
     isEmpty: false,
     canvasSize: 600,          // canvas 边长（rpx 转 px 需乘 dpr）
-    // 视图模式：'pie'（分类饼图）| 'trend'（趋势柱状图）
+    // 视图模式：'pie'（分类饼图）| 'trend'（趋势柱状图）| 'annual'（年度总览）
     viewMode: 'pie',
     // 趋势数据 [{ label, income, expense, net }]
     trendData: [],
     // 趋势图：当前高亮月份索引（-1 = 无）
-    trendHighlight: -1
+    trendHighlight: -1,
+    // 年度总览
+    annualYear: 0,             // 当前查看的年份
+    currentYear: 0,            // 当前真实年份（用于禁用"下一年"按钮）
+    annualData: [],            // [{ label, income, expense, net }] x12
+    annualSummary: null        // { totalIncome, totalExpense, netSaving, bestExpenseMonth, bestIncomeMonth }
   },
 
   onLoad() {
     this._initMonth();
+    this._initAnnualYear();
   },
 
   onShow() {
@@ -76,6 +82,239 @@ Page({
     const yearMonth = `${year}-${m < 10 ? '0' + m : m}`;
     const currentMonth = `${year}年${m < 10 ? '0' + m : m}月`;
     this.setData({ yearMonth, currentMonth, isCurrentMonth: true });
+  },
+
+  // ─── 年度总览导航 ─────────────────────────────────────
+
+  _initAnnualYear() {
+    const currentYear = new Date().getFullYear();
+    this.setData({ annualYear: currentYear, currentYear });
+  },
+
+  prevYear() {
+    this.setData({ annualYear: this.data.annualYear - 1 }, () => this._loadAnnualData());
+  },
+
+  nextYear() {
+    if (this.data.annualYear >= this.data.currentYear) return;
+    this.setData({ annualYear: this.data.annualYear + 1 }, () => this._loadAnnualData());
+  },
+
+  _loadAnnualData() {
+    const year = this.data.annualYear;
+    const annualData = [];
+    let totalIncome = 0;
+    let totalExpense = 0;
+
+    for (let m = 1; m <= 12; m++) {
+      const ym = `${year}-${m < 10 ? '0' + m : m}`;
+      const summary = getMonthSummary(ym);
+      totalIncome += summary.income;
+      totalExpense += summary.expense;
+      annualData.push({
+        ym,
+        label: `${m}月`,
+        income: summary.income,
+        expense: summary.expense,
+        net: summary.net
+      });
+    }
+
+    totalIncome = parseFloat(totalIncome.toFixed(2));
+    totalExpense = parseFloat(totalExpense.toFixed(2));
+    const netSaving = parseFloat((totalIncome - totalExpense).toFixed(2));
+
+    // 找最高消费月和最高收入月
+    let bestExpenseMonth = '';
+    let bestExpenseVal = 0;
+    let bestIncomeMonth = '';
+    let bestIncomeVal = 0;
+    annualData.forEach(d => {
+      if (d.expense > bestExpenseVal) { bestExpenseVal = d.expense; bestExpenseMonth = d.label; }
+      if (d.income > bestIncomeVal) { bestIncomeVal = d.income; bestIncomeMonth = d.label; }
+    });
+
+    const annualSummary = {
+      totalIncome,
+      totalExpense,
+      netSaving,
+      bestExpenseMonth: bestExpenseVal > 0 ? bestExpenseMonth : '—',
+      bestExpenseVal,
+      bestIncomeMonth: bestIncomeVal > 0 ? bestIncomeMonth : '—',
+      bestIncomeVal,
+      isPositive: netSaving >= 0
+    };
+
+    this.setData({ annualData, annualSummary }, () => {
+      this.drawAnnualChart(annualData);
+    });
+  },
+
+  // 绘制年度柱状图（复用趋势图逻辑，12个月）
+  drawAnnualChart(annualData) {
+    const query = wx.createSelectorQuery();
+    query.select('#annualCanvas')
+      .fields({ node: true, size: true })
+      .exec((res) => {
+        if (!res || !res[0] || !res[0].node) {
+          this.drawAnnualChartLegacy(annualData);
+          return;
+        }
+        const canvas = res[0].node;
+        const ctx = canvas.getContext('2d');
+        const dpr = wx.getWindowInfo
+          ? wx.getWindowInfo().pixelRatio
+          : (wx.getSystemInfoSync().pixelRatio || 2);
+        const w = res[0].width;
+        const h = res[0].height;
+        canvas.width = w * dpr;
+        canvas.height = h * dpr;
+        ctx.scale(dpr, dpr);
+        this._renderAnnualChart(ctx, w, h, annualData);
+      });
+  },
+
+  drawAnnualChartLegacy(annualData) {
+    const ctx = wx.createCanvasContext('annualCanvasLegacy', this);
+    this._renderAnnualChartLegacy(ctx, 340, 200, annualData);
+    ctx.draw();
+  },
+
+  _renderAnnualChart(ctx, w, h, annualData) {
+    ctx.clearRect(0, 0, w, h);
+
+    const padLeft = 52;
+    const padRight = 12;
+    const padTop = 16;
+    const padBottom = 36;
+    const chartW = w - padLeft - padRight;
+    const chartH = h - padTop - padBottom;
+    const n = annualData.length; // 12
+
+    const maxVal = annualData.reduce((max, d) => Math.max(max, d.income, d.expense), 1);
+    const groupW = chartW / n;
+    const barW = Math.max(Math.min(groupW * 0.32, 16), 6);
+    const barGap = 2;
+
+    // 背景网格线
+    ctx.strokeStyle = '#EBF7FB';
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= 4; i++) {
+      const y = padTop + chartH - (chartH * i / 4);
+      ctx.beginPath();
+      ctx.moveTo(padLeft, y);
+      ctx.lineTo(padLeft + chartW, y);
+      ctx.stroke();
+      const val = Math.round(maxVal * i / 4);
+      ctx.fillStyle = '#B0C4D0';
+      ctx.font = '10px sans-serif';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(val >= 1000 ? `${(val / 1000).toFixed(1)}k` : String(val), padLeft - 5, y);
+    }
+
+    // Y 轴线
+    ctx.strokeStyle = '#D8EEF5';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(padLeft, padTop);
+    ctx.lineTo(padLeft, padTop + chartH);
+    ctx.stroke();
+
+    annualData.forEach((d, i) => {
+      const groupX = padLeft + i * groupW + groupW / 2;
+
+      if (d.expense > 0) {
+        const expenseH = chartH * (d.expense / maxVal);
+        const expenseX = groupX - barGap / 2 - barW;
+        const expenseY = padTop + chartH - expenseH;
+        const gradExp = ctx.createLinearGradient(0, expenseY, 0, padTop + chartH);
+        gradExp.addColorStop(0, '#FF8BAB');
+        gradExp.addColorStop(1, '#FFCCD8');
+        ctx.fillStyle = gradExp;
+        this._roundRect(ctx, expenseX, expenseY, barW, expenseH, Math.min(barW / 2, 4), true, false);
+      }
+
+      if (d.income > 0) {
+        const incomeH = chartH * (d.income / maxVal);
+        const incomeX = groupX + barGap / 2;
+        const incomeY = padTop + chartH - incomeH;
+        const gradInc = ctx.createLinearGradient(0, incomeY, 0, padTop + chartH);
+        gradInc.addColorStop(0, '#4FB8D4');
+        gradInc.addColorStop(1, '#A8E0EF');
+        ctx.fillStyle = gradInc;
+        this._roundRect(ctx, incomeX, incomeY, barW, incomeH, Math.min(barW / 2, 4), true, false);
+      }
+
+      // X 轴月份标签（每隔1个标注一次，12个月较密）
+      ctx.fillStyle = '#7A9AAB';
+      ctx.font = '10px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillText(d.label, groupX, padTop + chartH + 6);
+    });
+
+    // 图例
+    const legendY = padTop + 2;
+    const legendX = padLeft + chartW - 110;
+    ctx.fillStyle = '#FF8BAB';
+    ctx.fillRect(legendX, legendY, 12, 8);
+    ctx.fillStyle = '#7A9AAB';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('支出', legendX + 16, legendY + 4);
+    ctx.fillStyle = '#4FB8D4';
+    ctx.fillRect(legendX + 52, legendY, 12, 8);
+    ctx.fillStyle = '#7A9AAB';
+    ctx.fillText('收入', legendX + 68, legendY + 4);
+  },
+
+  _renderAnnualChartLegacy(ctx, w, h, annualData) {
+    const padLeft = 48;
+    const padRight = 10;
+    const padTop = 12;
+    const padBottom = 32;
+    const chartW = w - padLeft - padRight;
+    const chartH = h - padTop - padBottom;
+    const n = annualData.length;
+    const maxVal = annualData.reduce((max, d) => Math.max(max, d.income, d.expense), 1);
+    const groupW = chartW / n;
+    const barW = Math.max(Math.min(groupW * 0.3, 14), 5);
+    const barGap = 2;
+
+    for (let i = 0; i <= 4; i++) {
+      const y = padTop + chartH - (chartH * i / 4);
+      ctx.setStrokeStyle('#EBF7FB');
+      ctx.setLineWidth(1);
+      ctx.beginPath();
+      ctx.moveTo(padLeft, y);
+      ctx.lineTo(padLeft + chartW, y);
+      ctx.stroke();
+      const val = Math.round(maxVal * i / 4);
+      ctx.setFontSize(9);
+      ctx.setFillStyle('#B0C4D0');
+      ctx.setTextAlign('right');
+      ctx.fillText(val >= 1000 ? `${(val / 1000).toFixed(1)}k` : String(val), padLeft - 4, y + 4);
+    }
+
+    annualData.forEach((d, i) => {
+      const groupX = padLeft + i * groupW + groupW / 2;
+      if (d.expense > 0) {
+        const expH = chartH * (d.expense / maxVal);
+        ctx.setFillStyle('#FF8BAB');
+        ctx.fillRect(groupX - barGap / 2 - barW, padTop + chartH - expH, barW, expH);
+      }
+      if (d.income > 0) {
+        const incH = chartH * (d.income / maxVal);
+        ctx.setFillStyle('#4FB8D4');
+        ctx.fillRect(groupX + barGap / 2, padTop + chartH - incH, barW, incH);
+      }
+      ctx.setFontSize(9);
+      ctx.setFillStyle('#7A9AAB');
+      ctx.setTextAlign('center');
+      ctx.fillText(d.label, groupX, padTop + chartH + 12);
+    });
   },
 
   // 上一月
@@ -185,6 +424,8 @@ Page({
     this.setData({ viewMode }, () => {
       if (viewMode === 'trend') {
         this._loadTrendData();
+      } else if (viewMode === 'annual') {
+        this._loadAnnualData();
       } else {
         // 切回饼图，重新绘制
         if (!this.data.isEmpty) {
