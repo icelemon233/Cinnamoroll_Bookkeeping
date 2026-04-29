@@ -388,3 +388,161 @@
   font-size: 24rpx;
   color: #B8D8E4;
 }
+
+/* ─── 账单详情弹窗 ──────────────────────────────────────── */
+.detail-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(61, 90, 110, 0.45);
+  z-index: 100;
+  display: flex;
+  align-items: flex-end;
+}
+
+.detail-card {
+  width: 100%;
+  background: #FFFFFF;
+  border-radius: 40rpx 40rpx 0 0;
+  padding: 20rpx 40rpx 60rpx;
+  box-sizing: border-box;
+  animation: slideUp 0.28s ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.detail-drag-bar {
+  width: 80rpx;
+  height: 8rpx;
+  background: #DCE8EF;
+  border-radius: 100rpx;
+  margin: 0 auto 36rpx;
+}
+
+.detail-header {
+  display: flex;
+  align-items: center;
+  gap: 32rpx;
+  margin-bottom: 40rpx;
+}
+
+.detail-emoji-wrap {
+  width: 112rpx;
+  height: 112rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #E8F8FB, #D0F0F8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.detail-emoji {
+  font-size: 56rpx;
+}
+
+.detail-amount-wrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-amount {
+  font-size: 56rpx;
+  font-weight: 800;
+  letter-spacing: -1rpx;
+  line-height: 1.1;
+}
+
+.detail-type-label {
+  font-size: 26rpx;
+  color: #9BAAB8;
+  margin-top: 6rpx;
+}
+
+.detail-info-list {
+  background: #F6FBFD;
+  border-radius: 24rpx;
+  padding: 8rpx 28rpx;
+  margin-bottom: 40rpx;
+}
+
+.detail-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24rpx 0;
+  border-bottom: 1rpx solid #EDF6FA;
+}
+
+.detail-info-row:last-child {
+  border-bottom: none;
+}
+
+.detail-info-label {
+  font-size: 28rpx;
+  color: #9BAAB8;
+  flex-shrink: 0;
+}
+
+.detail-info-value {
+  font-size: 28rpx;
+  color: #3D5A6E;
+  font-weight: 500;
+  text-align: right;
+  max-width: 70%;
+}
+
+.detail-note-value {
+  color: #5A7A8E;
+  font-weight: 400;
+}
+
+.detail-actions {
+  display: flex;
+  gap: 24rpx;
+}
+
+.detail-action-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  padding: 28rpx 0;
+  border-radius: 24rpx;
+}
+
+.detail-action-btn:active {
+  opacity: 0.8;
+}
+
+.detail-edit-btn {
+  background: linear-gradient(135deg, #C8EEFA, #A8D8EA);
+}
+
+.detail-delete-btn {
+  background: linear-gradient(135deg, #FFE0E8, #FFCCD8);
+}
+
+.detail-action-icon {
+  font-size: 36rpx;
+}
+
+.detail-action-text {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #3D5A6E;
+}
+
+.detail-edit-btn .detail-action-text {
+  color: #3E90A6;
+}
+
+.detail-delete-btn .detail-action-text {
+  color: #E06080;
+}

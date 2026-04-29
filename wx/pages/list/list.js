@@ -26,7 +26,10 @@ Page({
     searchResultCount: 0,
     // 分类筛选
     filterCategory: '',       // '' = 不限，否则为分类名称
-    categoryChips: []         // [{ name, emoji, count }] 当月/搜索范围内有记录的分类
+    categoryChips: [],        // [{ name, emoji, count }] 当月/搜索范围内有记录的分类
+    // 详情弹窗
+    showDetail: false,
+    detailRecord: null        // 当前查看的账单记录
   },
 
   onLoad() {
@@ -206,7 +209,57 @@ Page({
     this.setData({ filterType, filterCategory: '' }, () => this.loadData());
   },
 
-  // ─── 长按操作 ─────────────────────────────────────────
+  // ─── 详情弹窗 ─────────────────────────────────────────
+
+  onRecordTap(e) {
+    const { id } = e.currentTarget.dataset;
+    let targetRecord = null;
+    for (const group of this.data.allGroups) {
+      const found = group.records.find(r => String(r.id) === String(id));
+      if (found) { targetRecord = found; break; }
+    }
+    if (!targetRecord) return;
+    this.setData({ showDetail: true, detailRecord: targetRecord });
+  },
+
+  closeDetail() {
+    this.setData({ showDetail: false, detailRecord: null });
+  },
+
+  onDetailEdit() {
+    const { detailRecord } = this.data;
+    if (!detailRecord) return;
+    this.setData({ showDetail: false, detailRecord: null });
+    wx.navigateTo({ url: `/pages/add/add?recordId=${detailRecord.id}` });
+  },
+
+  onDetailDelete() {
+    const { detailRecord } = this.data;
+    if (!detailRecord) return;
+    wx.showModal({
+      title: '确认删除',
+      content: '删除这条账单记录？',
+      confirmText: '删除',
+      confirmColor: '#FF8BAB',
+      cancelText: '取消',
+      success: (res) => {
+        if (res.confirm) {
+          deleteRecord(detailRecord.id);
+          this.setData({ showDetail: false, detailRecord: null });
+          wx.showToast({ title: '已删除', icon: 'success', duration: 800 });
+          this.loadData();
+        }
+      }
+    });
+  },
+
+  onMaskTap() {
+    this.setData({ showDetail: false, detailRecord: null });
+  },
+
+  onCardTap() {},
+
+  // ─── 长按操作（兼容保留） ─────────────────────────────
 
   onLongPress(e) {
     const id = e.currentTarget.dataset.id;

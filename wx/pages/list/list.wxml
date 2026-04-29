@@ -115,6 +115,7 @@
         wx:for-item="record"
         wx:key="id"
         data-id="{{record.id}}"
+        bindtap="onRecordTap"
         bindlongpress="onLongPress"
       >
         <view class="record-icon"><text>{{record.emoji}}</text></view>
@@ -124,7 +125,55 @@
         </view>
         <view class="record-right">
           <text class="record-amount {{record.type === 'income' ? 'income-text' : 'expense-text'}}">{{record.amountDisplay}}</text>
-          <text class="record-edit-hint">长按</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 账单详情弹窗 -->
+  <view wx:if="{{showDetail}}" class="detail-mask" bindtap="onMaskTap">
+    <view class="detail-card" catchtap="onCardTap">
+      <!-- 拖动条 -->
+      <view class="detail-drag-bar"></view>
+
+      <!-- 分类图标 + 金额 -->
+      <view class="detail-header">
+        <view class="detail-emoji-wrap">
+          <text class="detail-emoji">{{detailRecord.emoji}}</text>
+        </view>
+        <view class="detail-amount-wrap">
+          <text class="detail-amount {{detailRecord.type === 'income' ? 'income-text' : 'expense-text'}}">
+            {{detailRecord.type === 'income' ? '+' : '-'}}{{detailRecord.amount}}
+          </text>
+          <text class="detail-type-label">{{detailRecord.type === 'income' ? '收入' : '支出'}}</text>
+        </view>
+      </view>
+
+      <!-- 详细信息行 -->
+      <view class="detail-info-list">
+        <view class="detail-info-row">
+          <text class="detail-info-label">分类</text>
+          <text class="detail-info-value">{{detailRecord.emoji}} {{detailRecord.category}}</text>
+        </view>
+        <view class="detail-info-row">
+          <text class="detail-info-label">日期</text>
+          <text class="detail-info-value">{{detailRecord.date}}</text>
+        </view>
+        <view class="detail-info-row" wx:if="{{detailRecord.note}}">
+          <text class="detail-info-label">备注</text>
+          <text class="detail-info-value detail-note-value">{{detailRecord.note}}</text>
+        </view>
+      </view>
+
+      <!-- 操作按钮 -->
+      <view class="detail-actions">
+        <view class="detail-action-btn detail-edit-btn" bindtap="onDetailEdit">
+          <text class="detail-action-icon">✏️</text>
+          <text class="detail-action-text">编辑</text>
+        </view>
+        <view class="detail-action-btn detail-delete-btn" bindtap="onDetailDelete">
+          <text class="detail-action-icon">🗑️</text>
+          <text class="detail-action-text">删除</text>
         </view>
       </view>
     </view>
