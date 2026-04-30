@@ -59,7 +59,9 @@ Page({
     annualYear: 0,             // 当前查看的年份
     currentYear: 0,            // 当前真实年份（用于禁用"下一年"按钮）
     annualData: [],            // [{ label, income, expense, net }] x12
-    annualSummary: null        // { totalIncome, totalExpense, netSaving, bestExpenseMonth, bestIncomeMonth }
+    annualSummary: null,       // { totalIncome, totalExpense, netSaving, bestExpenseMonth, bestIncomeMonth }
+    // 智能分析卡片（仅饼图模式 / 支出视角）
+    insightCard: null          // { dailyAvg, predicted, vsLastMonth, vsLastMonthPct, isUp, tip, tipEmoji, showPrediction }
   },
 
   onLoad() {
@@ -378,11 +380,15 @@ Page({
       emoji: CATEGORY_EMOJI[item.category] || '📦'
     }));
 
+    // 计算智能分析卡片数据（仅支出模式）
+    const insightCard = this._buildInsightCard(yearMonth, summary.expense);
+
     this.setData({
       monthIncome: summary.income,
       monthExpense: summary.expense,
       categoryList,
-      isEmpty: categoryList.length === 0
+      isEmpty: categoryList.length === 0,
+      insightCard
     }, () => {
       if (viewMode === 'pie' && !this.data.isEmpty) {
         this.drawPieChart(categoryList);
@@ -390,6 +396,116 @@ Page({
         this._loadTrendData();
       }
     });
+  },
+
+  // ─── 智能分析卡片 ────────────────────────────────────
+
+  /**
+   * 计算当月支出智能分析数据
+   * @param {string} yearMonth - 'YYYY-MM'
+   * @param {number} currentExpense - 当月已有支出
+   * @returns {Object|null} insightCard 数据，或 null（无数据时）
+   */
+  _buildInsightCard(yearMonth, currentExpense) {
+    if (!currentExpense || currentExpense <= 0) return null;
+
+    const now = new Date();
+    const [year, month] = yearMonth.split('-').map(Number);
+
+    // 当月总天数
+    const daysInMonth = new Date(year, month, 0).getDate();
+
+    // 当月已过天数：如果是当月则用今天，否则用整月
+    const isThisMonth = (year === now.getFullYear() && month === (now.getMonth() + 1));
+    const daysPassed = isThisMonth ? now.getDate() : daysInMonth;
+
+    if (daysPassed <= 0) return null;
+
+    // 日均消费
+    const dailyAvg = parseFloat((currentExpense / daysPassed).toFixed(2));
+
+    // 月末预测（仅当月才显示预测）
+    const predicted = isThisMonth
+      ? parseFloat((dailyAvg * daysInMonth).toFixed(2))
+      : currentExpense;
+    const showPrediction = isThisMonth && daysPassed < daysInMonth;
+
+    // 上月同期支出（同期 = 前 daysPassed 天）
+    let prevMonthYM;
+    if (month === 1) {
+      prevMonthYM = `${year - 1}-12`;
+    } else {
+      prevMonthYM = `${year}-${(month - 1) < 10 ? '0' + (month - 1) : (month - 1)}`;
+    }
+    const prevSummary = getMonthSummary(prevMonthYM);
+    const prevExpense = prevSummary.expense;
+
+    // 上月同期（取上月前 daysPassed 天的支出，通过记录过滤计算）
+    let prevSamePeriodExpense = 0;
+    if (prevSummary.records && prevSummary.records.length > 0) {
+      const cutoffDay = daysPassed;
+      prevSummary.records.forEach(r => {
+        if (r.type !== 'expense') return;
+        const dayOfMonth = parseInt((r.date || '').split('-')[2] || '0');
+        if (dayOfMonth > 0 && dayOfMonth <= cutoffDay) {
+          prevSamePeriodExpense += Number(r.amount) || 0;
+        }
+      });
+      prevSamePeriodExpense = parseFloat(prevSamePeriodExpense.toFixed(2));
+    }
+
+    // 与上月同期对比
+    let vsLastMonthPct = null;
+    let isUp = false;
+    if (prevSamePeriodExpense > 0) {
+      const diff = currentExpense - prevSamePeriodExpense;
+      vsLastMonthPct = parseFloat(Math.abs(diff / prevSamePeriodExpense * 100).toFixed(1));
+      isUp = diff > 0;
+    }
+
+    // 消费节奏提示文案
+    const tip = this._getExpenseTip(dailyAvg, daysPassed, daysInMonth, isUp, vsLastMonthPct);
+
+    return {
+      dailyAvg,
+      predicted,
+      showPrediction,
+      daysInMonth,
+      daysPassed,
+      vsLastMonthPct,
+      isUp,
+      tip: tip.text,
+      tipEmoji: tip.emoji,
+      prevSamePeriodExpense
+    };
+  },
+
+  /**
+   * 根据消费情况生成 Cinnamoroll 风格提示文案
+   */
+  _getExpenseTip(dailyAvg, daysPassed, daysInMonth, isUp, vsLastMonthPct) {
+    // 月初（前5天）
+    if (daysPassed <= 5) {
+      return { emoji: '🌸', text: '月初阶段，继续保持记录习惯～' };
+    }
+    // 与上月相比大幅增加
+    if (vsLastMonthPct !== null && isUp && vsLastMonthPct >= 30) {
+      return { emoji: '⚠️', text: `比上月同期多了 ${vsLastMonthPct}%，要注意咯～` };
+    }
+    // 与上月相比大幅减少
+    if (vsLastMonthPct !== null && !isUp && vsLastMonthPct >= 20) {
+      return { emoji: '🎉', text: `比上月同期少了 ${vsLastMonthPct}%，省钱达人！` };
+    }
+    // 月末预测相关
+    if (daysPassed >= daysInMonth * 0.6) {
+      if (isUp) {
+        return { emoji: '🐾', text: '月中已过，消费偏多，后半程注意收支～' };
+      } else {
+        return { emoji: '✨', text: '节奏不错，继续保持！' };
+      }
+    }
+    // 无上月数据的默认提示
+    return { emoji: '📊', text: `今日日均 ¥${dailyAvg}，记得按需消费哦～` };
   },
 
   _buildCatList(records) {

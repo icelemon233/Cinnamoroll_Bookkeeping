@@ -455,3 +455,106 @@
 .zero-text {
   color: #C8DAE0;
 }
+
+/* ─── 智能分析卡片 ──────────────────────────────── */
+.insight-card {
+  margin-bottom: 24rpx;
+  padding: 28rpx 28rpx 20rpx;
+}
+
+.insight-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+
+.insight-title {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #3D5A6E;
+}
+
+.insight-days {
+  font-size: 22rpx;
+  color: #9BAAB8;
+  background: #EBF7FB;
+  padding: 4rpx 14rpx;
+  border-radius: 20rpx;
+}
+
+.insight-stats-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  margin-bottom: 20rpx;
+}
+
+.insight-stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6rpx;
+  flex: 1;
+}
+
+.insight-stat-divider {
+  width: 1rpx;
+  height: 48rpx;
+  background: #D8EEF5;
+}
+
+.insight-stat-label {
+  font-size: 22rpx;
+  color: #9BAAB8;
+}
+
+.insight-stat-val {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #3D5A6E;
+}
+
+.insight-vs-row {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+}
+
+.insight-vs-arrow {
+  font-size: 22rpx;
+  font-weight: 700;
+}
+
+.vs-up {
+  color: #FF6B8A;
+}
+
+.vs-down {
+  color: #4FB8D4;
+}
+
+.insight-vs-pct {
+  font-size: 32rpx;
+  font-weight: 700;
+}
+
+.insight-tip-row {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  background: #F5FAFE;
+  border-radius: 16rpx;
+  padding: 14rpx 18rpx;
+}
+
+.insight-tip-emoji {
+  font-size: 30rpx;
+  flex-shrink: 0;
+}
+
+.insight-tip-text {
+  font-size: 24rpx;
+  color: #5A7A8E;
+  line-height: 1.5;
+}

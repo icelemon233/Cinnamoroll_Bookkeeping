@@ -61,6 +61,41 @@
       </view>
     </view>
 
+    <!-- 智能分析卡片（有支出数据时展示） -->
+    <view wx:if="{{insightCard && statsType === 'expense'}}" class="card insight-card">
+      <view class="insight-header">
+        <text class="insight-title">📉 消费分析</text>
+        <text class="insight-days">已记 {{insightCard.daysPassed}} 天</text>
+      </view>
+      <view class="insight-stats-row">
+        <view class="insight-stat-item">
+          <text class="insight-stat-label">日均消费</text>
+          <text class="insight-stat-val expense-text">¥{{insightCard.dailyAvg}}</text>
+        </view>
+        <view class="insight-stat-divider"></view>
+        <view class="insight-stat-item" wx:if="{{insightCard.showPrediction}}">
+          <text class="insight-stat-label">月末预测</text>
+          <text class="insight-stat-val">¥{{insightCard.predicted}}</text>
+        </view>
+        <view class="insight-stat-item" wx:elif="{{!insightCard.showPrediction}}">
+          <text class="insight-stat-label">月度实际</text>
+          <text class="insight-stat-val expense-text">¥{{insightCard.predicted}}</text>
+        </view>
+        <view class="insight-stat-divider" wx:if="{{insightCard.vsLastMonthPct !== null}}"></view>
+        <view class="insight-stat-item" wx:if="{{insightCard.vsLastMonthPct !== null}}">
+          <text class="insight-stat-label">较上月同期</text>
+          <view class="insight-vs-row">
+            <text class="insight-vs-arrow {{insightCard.isUp ? 'vs-up' : 'vs-down'}}">{{insightCard.isUp ? '▲' : '▼'}}</text>
+            <text class="insight-vs-pct {{insightCard.isUp ? 'expense-text' : 'income-text'}}">{{insightCard.vsLastMonthPct}}%</text>
+          </view>
+        </view>
+      </view>
+      <view class="insight-tip-row">
+        <text class="insight-tip-emoji">{{insightCard.tipEmoji}}</text>
+        <text class="insight-tip-text">{{insightCard.tip}}</text>
+      </view>
+    </view>
+
     <!-- 空状态 -->
     <view wx:if="{{isEmpty}}" class="empty-state">
       <text class="empty-emoji">🌸</text>
