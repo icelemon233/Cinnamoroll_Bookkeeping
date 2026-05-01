@@ -25,6 +25,29 @@ const INCOME_CATEGORIES = [
   { name: '其他', emoji: '📦' }
 ];
 
+// 各分类对应的常用备注快捷标签
+const QUICK_NOTES = {
+  // 支出分类
+  '餐饮': ['午餐', '早餐', '晚餐', '聚餐', '外卖', '下午茶', '夜宵'],
+  '交通': ['打车', '地铁', '公交', '加油', '高铁', '停车费', '共享单车'],
+  '购物': ['日常购物', '网购', '超市', '服装', '数码', '书籍'],
+  '娱乐': ['电影', 'KTV', '游戏', '演唱会', '展览', '桌游'],
+  '住房': ['房租', '水费', '电费', '燃气费', '物业费', '宽带'],
+  '医疗': ['看病', '买药', '体检', '口腔', '眼科'],
+  '教育': ['课程', '培训', '书本', '文具', '考试报名'],
+  '运动': ['健身房', '游泳', '羽毛球', '跑步装备', '瑜伽'],
+  '旅行': ['机票', '酒店', '景区门票', '餐饮', '纪念品'],
+  '宠物': ['猫粮', '狗粮', '零食', '玩具', '宠物医院', '洗澡美容'],
+  '日用': ['洗护用品', '纸巾', '清洁用品', '厨房用品', '收纳'],
+  '其他': ['零花钱', '转账', '礼金', '捐款'],
+  // 收入分类
+  '工资': ['月薪', '绩效', '年终奖', '补贴'],
+  '奖金': ['季度奖', '项目奖金', '优秀员工奖'],
+  '副业': ['接单', '兼职', '稿费', '讲课费'],
+  '理财': ['基金收益', '股票', '利息', '分红'],
+  '红包': ['春节红包', '生日红包', '微信红包'],
+};
+
 // emoji 映射表（供 wxml 等外部使用）
 const CATEGORY_EMOJI = {};
 [...EXPENSE_CATEGORIES, ...INCOME_CATEGORIES].forEach(c => {
@@ -41,7 +64,8 @@ Page({
     amountStr: '',               // 金额字符串（数字键盘输入）
     note: '',
     date: '',                    // YYYY-MM-DD
-    showKeyboard: true
+    showKeyboard: true,
+    quickNotes: QUICK_NOTES['餐饮'] || []  // 当前分类的常用备注标签
   },
 
   onLoad(options) {
@@ -50,7 +74,8 @@ Page({
       this.setData({
         type: 'income',
         categories: INCOME_CATEGORIES,
-        selectedCategory: '工资'
+        selectedCategory: '工资',
+        quickNotes: QUICK_NOTES['工资'] || []
       });
     }
 
@@ -59,6 +84,7 @@ Page({
       const record = getRecordById(options.recordId);
       if (record) {
         const cats = record.type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
+        const quickNotes = QUICK_NOTES[record.category] || [];
         this.setData({
           isEditMode: true,
           editRecordId: record.id,
@@ -67,7 +93,8 @@ Page({
           selectedCategory: record.category,
           amountStr: String(record.amount),
           note: record.note || '',
-          date: record.date
+          date: record.date,
+          quickNotes
         });
         wx.setNavigationBarTitle({ title: '编辑记录' });
         return;
@@ -90,13 +117,21 @@ Page({
     const type = e.currentTarget.dataset.type;
     const categories = type === 'expense' ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
     const selectedCategory = categories[0].name;
-    this.setData({ type, categories, selectedCategory });
+    const quickNotes = QUICK_NOTES[selectedCategory] || [];
+    this.setData({ type, categories, selectedCategory, quickNotes });
   },
 
   // 选择分类
   selectCategory(e) {
     const category = e.currentTarget.dataset.category;
-    this.setData({ selectedCategory: category });
+    const quickNotes = QUICK_NOTES[category] || [];
+    this.setData({ selectedCategory: category, quickNotes });
+  },
+
+  // 点击常用备注标签快速填入
+  tapQuickNote(e) {
+    const tag = e.currentTarget.dataset.tag;
+    this.setData({ note: tag });
   },
 
   // 数字键盘点击
@@ -189,7 +224,8 @@ Page({
         note: '',
         type: 'expense',
         categories: EXPENSE_CATEGORIES,
-        selectedCategory: '餐饮'
+        selectedCategory: '餐饮',
+        quickNotes: QUICK_NOTES['餐饮'] || []
       });
     }, 500);
   }

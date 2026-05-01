@@ -64,6 +64,22 @@
         maxlength="30"
       />
     </view>
+    <!-- 常用备注快捷标签 -->
+    <view wx:if="{{quickNotes.length > 0}}" class="quick-notes-row">
+      <scroll-view scroll-x class="quick-notes-scroll">
+        <view class="quick-notes-inner">
+          <view
+            class="quick-note-tag {{note === item ? 'quick-note-tag-active' : ''}}"
+            wx:for="{{quickNotes}}"
+            wx:key="*this"
+            data-tag="{{item}}"
+            bindtap="tapQuickNote"
+          >
+            <text>{{item}}</text>
+          </view>
+        </view>
+      </scroll-view>
+    </view>
   </view>
 
   <!-- 数字键盘 -->
