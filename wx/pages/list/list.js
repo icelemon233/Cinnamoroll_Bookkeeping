@@ -1,5 +1,5 @@
 // pages/list/list.js - 账单列表页
-const { getRecords, deleteRecord, groupByDate, formatDate, exportToCSV, downloadCSV } = require('../../utils/storage');
+const { getRecords, deleteRecord, groupByDate, formatDate, exportToCSV, downloadCSV, getMonthSummary } = require('../../utils/storage');
 
 // 分类 emoji 映射（与 add 页保持一致）
 const CATEGORY_EMOJI = {
@@ -27,6 +27,9 @@ Page({
     // 分类筛选
     filterCategory: '',       // '' = 不限，否则为分类名称
     categoryChips: [],        // [{ name, emoji, count }] 当月/搜索范围内有记录的分类
+    // 本月 TOP 消费卡片
+    topCategories: [],        // [{ category, emoji, amount, percent }] 最多3条，仅支出
+    showTopCard: false,       // 当月有支出数据时显示
     // 详情弹窗
     showDetail: false,
     detailRecord: null        // 当前查看的账单记录
@@ -35,6 +38,7 @@ Page({
   onLoad() {
     this._initMonth();
     this.loadData();
+    this._buildTopCategories(this.data.filterMonth);
   },
 
   onShow() {
@@ -42,6 +46,55 @@ Page({
       this.getTabBar().setData({ selected: 2 });
     }
     this.loadData();
+    this._buildTopCategories(this.data.filterMonth);
+  },
+
+  // ─── TOP 消费卡片 ─────────────────────────────────────
+
+  /**
+   * 构建当月支出 TOP 分类数据（最多3个）
+   * @param {string} yearMonth - 'YYYY-MM'
+   */
+  _buildTopCategories(yearMonth) {
+    const summary = getMonthSummary(yearMonth);
+    const expenseRecords = summary.records.filter(r => r.type === 'expense');
+    if (expenseRecords.length === 0) {
+      this.setData({ topCategories: [], showTopCard: false });
+      return;
+    }
+
+    const map = {};
+    let totalExpense = 0;
+    expenseRecords.forEach(r => {
+      const cat = r.category || '其他';
+      map[cat] = (map[cat] || 0) + (Number(r.amount) || 0);
+      totalExpense += Number(r.amount) || 0;
+    });
+
+    const sorted = Object.keys(map)
+      .map(category => ({
+        category,
+        emoji: CATEGORY_EMOJI[category] || '📦',
+        amount: parseFloat(map[category].toFixed(2)),
+        percent: totalExpense > 0 ? parseFloat((map[category] / totalExpense * 100).toFixed(0)) : 0
+      }))
+      .sort((a, b) => b.amount - a.amount)
+      .slice(0, 3);
+
+    // 给 TOP1 加皇冠标识
+    if (sorted.length > 0) sorted[0].isTop1 = true;
+
+    this.setData({ topCategories: sorted, showTopCard: sorted.length > 0 });
+  },
+
+  // 点击 TOP 分类卡片 → 直接触发该分类的筛选
+  onTopCategoryTap(e) {
+    const { category } = e.currentTarget.dataset;
+    if (!category) return;
+    // 切换为支出 + 对应分类
+    this.setData({ filterType: 'expense', filterCategory: category }, () => this.loadData());
+    // 轻触反馈
+    wx.vibrateShort({ type: 'light' }).catch(() => {});
   },
 
   // ─── 月份导航 ────────────────────────────────────────
@@ -82,7 +135,10 @@ Page({
     const currentMonthLabel = `${year}年${month < 10 ? '0' + month : month}月`;
     const isLatestMonth = filterMonth >= nowYM;
     // 切换月份时重置分类筛选
-    this.setData({ filterMonth, currentMonthLabel, isLatestMonth, filterCategory: '' }, () => this.loadData());
+    this.setData({ filterMonth, currentMonthLabel, isLatestMonth, filterCategory: '' }, () => {
+      this.loadData();
+      this._buildTopCategories(filterMonth);
+    });
   },
 
   // ─── 搜索 ─────────────────────────────────────────────

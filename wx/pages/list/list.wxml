@@ -49,6 +49,38 @@
     </view>
   </view>
 
+  <!-- 本月 TOP 消费卡片（仅非搜索、非空数据时显示） -->
+  <view wx:if="{{!isSearchMode && showTopCard}}" class="top-card card">
+    <view class="top-card-header">
+      <text class="top-card-title">🏆 本月支出 TOP</text>
+      <text class="top-card-sub">点击可快速筛选</text>
+    </view>
+    <view class="top-card-list">
+      <view
+        class="top-cat-item {{filterCategory === item.category && filterType === 'expense' ? 'top-cat-active' : ''}}"
+        wx:for="{{topCategories}}"
+        wx:key="category"
+        data-category="{{item.category}}"
+        bindtap="onTopCategoryTap"
+      >
+        <view class="top-cat-rank">
+          <text class="top-rank-text">{{item.isTop1 ? '👑' : (index + 1)}}</text>
+        </view>
+        <text class="top-cat-emoji">{{item.emoji}}</text>
+        <view class="top-cat-body">
+          <text class="top-cat-name">{{item.category}}</text>
+          <view class="top-cat-bar-wrap">
+            <view class="top-cat-bar" style="width: {{item.percent}}%"></view>
+          </view>
+        </view>
+        <view class="top-cat-right">
+          <text class="top-cat-amount">¥{{item.amount}}</text>
+          <text class="top-cat-percent">{{item.percent}}%</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
   <!-- 类型筛选 -->
   <view class="filter-row">
     <view class="filter-btn {{filterType === 'all' ? 'filter-active' : ''}}" data-type="all" bindtap="switchFilter">全部</view>
