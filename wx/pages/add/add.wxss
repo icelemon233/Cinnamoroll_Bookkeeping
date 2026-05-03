@@ -41,7 +41,7 @@
   padding: 32rpx 36rpx;
   margin-bottom: 24rpx;
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 8rpx;
   box-shadow: 0 4rpx 16rpx rgba(79, 184, 212, 0.1);
   min-height: 120rpx;
@@ -51,13 +51,42 @@
   font-size: 44rpx;
   color: #9BAAB8;
   font-weight: 500;
+  align-self: flex-start;
+  margin-top: 16rpx;
+}
+
+.amount-display-inner {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+  overflow: hidden;
 }
 
 .amount-display {
   font-size: 72rpx;
   font-weight: 700;
-  flex: 1;
   letter-spacing: -2rpx;
+  word-break: break-all;
+}
+
+/* 表达式求值结果行 */
+.amount-result-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8rpx;
+}
+
+.amount-result-eq {
+  font-size: 28rpx;
+  color: #C8D8E4;
+  font-weight: 400;
+}
+
+.amount-result {
+  font-size: 36rpx;
+  font-weight: 600;
+  opacity: 0.75;
 }
 
 .income-text { color: #4FB8D4; }
@@ -249,10 +278,22 @@
   color: #9BAAB8;
 }
 
+/* 运算符键（+ / −） */
+.key-operator {
+  background: #F0F8FF;
+  color: #4FB8D4;
+  font-weight: 700;
+  font-size: 44rpx;
+}
+
+.key-operator:active {
+  background: #D8EEF5;
+}
+
 .key-save {
-  flex: 4;
+  flex: 2;
   height: 112rpx;
-  font-size: 34rpx;
+  font-size: 32rpx;
   font-weight: 700;
   border-radius: 0;
 }

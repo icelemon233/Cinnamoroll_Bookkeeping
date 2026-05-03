@@ -61,7 +61,9 @@ Page({
     type: 'expense',             // 'expense' | 'income'
     categories: EXPENSE_CATEGORIES,
     selectedCategory: '餐饮',
-    amountStr: '',               // 金额字符串（数字键盘输入）
+    amountStr: '',               // 金额字符串（支持加减表达式，如 15+8+12）
+    amountResult: '',            // 表达式实时求值结果（有运算符时显示）
+    hasOperator: false,          // 当前输入是否包含运算符
     note: '',
     date: '',                    // YYYY-MM-DD
     showKeyboard: true,
@@ -92,6 +94,8 @@ Page({
           categories: cats,
           selectedCategory: record.category,
           amountStr: String(record.amount),
+          amountResult: '',
+          hasOperator: false,
           note: record.note || '',
           date: record.date,
           quickNotes
@@ -121,6 +125,34 @@ Page({
     this.setData({ type, categories, selectedCategory, quickNotes });
   },
 
+  // 对加减表达式求值（安全实现，仅处理正数加减）
+  _evalExpr(expr) {
+    if (!expr) return 0;
+    // 仅允许数字、小数点、加号、减号
+    if (!/^[\d.+\-]+$/.test(expr)) return NaN;
+    // 分割为加减项（保留符号）
+    const tokens = expr.match(/[+\-]?[\d.]+/g);
+    if (!tokens) return NaN;
+    let sum = 0;
+    for (const t of tokens) {
+      const v = parseFloat(t);
+      if (isNaN(v)) return NaN;
+      sum += v;
+    }
+    return parseFloat(sum.toFixed(2));
+  },
+
+  // 更新表达式求值状态
+  _updateExprState(amountStr) {
+    const hasOperator = /[+\-]/.test(amountStr.replace(/^-/, '')); // 排除开头的负号
+    let amountResult = '';
+    if (hasOperator) {
+      const val = this._evalExpr(amountStr);
+      amountResult = isNaN(val) ? '' : (val > 0 ? String(val) : '');
+    }
+    this.setData({ amountStr, hasOperator, amountResult });
+  },
+
   // 选择分类
   selectCategory(e) {
     const category = e.currentTarget.dataset.category;
@@ -134,34 +166,58 @@ Page({
     this.setData({ note: tag });
   },
 
-  // 数字键盘点击
+  // 数字键盘点击（支持加减运算符）
   pressKey(e) {
     const key = e.currentTarget.dataset.key;
     let { amountStr } = this.data;
 
     if (key === 'del') {
       amountStr = amountStr.slice(0, -1);
-    } else if (key === '.') {
-      // 只允许一个小数点，且小数位最多2位
-      if (amountStr.includes('.')) return;
-      if (amountStr === '') amountStr = '0';
-      amountStr += '.';
-    } else {
-      // 限制整数部分最多7位，小数部分最多2位
-      if (amountStr.includes('.')) {
-        const parts = amountStr.split('.');
-        if (parts[1].length >= 2) return;
-      } else {
-        if (amountStr.length >= 7) return;
-      }
-      // 防止多个前导零
-      if (amountStr === '0') {
-        amountStr = key;
-      } else {
-        amountStr += key;
-      }
+      this._updateExprState(amountStr);
+      return;
     }
-    this.setData({ amountStr });
+
+    if (key === '+' || key === '-') {
+      // 空串或已有运算符结尾时不允许追加运算符
+      if (amountStr === '') return;
+      const lastChar = amountStr.slice(-1);
+      if (lastChar === '+' || lastChar === '-' || lastChar === '.') return;
+      // 追加运算符
+      amountStr += key;
+      this._updateExprState(amountStr);
+      return;
+    }
+
+    if (key === '.') {
+      if (amountStr === '') { amountStr = '0'; }
+      // 找最后一个数字段（运算符分割后的最后段）
+      const segments = amountStr.split(/[+\-]/);
+      const lastSeg = segments[segments.length - 1];
+      // 最后一段已有小数点则不允许再加
+      if (lastSeg.includes('.')) return;
+      amountStr += '.';
+      this._updateExprState(amountStr);
+      return;
+    }
+
+    // 数字键
+    const segments = amountStr.split(/[+\-]/);
+    const lastSeg = segments[segments.length - 1];
+    // 对最后一段做长度校验
+    if (lastSeg.includes('.')) {
+      const parts = lastSeg.split('.');
+      if (parts[1].length >= 2) return;
+    } else {
+      if (lastSeg.length >= 7) return;
+    }
+    // 防止最后一段有多个前导零
+    if (lastSeg === '0') {
+      // 替换最后的 '0' 为新数字
+      amountStr = amountStr.slice(0, -1) + key;
+    } else {
+      amountStr += key;
+    }
+    this._updateExprState(amountStr);
   },
 
   // 备注输入
@@ -177,7 +233,8 @@ Page({
   // 保存/更新记录
   saveRecord() {
     const { isEditMode, editRecordId, type, selectedCategory, amountStr, note, date } = this.data;
-    const amount = parseFloat(amountStr);
+    // 支持表达式求值（如 15+8+12），纯数字退化为 parseFloat
+    const amount = this._evalExpr(amountStr) || parseFloat(amountStr);
 
     if (!amountStr || isNaN(amount) || amount <= 0) {
       wx.showToast({ title: '请输入有效金额 🐾', icon: 'none' });
@@ -221,6 +278,8 @@ Page({
     setTimeout(() => {
       this.setData({
         amountStr: '',
+        amountResult: '',
+        hasOperator: false,
         note: '',
         type: 'expense',
         categories: EXPENSE_CATEGORIES,

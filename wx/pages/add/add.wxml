@@ -22,9 +22,18 @@
   <!-- 金额显示 -->
   <view class="amount-display-card">
     <text class="amount-unit">¥</text>
-    <text class="amount-display {{type === 'income' ? 'income-text' : 'expense-text'}}">
-      {{amountStr || '0.00'}}
-    </text>
+    <view class="amount-display-inner">
+      <text class="amount-display {{type === 'income' ? 'income-text' : 'expense-text'}}">
+        {{amountStr || '0.00'}}
+      </text>
+      <!-- 表达式有运算符时，下方显示实时求值结果 -->
+      <view wx:if="{{hasOperator && amountResult}}" class="amount-result-row">
+        <text class="amount-result-eq">=</text>
+        <text class="amount-result {{type === 'income' ? 'income-text' : 'expense-text'}}">
+          {{amountResult}}
+        </text>
+      </view>
+    </view>
   </view>
 
   <!-- 分类选择 -->
@@ -82,7 +91,7 @@
     </view>
   </view>
 
-  <!-- 数字键盘 -->
+  <!-- 数字键盘（支持加减运算符，可连续计算总金额） -->
   <view class="keyboard">
     <view class="keyboard-row">
       <view class="key-btn" data-key="7" bindtap="pressKey"><text>7</text></view>
@@ -94,18 +103,21 @@
       <view class="key-btn" data-key="4" bindtap="pressKey"><text>4</text></view>
       <view class="key-btn" data-key="5" bindtap="pressKey"><text>5</text></view>
       <view class="key-btn" data-key="6" bindtap="pressKey"><text>6</text></view>
-      <view class="key-btn key-clear" data-key="0" bindtap="pressKey"><text>0</text></view>
+      <view class="key-btn key-operator" data-key="+" bindtap="pressKey"><text>+</text></view>
     </view>
     <view class="keyboard-row">
       <view class="key-btn" data-key="1" bindtap="pressKey"><text>1</text></view>
       <view class="key-btn" data-key="2" bindtap="pressKey"><text>2</text></view>
       <view class="key-btn" data-key="3" bindtap="pressKey"><text>3</text></view>
-      <view class="key-btn key-dot" data-key="." bindtap="pressKey"><text>.</text></view>
+      <view class="key-btn key-operator" data-key="-" bindtap="pressKey"><text>−</text></view>
     </view>
     <view class="keyboard-row">
+      <view class="key-btn key-dot" data-key="." bindtap="pressKey"><text>.</text></view>
+      <view class="key-btn" data-key="0" bindtap="pressKey"><text>0</text></view>
       <view
         class="key-btn key-save {{type === 'income' ? 'key-save-income' : 'key-save-expense'}}"
         bindtap="saveRecord"
+        style="flex: 2"
       >
         <text>{{isEditMode ? '保存修改 ✨' : '保存 🐾'}}</text>
       </view>
