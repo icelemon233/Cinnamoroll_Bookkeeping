@@ -27,6 +27,8 @@ Page({
     // 分类筛选
     filterCategory: '',       // '' = 不限，否则为分类名称
     categoryChips: [],        // [{ name, emoji, count }] 当月/搜索范围内有记录的分类
+    // 排序方式
+    sortMode: 'date',         // 'date'（按日期倒序）| 'amount'（按金额降序）
     // 本月 TOP 消费卡片
     topCategories: [],        // [{ category, emoji, amount, percent }] 最多3条，仅支出
     showTopCard: false,       // 当月有支出数据时显示
@@ -165,6 +167,13 @@ Page({
     this.setData({ filterCategory: current === name ? '' : name }, () => this.loadData());
   },
 
+  // 切换排序方式
+  toggleSortMode() {
+    const sortMode = this.data.sortMode === 'date' ? 'amount' : 'date';
+    this.setData({ sortMode }, () => this.loadData());
+    wx.vibrateShort({ type: 'light' }).catch(() => {});
+  },
+
   // 根据当前月份/搜索范围构建分类芯片列表
   _buildCategoryChips(records) {
     const map = {};
@@ -180,7 +189,7 @@ Page({
   // ─── 数据加载 ─────────────────────────────────────────
 
   loadData() {
-    const { filterType, filterMonth, searchKeyword, isSearchMode, filterCategory } = this.data;
+    const { filterType, filterMonth, searchKeyword, isSearchMode, filterCategory, sortMode } = this.data;
     let records = getRecords();
 
     if (isSearchMode && searchKeyword) {
@@ -202,7 +211,7 @@ Page({
       if (filterCategory) {
         filtered = filtered.filter(r => r.category === filterCategory);
       }
-      const allGroups = this._buildGroups(filtered);
+      const allGroups = this._buildGroups(filtered, sortMode);
       this.setData({
         allGroups,
         totalIncome: 0,
@@ -231,7 +240,7 @@ Page({
         if (r.type === 'income') totalIncome += Number(r.amount) || 0;
         else totalExpense += Number(r.amount) || 0;
       });
-      const allGroups = this._buildGroups(filtered);
+      const allGroups = this._buildGroups(filtered, sortMode);
       this.setData({
         allGroups,
         totalIncome: parseFloat(totalIncome.toFixed(2)),
@@ -243,7 +252,32 @@ Page({
     }
   },
 
-  _buildGroups(records) {
+  _buildGroups(records, sortMode) {
+    if (sortMode === 'amount') {
+      // 按金额降序排列，不分组，以单条展示
+      const sorted = records
+        .slice()
+        .sort((a, b) => Number(b.amount) - Number(a.amount));
+      return groupByDate(sorted).map(group => ({
+        ...group,
+        dateLabel: formatDate(group.date),
+        groupIncome: group.records.filter(r => r.type === 'income').reduce((s, r) => s + Number(r.amount), 0),
+        groupExpense: group.records.filter(r => r.type === 'expense').reduce((s, r) => s + Number(r.amount), 0),
+        records: group.records
+          .slice()
+          .sort((a, b) => Number(b.amount) - Number(a.amount))
+          .map(r => ({
+            ...r,
+            emoji: CATEGORY_EMOJI[r.category] || '📦',
+            amountDisplay: r.type === 'income' ? `+${r.amount}` : `-${r.amount}`
+          }))
+      })).sort((a, b) => {
+        // 按组内最大金额对日期组进行排序
+        const maxA = Math.max(...a.records.map(r => Number(r.amount)));
+        const maxB = Math.max(...b.records.map(r => Number(r.amount)));
+        return maxB - maxA;
+      });
+    }
     return groupByDate(records).map(group => ({
       ...group,
       dateLabel: formatDate(group.date),

@@ -278,6 +278,28 @@
   border-color: #FFB3C8;
 }
 
+.sort-btn {
+  width: 72rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #FFFFFF;
+  border: 2rpx solid #E8F4F8;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.sort-btn-active {
+  background: #FFF8E0;
+  border-color: #FFD97A;
+}
+
+.sort-icon {
+  font-size: 32rpx;
+}
+
 .export-btn {
   width: 72rpx;
   height: 72rpx;
@@ -498,9 +520,30 @@
   margin-bottom: 16rpx;
 }
 
+.hint-bar-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+}
+
 .hint-text {
   font-size: 24rpx;
   color: #B8D8E4;
+}
+
+.hint-divider {
+  font-size: 24rpx;
+  color: #D8EEF5;
+}
+
+.sort-hint {
+  cursor: pointer;
+}
+
+.sort-hint-active {
+  color: #F5B800;
+  font-weight: 500;
 }
 
 /* ─── 账单详情弹窗 ──────────────────────────────────────── */

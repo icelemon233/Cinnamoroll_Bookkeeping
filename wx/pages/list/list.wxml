@@ -86,6 +86,9 @@
     <view class="filter-btn {{filterType === 'all' ? 'filter-active' : ''}}" data-type="all" bindtap="switchFilter">全部</view>
     <view class="filter-btn {{filterType === 'expense' ? 'filter-active filter-expense' : ''}}" data-type="expense" bindtap="switchFilter">支出</view>
     <view class="filter-btn {{filterType === 'income' ? 'filter-active filter-income' : ''}}" data-type="income" bindtap="switchFilter">收入</view>
+    <view class="sort-btn {{sortMode === 'amount' ? 'sort-btn-active' : ''}}" bindtap="toggleSortMode">
+      <text class="sort-icon">{{sortMode === 'amount' ? '💰' : '📅'}}</text>
+    </view>
     <view class="export-btn" bindtap="onExport">
       <text class="export-icon">📤</text>
     </view>
@@ -118,8 +121,12 @@
   </view>
 
   <!-- 操作提示 -->
-  <view wx:if="{{!isEmpty && !isSearchMode}}" class="hint-bar">
-    <text class="hint-text">长按账单可编辑或删除 ✨</text>
+  <view wx:if="{{!isEmpty && !isSearchMode}}" class="hint-bar hint-bar-row">
+    <text class="hint-text">共 {{searchResultCount}} 条</text>
+    <text class="hint-divider">·</text>
+    <text class="hint-text sort-hint {{sortMode === 'amount' ? 'sort-hint-active' : ''}}" bindtap="toggleSortMode">
+      {{sortMode === 'amount' ? '💰 按金额' : '📅 按日期'}}
+    </text>
   </view>
 
   <!-- 空状态 -->
