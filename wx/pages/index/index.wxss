@@ -571,3 +571,187 @@
   color: rgba(255, 255, 255, 0.55);
   flex: 1;
 }
+
+/* ─── 本月消费热力日历卡片 ─────────────────────────────── */
+.heatmap-card {
+  padding: 28rpx 32rpx 24rpx;
+  margin-bottom: 24rpx;
+}
+
+.heatmap-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+}
+
+.heatmap-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.heatmap-icon {
+  font-size: 36rpx;
+}
+
+.heatmap-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #3D5A6E;
+}
+
+/* 图例 */
+.heatmap-legend {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+}
+
+.heatmap-legend-label {
+  font-size: 20rpx;
+  color: #B0C4D0;
+}
+
+/* 星期标题行 */
+.heatmap-weekdays {
+  display: flex;
+  margin-bottom: 8rpx;
+}
+
+.heatmap-weekday {
+  flex: 1;
+  text-align: center;
+  font-size: 20rpx;
+  color: #9BAAB8;
+  font-weight: 500;
+}
+
+/* 格子网格 */
+.heatmap-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.heatmap-week-row {
+  display: flex;
+  gap: 6rpx;
+}
+
+.heatmap-cell-wrap {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  aspect-ratio: 1;
+}
+
+.heatmap-cell-empty {
+  /* 占位格，不可见 */
+}
+
+.heatmap-today-wrap {
+  /* 今日外圈高亮 */
+}
+
+/* 日期格子（正方形，带圆角） */
+.heatmap-day-cell {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 8rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.heatmap-day-num {
+  font-size: 18rpx;
+  line-height: 1;
+}
+
+/* 热力等级颜色 */
+.heatmap-level-empty,
+.heatmap-level-0 {
+  background: #EEF8FB;
+}
+
+.heatmap-level-empty .heatmap-day-num,
+.heatmap-level-0 .heatmap-day-num {
+  color: transparent;
+}
+
+.heatmap-level-0 .heatmap-day-num {
+  color: #B0C8D4;
+}
+
+.heatmap-level-1 {
+  background: #C8E8F4;
+}
+
+.heatmap-level-1 .heatmap-day-num {
+  color: #7AAFC4;
+}
+
+.heatmap-level-2 {
+  background: #7EC8E3;
+}
+
+.heatmap-level-2 .heatmap-day-num {
+  color: #3D7A8A;
+}
+
+.heatmap-level-3 {
+  background: #4FB8D4;
+}
+
+.heatmap-level-3 .heatmap-day-num {
+  color: #FFFFFF;
+}
+
+.heatmap-level-4 {
+  background: #FF8BAB;
+}
+
+.heatmap-level-4 .heatmap-day-num {
+  color: #FFFFFF;
+}
+
+/* 未来日期 */
+.heatmap-level-future {
+  background: #F5F9FB;
+}
+
+.heatmap-level-future .heatmap-day-num {
+  color: #C8D8E4;
+}
+
+/* 今日高亮：外圈圆角边框 */
+.heatmap-today {
+  border: 2rpx solid #FF8BAB;
+  box-sizing: border-box;
+}
+
+/* 图例中的小方块（复用 heatmap-cell） */
+.heatmap-cell {
+  width: 22rpx;
+  height: 22rpx;
+  border-radius: 5rpx;
+}
+
+/* 底部汇总行 */
+.heatmap-footer {
+  margin-top: 20rpx;
+  padding-top: 16rpx;
+  border-top: 1rpx solid #EEF8FB;
+}
+
+.heatmap-footer-text {
+  font-size: 24rpx;
+  color: #9BAAB8;
+}
+
+.heatmap-footer-accent {
+  color: #4FB8D4;
+  font-weight: 600;
+}

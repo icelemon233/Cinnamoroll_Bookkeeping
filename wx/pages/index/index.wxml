@@ -100,6 +100,64 @@
     </view>
   </view>
 
+  <!-- 本月消费热力日历卡片 -->
+  <view wx:if="{{heatmap}}" class="card heatmap-card">
+    <view class="heatmap-header">
+      <view class="heatmap-title-row">
+        <text class="heatmap-icon">🗓️</text>
+        <text class="heatmap-title">本月消费日历</text>
+      </view>
+      <view class="heatmap-legend">
+        <text class="heatmap-legend-label">少</text>
+        <view class="heatmap-cell heatmap-level-1"></view>
+        <view class="heatmap-cell heatmap-level-2"></view>
+        <view class="heatmap-cell heatmap-level-3"></view>
+        <view class="heatmap-cell heatmap-level-4"></view>
+        <text class="heatmap-legend-label">多</text>
+      </view>
+    </view>
+
+    <!-- 星期标题行 -->
+    <view class="heatmap-weekdays">
+      <text class="heatmap-weekday">一</text>
+      <text class="heatmap-weekday">二</text>
+      <text class="heatmap-weekday">三</text>
+      <text class="heatmap-weekday">四</text>
+      <text class="heatmap-weekday">五</text>
+      <text class="heatmap-weekday">六</text>
+      <text class="heatmap-weekday">日</text>
+    </view>
+
+    <!-- 日历格子 -->
+    <view class="heatmap-grid">
+      <block wx:for="{{heatmap.weeks}}" wx:key="index" wx:for-item="week">
+        <view class="heatmap-week-row">
+          <block wx:for="{{week}}" wx:key="index" wx:for-item="cell">
+            <view
+              class="heatmap-cell-wrap {{cell.isEmpty ? 'heatmap-cell-empty' : ''}} {{cell.isToday ? 'heatmap-today-wrap' : ''}}"
+            >
+              <view
+                wx:if="{{!cell.isEmpty}}"
+                class="heatmap-day-cell heatmap-level-{{cell.isFuture ? 'future' : cell.level}} {{cell.isToday ? 'heatmap-today' : ''}}"
+              >
+                <text class="heatmap-day-num">{{cell.day}}</text>
+              </view>
+              <view wx:else class="heatmap-day-cell heatmap-level-empty"></view>
+            </view>
+          </block>
+        </view>
+      </block>
+    </view>
+
+    <!-- 底部汇总行 -->
+    <view class="heatmap-footer">
+      <text class="heatmap-footer-text">
+        本月已有 <text class="heatmap-footer-accent">{{heatmap.totalDaysWithExpense}}</text> 天有支出记录
+        <text wx:if="{{heatmap.maxAmount > 0}}">，单日最高 <text class="heatmap-footer-accent">¥{{heatmap.maxAmount}}</text></text>
+      </text>
+    </view>
+  </view>
+
   <!-- 打卡连击卡片 -->
   <view class="card streak-card">
     <view class="streak-header">

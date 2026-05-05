@@ -379,6 +379,119 @@ function getStreakDays() {
   return { streak, todayDone, longestStreak };
 }
 
+// ─── 本月消费热力日历 ──────────────────────────────────
+
+/**
+ * 获取指定月份的逐日支出热力数据，用于首页热力日历卡片。
+ *
+ * 返回结构：
+ *   {
+ *     year: number,
+ *     month: number,          // 1-12
+ *     weeks: Array<Array<{    // 按周分组，每行 7 格（周一到周日）
+ *       day: number,          // 1-31，0 表示占位空格
+ *       amount: number,       // 当日支出合计（0 表示无支出）
+ *       level: number,        // 0-4，热力等级（0=无数据，1-4=按四分位分级）
+ *       isToday: boolean,
+ *       isFuture: boolean     // 未来日期
+ *     }>>,
+ *     maxAmount: number,      // 当月最高单日支出
+ *     totalDaysWithExpense: number
+ *   }
+ *
+ * 周从周一开始（level 0 = 空/无支出）。
+ */
+function getMonthHeatmap(yearMonth) {
+  if (!yearMonth) {
+    const now = new Date();
+    const m = now.getMonth() + 1;
+    yearMonth = `${now.getFullYear()}-${m < 10 ? '0' + m : m}`;
+  }
+
+  const [year, month] = yearMonth.split('-').map(Number);
+  const allRecords = getRecords();
+
+  // 汇总当月每天的支出
+  const dayExpense = {}; // key: 'YYYY-MM-DD', value: number
+  allRecords.forEach(r => {
+    if (!r.date || !r.date.startsWith(yearMonth) || r.type !== 'expense') return;
+    dayExpense[r.date] = (dayExpense[r.date] || 0) + (Number(r.amount) || 0);
+  });
+
+  // 计算热力等级分界（四分位）
+  const amounts = Object.values(dayExpense).filter(v => v > 0);
+  const maxAmount = amounts.length > 0 ? Math.max(...amounts) : 0;
+  let thresholds = [0, 0, 0, 0]; // level 1/2/3/4 的下界
+  if (maxAmount > 0) {
+    thresholds = [
+      maxAmount * 0.01,     // level 1: > 0
+      maxAmount * 0.25,     // level 2: > 25%
+      maxAmount * 0.55,     // level 3: > 55%
+      maxAmount * 0.80      // level 4: > 80%
+    ];
+  }
+
+  const getLevel = (amount) => {
+    if (!amount || amount <= 0) return 0;
+    if (amount >= thresholds[3]) return 4;
+    if (amount >= thresholds[2]) return 3;
+    if (amount >= thresholds[1]) return 2;
+    return 1;
+  };
+
+  // 今天
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const isCurrentMonth = (year === now.getFullYear() && month === (now.getMonth() + 1));
+
+  // 当月第一天是星期几（0=周日，1=周一…，转为周一=0的偏移）
+  const firstDay = new Date(year, month - 1, 1);
+  const firstDayOfWeek = firstDay.getDay(); // 0=周日
+  // 转为周一起始（周一=0, ..., 周日=6）
+  const startOffset = (firstDayOfWeek === 0) ? 6 : firstDayOfWeek - 1;
+
+  // 当月总天数
+  const daysInMonth = new Date(year, month, 0).getDate();
+
+  // 构建格子数组（含前置空格）
+  const cells = [];
+  for (let i = 0; i < startOffset; i++) {
+    cells.push({ day: 0, amount: 0, level: 0, isToday: false, isFuture: false, isEmpty: true });
+  }
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    const amount = parseFloat((dayExpense[dateStr] || 0).toFixed(2));
+    const isFuture = isCurrentMonth && dateStr > todayStr;
+    cells.push({
+      day: d,
+      amount,
+      level: isFuture ? 0 : getLevel(amount),
+      isToday: dateStr === todayStr,
+      isFuture,
+      isEmpty: false
+    });
+  }
+
+  // 补齐末尾至整行（7的倍数）
+  while (cells.length % 7 !== 0) {
+    cells.push({ day: 0, amount: 0, level: 0, isToday: false, isFuture: false, isEmpty: true });
+  }
+
+  // 按每7个分为一周
+  const weeks = [];
+  for (let i = 0; i < cells.length; i += 7) {
+    weeks.push(cells.slice(i, i + 7));
+  }
+
+  return {
+    year,
+    month,
+    weeks,
+    maxAmount,
+    totalDaysWithExpense: amounts.length
+  };
+}
+
 module.exports = {
   getRecords,
   saveRecord,
@@ -395,5 +508,6 @@ module.exports = {
   exportToCSV,
   downloadCSV,
   getStreakDays,
-  getTodaySummary
+  getTodaySummary,
+  getMonthHeatmap
 };

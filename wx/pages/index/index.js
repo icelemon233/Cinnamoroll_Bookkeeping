@@ -1,5 +1,5 @@
 // pages/index/index.js - 首页
-const { getRecords, getMonthSummary, groupByDate, formatDate, getMonthBudget, setMonthBudget, getStreakDays, getTodaySummary } = require('../../utils/storage');
+const { getRecords, getMonthSummary, groupByDate, formatDate, getMonthBudget, setMonthBudget, getStreakDays, getTodaySummary, getMonthHeatmap } = require('../../utils/storage');
 
 // 分类 emoji 映射（与 add 页保持一致）
 const CATEGORY_EMOJI = {
@@ -34,7 +34,9 @@ Page({
     streak: 0,
     todayDone: false,
     longestStreak: 0,
-    streakTitle: ''          // 连击称号
+    streakTitle: '',         // 连击称号
+    // 本月消费热力日历
+    heatmap: null
   },
 
   onLoad() {
@@ -95,6 +97,9 @@ Page({
     // 今日速览
     const { todayExpense, todayIncome, todayCount } = getTodaySummary();
 
+    // 本月消费热力日历
+    const heatmap = getMonthHeatmap(yearMonth);
+
     this.setData({
       currentMonth: monthLabel,
       yearMonth,
@@ -115,7 +120,8 @@ Page({
       todayExpense,
       todayIncome,
       todayCount,
-      hasTodayRecords: todayCount > 0
+      hasTodayRecords: todayCount > 0,
+      heatmap
     });
   },
 
