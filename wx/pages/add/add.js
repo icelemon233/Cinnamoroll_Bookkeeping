@@ -1,5 +1,5 @@
 // pages/add/add.js - 记账页（支持新增和编辑两种模式）
-const { saveRecord, updateRecord, getRecordById } = require('../../utils/storage');
+const { saveRecord, updateRecord, getRecordById, getTodaySummary } = require('../../utils/storage');
 
 const EXPENSE_CATEGORIES = [
   { name: '餐饮', emoji: '🍜' },
@@ -67,7 +67,12 @@ Page({
     note: '',
     date: '',                    // YYYY-MM-DD
     showKeyboard: true,
-    quickNotes: QUICK_NOTES['餐饮'] || []  // 当前分类的常用备注标签
+    quickNotes: QUICK_NOTES['餐饮'] || [],  // 当前分类的常用备注标签
+    // 今日速览
+    todayExpense: 0,
+    todayIncome: 0,
+    todayCount: 0,
+    hasTodayRecords: false
   },
 
   onLoad(options) {
@@ -114,6 +119,18 @@ Page({
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().setData({ selected: 1 });
     }
+    this._loadTodaySummary();
+  },
+
+  // 加载今日消费概览
+  _loadTodaySummary() {
+    const { todayExpense, todayIncome, todayCount } = getTodaySummary();
+    this.setData({
+      todayExpense,
+      todayIncome,
+      todayCount,
+      hasTodayRecords: todayCount > 0
+    });
   },
 
   // 切换收入/支出
@@ -286,6 +303,8 @@ Page({
         selectedCategory: '餐饮',
         quickNotes: QUICK_NOTES['餐饮'] || []
       });
+      // 刷新今日速览（保存后立即更新数据）
+      this._loadTodaySummary();
     }, 500);
   }
 });

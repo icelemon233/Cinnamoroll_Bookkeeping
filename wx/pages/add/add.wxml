@@ -1,6 +1,25 @@
 <!-- pages/add/add.wxml - 记账页（支持新增/编辑两种模式） -->
 <view class="container">
 
+  <!-- 今日速览横幅（非编辑模式下显示） -->
+  <view wx:if="{{!isEditMode}}" class="today-banner">
+    <view class="today-banner-inner">
+      <view class="today-banner-left">
+        <text class="today-banner-icon">☀️</text>
+        <text class="today-banner-label">今日已花</text>
+      </view>
+      <view class="today-banner-right">
+        <text class="today-banner-expense">¥{{todayExpense}}</text>
+        <text wx:if="{{hasTodayRecords}}" class="today-banner-count">共 {{todayCount}} 笔</text>
+        <text wx:else class="today-banner-count">还没有支出 ✨</text>
+      </view>
+    </view>
+    <view wx:if="{{todayIncome > 0}}" class="today-banner-income-row">
+      <text class="today-banner-income-label">今日收入</text>
+      <text class="today-banner-income-val">+¥{{todayIncome}}</text>
+    </view>
+  </view>
+
   <!-- 收入/支出切换（编辑模式下仍可切换） -->
   <view class="type-switcher">
     <view

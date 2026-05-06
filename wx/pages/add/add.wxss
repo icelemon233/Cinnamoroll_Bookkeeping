@@ -1,5 +1,73 @@
 /* pages/add/add.wxss */
 
+/* ─── 今日速览横幅 ───────────────────────────────── */
+.today-banner {
+  background: linear-gradient(135deg, #E8F8FC, #F0FBFF);
+  border-radius: 20rpx;
+  padding: 20rpx 28rpx;
+  margin-bottom: 24rpx;
+  border: 1.5rpx solid #D0EEFA;
+}
+
+.today-banner-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.today-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.today-banner-icon {
+  font-size: 30rpx;
+}
+
+.today-banner-label {
+  font-size: 26rpx;
+  color: #7A9AAB;
+}
+
+.today-banner-right {
+  display: flex;
+  align-items: baseline;
+  gap: 10rpx;
+}
+
+.today-banner-expense {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #FF8BAB;
+}
+
+.today-banner-count {
+  font-size: 22rpx;
+  color: #9BAAB8;
+}
+
+.today-banner-income-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8rpx;
+  margin-top: 8rpx;
+  padding-top: 8rpx;
+  border-top: 1rpx solid #D8EEF5;
+}
+
+.today-banner-income-label {
+  font-size: 22rpx;
+  color: #9BAAB8;
+}
+
+.today-banner-income-val {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #4FB8D4;
+}
+
 /* 收支切换 */
 .type-switcher {
   display: flex;
