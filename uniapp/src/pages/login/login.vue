@@ -122,42 +122,55 @@ export default {
     },
 
     async doLogin(email, password) {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) {
-        this.errorMsg = this._translateError(error.message)
-        return
-      }
-      if (data.session) {
-        uni.showToast({ title: '登录成功 🐾', icon: 'success', duration: 1000 })
-        setTimeout(() => {
-          uni.reLaunch({ url: '/pages/main/main' })
-        }, 800)
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+        if (error) {
+          this.errorMsg = this._translateError(error.message)
+          return
+        }
+        if (data.session) {
+          uni.showToast({ title: '登录成功 🐾', icon: 'success', duration: 1000 })
+          setTimeout(() => {
+            uni.reLaunch({ url: '/pages/main/main' })
+          }, 800)
+        }
+      } catch (e) {
+        console.error('[login] doLogin error:', e)
+        this.errorMsg = this._translateError(e.message || '网络请求失败')
       }
     },
 
     async doRegister(email, password) {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: 'https://icelemon.top/#/pages/verify/verify'
+      try {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: 'https://icelemon.top/#/pages/verify/verify'
+          }
+        })
+        if (error) {
+          this.errorMsg = this._translateError(error.message)
+          return
         }
-      })
-      if (error) {
-        this.errorMsg = this._translateError(error.message)
-        return
+        // Supabase 默认需要邮箱验证
+        this.registerSuccess = true
+        this.password = ''
+      } catch (e) {
+        console.error('[login] doRegister error:', e)
+        this.errorMsg = this._translateError(e.message || '网络请求失败')
       }
-      // Supabase 默认需要邮箱验证
-      this.registerSuccess = true
-      this.password = ''
     },
 
     _translateError(msg) {
+      if (!msg) return '未知错误，请稍后重试'
       if (msg.includes('Invalid login credentials')) return '邮箱或密码不正确'
       if (msg.includes('Email not confirmed')) return '邮箱尚未验证，请检查收件箱'
       if (msg.includes('User already registered')) return '该邮箱已注册，请直接登录'
       if (msg.includes('Password should be')) return '密码至少需要6位'
       if (msg.includes('Unable to validate')) return '邮箱格式不正确'
+      if (msg.includes('fetch') || msg.includes('Failed to fetch') || msg.includes('Network')) return '网络连接失败，请检查网络后重试'
+      if (msg.includes('timeout') || msg.includes('Timeout')) return '请求超时，请检查网络后重试'
       return msg
     }
   }
