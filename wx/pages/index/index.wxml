@@ -52,6 +52,37 @@
     <text class="quick-add-text">记一笔</text>
   </view>
 
+  <!-- 近6个月净储蓄折线卡片 -->
+  <view class="card trend-line-card">
+    <view class="trend-line-header">
+      <view class="trend-line-title-row">
+        <text class="trend-line-icon">📉</text>
+        <text class="trend-line-title">近6个月净储蓄走势</text>
+      </view>
+      <view class="trend-line-net-tag {{monthNet >= 0 ? 'trend-line-tag-pos' : 'trend-line-tag-neg'}}">
+        <text class="trend-line-tag-text">本月 {{monthNet >= 0 ? '+' : ''}}{{monthNet}}</text>
+      </view>
+    </view>
+
+    <!-- Canvas 折线图（新版 API） -->
+    <canvas
+      type="2d"
+      id="trendLineCanvas"
+      class="trend-line-canvas"
+    ></canvas>
+    <!-- 旧版降级 -->
+    <canvas
+      canvas-id="trendLineCanvasLegacy"
+      class="trend-line-canvas trend-line-canvas-legacy"
+    ></canvas>
+
+    <!-- 洞察文案 -->
+    <view class="trend-line-insight">
+      <text class="trend-line-insight-emoji">{{trendInsightEmoji}}</text>
+      <text class="trend-line-insight-text">{{trendInsight}}</text>
+    </view>
+  </view>
+
   <!-- 月度预算卡片 -->
   <view class="card budget-card">
     <view class="budget-header">

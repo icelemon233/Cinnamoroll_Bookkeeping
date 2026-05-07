@@ -492,6 +492,27 @@ function getMonthHeatmap(yearMonth) {
   };
 }
 
+/**
+ * 获取最近 N 个月的收支汇总数组（从早到晚排列）
+ * @param {number} n - 月份数，默认 6
+ * @returns {Array<{ ym: string, label: string, income: number, expense: number, net: number }>}
+ */
+function getRecentMonthsSummary(n) {
+  const count = n || 6;
+  const result = [];
+  const now = new Date();
+  for (let i = count - 1; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const year = d.getFullYear();
+    const month = d.getMonth() + 1;
+    const ym = `${year}-${month < 10 ? '0' + month : month}`;
+    const label = `${month}月`;
+    const summary = getMonthSummary(ym);
+    result.push({ ym, label, income: summary.income, expense: summary.expense, net: summary.net });
+  }
+  return result;
+}
+
 module.exports = {
   getRecords,
   saveRecord,
@@ -509,5 +530,6 @@ module.exports = {
   downloadCSV,
   getStreakDays,
   getTodaySummary,
-  getMonthHeatmap
+  getMonthHeatmap,
+  getRecentMonthsSummary
 };
