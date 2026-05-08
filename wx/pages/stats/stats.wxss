@@ -238,9 +238,9 @@
 .view-mode-btn {
   flex: 1;
   text-align: center;
-  padding: 20rpx 0;
+  padding: 18rpx 0;
   border-radius: 100rpx;
-  font-size: 30rpx;
+  font-size: 26rpx;
   color: #9BAAB8;
   transition: all 0.2s;
 }
@@ -557,4 +557,237 @@
   font-size: 24rpx;
   color: #5A7A8E;
   line-height: 1.5;
+}
+
+/* ═══════ 环比对比模式 ═══════ */
+
+/* 顶部总计对比卡片 */
+.compare-overview {
+  padding: 28rpx 32rpx;
+  margin-bottom: 20rpx;
+}
+
+.compare-overview-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.compare-ov-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+
+.compare-ov-label {
+  font-size: 24rpx;
+  color: #9BAAB8;
+  margin-bottom: 8rpx;
+}
+
+.compare-ov-val {
+  font-size: 40rpx;
+  font-weight: 700;
+}
+
+.compare-prev-text {
+  color: #9BAAB8;
+}
+
+.compare-ov-arrow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 16rpx;
+}
+
+.compare-ov-vs-text {
+  font-size: 26rpx;
+  font-weight: 600;
+  letter-spacing: 1rpx;
+}
+
+.vs-up-text {
+  color: #FF7096;
+}
+
+.vs-down-text {
+  color: #4FB8D4;
+}
+
+.compare-ov-vs-label {
+  font-size: 20rpx;
+  color: #B0C4D0;
+  margin-top: 4rpx;
+}
+
+/* 分类环比列表卡片 */
+.compare-list-card {
+  padding: 28rpx 32rpx;
+  margin-bottom: 16rpx;
+}
+
+/* 图例行 */
+.compare-legend-row {
+  display: flex;
+  gap: 24rpx;
+  margin-bottom: 20rpx;
+}
+
+.compare-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.compare-legend-dot {
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 50%;
+}
+
+.compare-cur-dot {
+  background: #FF8BAB;
+}
+
+.compare-prev-dot {
+  background: #C8E6EF;
+}
+
+.compare-legend-label {
+  font-size: 22rpx;
+  color: #9BAAB8;
+}
+
+/* 单行分类对比 */
+.compare-row {
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #F0F8FF;
+}
+
+.compare-row:last-child {
+  border-bottom: none;
+}
+
+.compare-row-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12rpx;
+}
+
+.compare-cat-label {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.compare-cat-emoji {
+  font-size: 30rpx;
+}
+
+.compare-cat-name {
+  font-size: 28rpx;
+  color: #3D5A6E;
+  font-weight: 500;
+}
+
+/* 差异徽章 */
+.compare-diff-badge {
+  border-radius: 20rpx;
+  padding: 4rpx 16rpx;
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+.badge-up {
+  background: #FFF0F4;
+  color: #FF7096;
+}
+
+.badge-down {
+  background: #E8F7FB;
+  color: #4FB8D4;
+}
+
+.badge-even {
+  background: #F5F5F5;
+  color: #9BAAB8;
+}
+
+.compare-diff-text {
+  font-size: 22rpx;
+}
+
+/* 条形图行 */
+.compare-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 8rpx;
+}
+
+.compare-bar-row:last-child {
+  margin-bottom: 0;
+}
+
+.compare-bar-amount {
+  width: 120rpx;
+  font-size: 24rpx;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.compare-cur-amount {
+  color: #FF7096;
+}
+
+.compare-prev-amount {
+  color: #9BAAB8;
+}
+
+.compare-bar-track {
+  flex: 1;
+  height: 16rpx;
+  background: #F0F8FF;
+  border-radius: 8rpx;
+  overflow: hidden;
+}
+
+.compare-bar-fill {
+  height: 100%;
+  border-radius: 8rpx;
+  min-width: 4rpx;
+  transition: width 0.3s ease;
+}
+
+.compare-bar-cur {
+  background: linear-gradient(90deg, #FF8BAB, #FFCCD8);
+}
+
+.compare-bar-prev {
+  background: linear-gradient(90deg, #A8D8EA, #C8E6EF);
+}
+
+/* 底部提示文案 */
+.compare-tip-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 20rpx 24rpx;
+  background: #F7FCFE;
+  border-radius: 20rpx;
+  margin-bottom: 32rpx;
+}
+
+.compare-tip-emoji {
+  font-size: 32rpx;
+}
+
+.compare-tip-text {
+  font-size: 26rpx;
+  color: #6A8EA0;
+  line-height: 1.5;
+  flex: 1;
 }

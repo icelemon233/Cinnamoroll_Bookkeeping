@@ -1,7 +1,7 @@
 <!-- pages/stats/stats.wxml - 统计页 -->
 <view class="container">
 
-  <!-- 顶部：视图模式切换（饼图 / 趋势 / 年度） -->
+  <!-- 顶部：视图模式切换（饼图 / 趋势 / 年度 / 环比） -->
   <view class="view-mode-switcher">
     <view
       class="view-mode-btn {{viewMode === 'pie' ? 'view-mode-active' : ''}}"
@@ -18,6 +18,11 @@
       data-mode="annual"
       bindtap="switchViewMode"
     >🗓️ 年度</view>
+    <view
+      class="view-mode-btn {{viewMode === 'compare' ? 'view-mode-active' : ''}}"
+      data-mode="compare"
+      bindtap="switchViewMode"
+    >🔄 环比</view>
   </view>
 
   <!-- ═══════ 饼图模式 ═══════ -->
@@ -292,6 +297,108 @@
           </view>
         </view>
       </view>
+    </view>
+
+  </block>
+
+  <!-- ═══════ 环比对比模式 ═══════ -->
+  <block wx:if="{{viewMode === 'compare'}}">
+
+    <!-- 月份切换栏 -->
+    <view class="month-nav">
+      <view class="month-arrow" bindtap="prevMonth">
+        <text class="arrow-text">‹</text>
+      </view>
+      <text class="month-title">{{currentMonth}} 环比</text>
+      <view class="month-arrow {{isCurrentMonth ? 'arrow-disabled' : ''}}" bindtap="nextMonth">
+        <text class="arrow-text">›</text>
+      </view>
+    </view>
+
+    <!-- 总计对比概览 -->
+    <view class="compare-overview card" wx:if="{{compareData}}">
+      <view class="compare-overview-row">
+        <view class="compare-ov-item">
+          <text class="compare-ov-label">本月支出</text>
+          <text class="compare-ov-val expense-text">¥{{compareData.curExpense}}</text>
+        </view>
+        <view class="compare-ov-arrow">
+          <text class="compare-ov-vs-text {{compareData.expenseDiff > 0 ? 'vs-up-text' : compareData.expenseDiff < 0 ? 'vs-down-text' : ''}}">
+            {{compareData.expenseDiff > 0 ? '▲' : compareData.expenseDiff < 0 ? '▼' : '='}}
+            {{compareData.expenseDiffAbs > 0 ? '¥' + compareData.expenseDiffAbs : '持平'}}
+          </text>
+          <text class="compare-ov-vs-label">较上月</text>
+        </view>
+        <view class="compare-ov-item">
+          <text class="compare-ov-label">上月支出</text>
+          <text class="compare-ov-val compare-prev-text">¥{{compareData.prevExpense}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 空状态 -->
+    <view wx:if="{{!compareData || compareData.items.length === 0}}" class="empty-state">
+      <text class="empty-icon">🌸</text>
+      <text class="empty-text">暂无数据，快去记账吧～</text>
+    </view>
+
+    <!-- 分类环比列表 -->
+    <view wx:if="{{compareData && compareData.items.length > 0}}" class="card compare-list-card">
+      <text class="list-title">支出分类环比</text>
+      <view class="compare-legend-row">
+        <view class="compare-legend-item">
+          <view class="compare-legend-dot compare-cur-dot"></view>
+          <text class="compare-legend-label">本月</text>
+        </view>
+        <view class="compare-legend-item">
+          <view class="compare-legend-dot compare-prev-dot"></view>
+          <text class="compare-legend-label">上月</text>
+        </view>
+      </view>
+      <view
+        class="compare-row"
+        wx:for="{{compareData.items}}"
+        wx:key="category"
+      >
+        <view class="compare-row-header">
+          <view class="compare-cat-label">
+            <text class="compare-cat-emoji">{{item.emoji}}</text>
+            <text class="compare-cat-name">{{item.category}}</text>
+          </view>
+          <view class="compare-diff-badge {{item.diff > 0 ? 'badge-up' : item.diff < 0 ? 'badge-down' : 'badge-even'}}">
+            <text class="compare-diff-text">
+              {{item.diff > 0 ? '▲' : item.diff < 0 ? '▼' : '—'}}
+              {{item.diffPct > 0 ? item.diffPct + '%' : ''}}
+            </text>
+          </view>
+        </view>
+        <!-- 本月 bar -->
+        <view class="compare-bar-row">
+          <text class="compare-bar-amount compare-cur-amount expense-text">¥{{item.curAmount}}</text>
+          <view class="compare-bar-track">
+            <view
+              class="compare-bar-fill compare-bar-cur"
+              style="width: {{item.curPct}}%"
+            ></view>
+          </view>
+        </view>
+        <!-- 上月 bar -->
+        <view class="compare-bar-row">
+          <text class="compare-bar-amount compare-prev-amount compare-prev-text">¥{{item.prevAmount}}</text>
+          <view class="compare-bar-track">
+            <view
+              class="compare-bar-fill compare-bar-prev"
+              style="width: {{item.prevPct}}%"
+            ></view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 提示文案 -->
+    <view wx:if="{{compareData && compareData.items.length > 0}}" class="compare-tip-row">
+      <text class="compare-tip-emoji">{{compareData.tipEmoji}}</text>
+      <text class="compare-tip-text">{{compareData.tip}}</text>
     </view>
 
   </block>

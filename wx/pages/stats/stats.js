@@ -49,7 +49,7 @@ Page({
     categoryList: [],         // [{ category, amount, percent, color, emoji }]
     isEmpty: false,
     canvasSize: 600,          // canvas 边长（rpx 转 px 需乘 dpr）
-    // 视图模式：'pie'（分类饼图）| 'trend'（趋势柱状图）| 'annual'（年度总览）
+    // 视图模式：'pie'（分类饼图）| 'trend'（趋势柱状图）| 'annual'（年度总览）| 'compare'（分类环比）
     viewMode: 'pie',
     // 趋势数据 [{ label, income, expense, net }]
     trendData: [],
@@ -61,7 +61,9 @@ Page({
     annualData: [],            // [{ label, income, expense, net }] x12
     annualSummary: null,       // { totalIncome, totalExpense, netSaving, bestExpenseMonth, bestIncomeMonth }
     // 智能分析卡片（仅饼图模式 / 支出视角）
-    insightCard: null          // { dailyAvg, predicted, vsLastMonth, vsLastMonthPct, isUp, tip, tipEmoji, showPrediction }
+    insightCard: null,         // { dailyAvg, predicted, vsLastMonth, vsLastMonthPct, isUp, tip, tipEmoji, showPrediction }
+    // 分类环比数据
+    compareData: null          // { curExpense, prevExpense, expenseDiff, expenseDiffAbs, items, tip, tipEmoji }
   },
 
   onLoad() {
@@ -394,6 +396,8 @@ Page({
         this.drawPieChart(categoryList);
       } else if (viewMode === 'trend') {
         this._loadTrendData();
+      } else if (viewMode === 'compare') {
+        this._loadCompareData();
       }
     });
   },
@@ -542,6 +546,8 @@ Page({
         this._loadTrendData();
       } else if (viewMode === 'annual') {
         this._loadAnnualData();
+      } else if (viewMode === 'compare') {
+        this._loadCompareData();
       } else {
         // 切回饼图，重新绘制
         if (!this.data.isEmpty) {
@@ -549,6 +555,126 @@ Page({
         }
       }
     });
+  },
+
+  // ─── 分类环比数据加载 ──────────────────────────────────
+
+  /**
+   * 加载当月 vs 上月的分类支出对比数据
+   */
+  _loadCompareData() {
+    const { yearMonth } = this.data;
+    const [year, month] = yearMonth.split('-').map(Number);
+
+    // 上月 YYYY-MM
+    let prevYear = year;
+    let prevMonth = month - 1;
+    if (prevMonth < 1) { prevMonth = 12; prevYear -= 1; }
+    const prevYM = `${prevYear}-${prevMonth < 10 ? '0' + prevMonth : prevMonth}`;
+
+    const curSummary = getMonthSummary(yearMonth);
+    const prevSummary = getMonthSummary(prevYM);
+
+    const curExpense = parseFloat(curSummary.expense.toFixed(2));
+    const prevExpense = parseFloat(prevSummary.expense.toFixed(2));
+
+    // 按分类汇总本月和上月支出
+    const buildCatMap = (records) => {
+      const map = {};
+      records.filter(r => r.type === 'expense').forEach(r => {
+        const cat = r.category || '其他';
+        map[cat] = (map[cat] || 0) + (Number(r.amount) || 0);
+      });
+      return map;
+    };
+
+    const curMap = buildCatMap(curSummary.records);
+    const prevMap = buildCatMap(prevSummary.records);
+
+    // 合并所有出现过的分类（两个月的并集）
+    const allCats = Array.from(new Set([...Object.keys(curMap), ...Object.keys(prevMap)]));
+
+    // 计算双月最大值（用于 bar 宽度归一）
+    const maxVal = allCats.reduce((m, cat) => Math.max(m, curMap[cat] || 0, prevMap[cat] || 0), 1);
+
+    const items = allCats
+      .map(cat => {
+        const curAmount = parseFloat((curMap[cat] || 0).toFixed(2));
+        const prevAmount = parseFloat((prevMap[cat] || 0).toFixed(2));
+        const diff = parseFloat((curAmount - prevAmount).toFixed(2));
+        let diffPct = 0;
+        if (prevAmount > 0) {
+          diffPct = parseFloat(Math.abs(diff / prevAmount * 100).toFixed(0));
+        }
+        return {
+          category: cat,
+          emoji: CATEGORY_EMOJI[cat] || '📦',
+          curAmount,
+          prevAmount,
+          diff,
+          diffPct,
+          // bar 宽度百分比（相对于双月最大值，0-100）
+          curPct: Math.round(curAmount / maxVal * 100),
+          prevPct: Math.round(prevAmount / maxVal * 100)
+        };
+      })
+      // 按本月金额降序排列，本月无支出的放后面
+      .sort((a, b) => b.curAmount - a.curAmount || b.prevAmount - a.prevAmount);
+
+    // 生成对比洞察文案
+    const expenseDiff = parseFloat((curExpense - prevExpense).toFixed(2));
+    const expenseDiffAbs = Math.abs(expenseDiff);
+    const { tip, tipEmoji } = this._buildCompareTip(curExpense, prevExpense, items);
+
+    const compareData = {
+      curExpense,
+      prevExpense,
+      expenseDiff,
+      expenseDiffAbs: parseFloat(expenseDiffAbs.toFixed(2)),
+      items,
+      tip,
+      tipEmoji
+    };
+
+    this.setData({ compareData });
+  },
+
+  /**
+   * 生成环比对比洞察文案（Cinnamoroll 风格）
+   */
+  _buildCompareTip(curExpense, prevExpense, items) {
+    if (curExpense === 0 && prevExpense === 0) {
+      return { tipEmoji: '🌱', tip: '两个月都没有支出记录，快来记账吧～' };
+    }
+    if (prevExpense === 0) {
+      return { tipEmoji: '✨', tip: '上月没有记录，本月已开始记账，继续保持！' };
+    }
+
+    const diff = curExpense - prevExpense;
+    const pct = parseFloat(Math.abs(diff / prevExpense * 100).toFixed(1));
+
+    // 找出增幅最大的分类
+    const risingCats = items
+      .filter(i => i.diff > 0 && i.prevAmount > 0)
+      .sort((a, b) => b.diff - a.diff);
+
+    if (diff > 0 && pct >= 20) {
+      const topRise = risingCats[0];
+      if (topRise) {
+        return { tipEmoji: '⚠️', tip: `支出较上月多 ${pct}%，「${topRise.category}」增幅最大，注意控制哦～` };
+      }
+      return { tipEmoji: '⚠️', tip: `支出较上月多了 ${pct}%，注意控制支出～` };
+    }
+    if (diff < 0 && pct >= 20) {
+      return { tipEmoji: '🎉', tip: `支出较上月少了 ${pct}%，省钱好棒！继续保持 🐾` };
+    }
+    if (Math.abs(diff) < 1) {
+      return { tipEmoji: '📊', tip: '本月支出与上月基本持平，消费节奏稳定～' };
+    }
+    if (diff > 0) {
+      return { tipEmoji: '🐾', tip: `支出较上月增加 ¥${Math.abs(diff).toFixed(2)}，幅度在可控范围内～` };
+    }
+    return { tipEmoji: '✨', tip: `支出较上月减少 ¥${Math.abs(diff).toFixed(2)}，节约进行中！` };
   },
 
   // ─── 趋势数据加载 ─────────────────────────────────────
