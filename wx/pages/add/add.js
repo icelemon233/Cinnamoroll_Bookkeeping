@@ -68,6 +68,10 @@ Page({
     date: '',                    // YYYY-MM-DD
     showKeyboard: true,
     quickNotes: QUICK_NOTES['餐饮'] || [],  // 当前分类的常用备注标签
+    // 快捷日期：今天 / 昨天 / 前天（用于高亮对应按钮）
+    todayStr: '',
+    yesterdayStr: '',
+    dayBeforeStr: '',
     // 今日速览
     todayExpense: 0,
     todayIncome: 0,
@@ -76,6 +80,9 @@ Page({
   },
 
   onLoad(options) {
+    // 预先计算快捷日期（所有分支都需要）
+    const quickDates = this._getQuickDates();
+
     // 支持从外部携带 type 参数
     if (options.type === 'income') {
       this.setData({
@@ -103,16 +110,46 @@ Page({
           hasOperator: false,
           note: record.note || '',
           date: record.date,
-          quickNotes
+          quickNotes,
+          ...quickDates
         });
         wx.setNavigationBarTitle({ title: '编辑记录' });
         return;
       }
     }
 
+    const { todayStr, yesterdayStr, dayBeforeStr } = quickDates;
+    this.setData({ date: todayStr, todayStr, yesterdayStr, dayBeforeStr });
+  },
+
+  // ─── 快捷日期 ──────────────────────────────────────────
+
+  /**
+   * 计算今天、昨天、前天的 YYYY-MM-DD 字符串
+   */
+  _getQuickDates() {
+    const toStr = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     const now = new Date();
-    const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const yest = new Date(now); yest.setDate(now.getDate() - 1);
+    const dbef = new Date(now); dbef.setDate(now.getDate() - 2);
+    return {
+      todayStr: toStr(now),
+      yesterdayStr: toStr(yest),
+      dayBeforeStr: toStr(dbef)
+    };
+  },
+
+  /**
+   * 点击快捷日期按钮（今天/昨天/前天）
+   * @param {object} e - 事件对象，e.currentTarget.dataset.offset 为距今天数
+   */
+  onQuickDate(e) {
+    const offset = parseInt(e.currentTarget.dataset.offset) || 0;
+    const d = new Date();
+    d.setDate(d.getDate() - offset);
+    const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     this.setData({ date });
+    wx.vibrateShort({ type: 'light' }).catch(() => {});
   },
 
   onShow() {

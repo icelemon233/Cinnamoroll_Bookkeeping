@@ -76,9 +76,28 @@
   <view class="card form-section">
     <view class="form-row">
       <text class="form-label-inline">📅 日期</text>
-      <picker mode="date" value="{{date}}" bindchange="onDateChange">
-        <text class="form-value">{{date}}</text>
-      </picker>
+      <view class="date-quick-row">
+        <view
+          class="date-quick-btn {{date === todayStr ? 'date-quick-active' : ''}}"
+          data-offset="0"
+          bindtap="onQuickDate"
+        ><text>今天</text></view>
+        <view
+          class="date-quick-btn {{date === yesterdayStr ? 'date-quick-active' : ''}}"
+          data-offset="1"
+          bindtap="onQuickDate"
+        ><text>昨天</text></view>
+        <view
+          class="date-quick-btn {{date === dayBeforeStr ? 'date-quick-active' : ''}}"
+          data-offset="2"
+          bindtap="onQuickDate"
+        ><text>前天</text></view>
+        <picker mode="date" value="{{date}}" bindchange="onDateChange">
+          <view class="date-quick-btn date-quick-picker {{(date !== todayStr && date !== yesterdayStr && date !== dayBeforeStr) ? 'date-quick-active' : ''}}">
+            <text>{{(date !== todayStr && date !== yesterdayStr && date !== dayBeforeStr) ? date : '其他'}}</text>
+          </view>
+        </picker>
+      </view>
     </view>
     <view class="divider-light"></view>
     <view class="form-row">

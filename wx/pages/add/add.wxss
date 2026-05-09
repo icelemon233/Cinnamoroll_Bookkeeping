@@ -253,6 +253,45 @@
   color: #C8D8E4;
 }
 
+/* 快捷日期按钮组 */
+.date-quick-row {
+  display: flex;
+  flex: 1;
+  gap: 10rpx;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+}
+
+.date-quick-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10rpx 20rpx;
+  background: #F5FBFD;
+  border: 1.5rpx solid #D8EEF5;
+  border-radius: 100rpx;
+  font-size: 24rpx;
+  color: #5A8A9E;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+
+.date-quick-btn:active {
+  opacity: 0.75;
+  background: #E0F5FA;
+}
+
+.date-quick-active {
+  background: #E0F5FA;
+  border-color: #4FB8D4;
+  color: #4FB8D4;
+  font-weight: 600;
+}
+
+.date-quick-picker {
+  min-width: 88rpx;
+}
+
 /* 常用备注快捷标签 */
 .quick-notes-row {
   padding: 8rpx 0 16rpx;
