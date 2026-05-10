@@ -1,5 +1,5 @@
 // pages/index/index.js - 首页
-const { getRecords, getMonthSummary, groupByDate, formatDate, getMonthBudget, setMonthBudget, getStreakDays, getTodaySummary, getMonthHeatmap, getRecentMonthsSummary } = require('../../utils/storage');
+const { getRecords, getMonthSummary, groupByDate, formatDate, getMonthBudget, setMonthBudget, getStreakDays, getTodaySummary, getMonthHeatmap, getRecentMonthsSummary, getWeekSummary } = require('../../utils/storage');
 
 // 分类 emoji 映射（与 add 页保持一致）
 const CATEGORY_EMOJI = {
@@ -40,7 +40,9 @@ Page({
     longestStreak: 0,
     streakTitle: '',         // 连击称号
     // 本月消费热力日历
-    heatmap: null
+    heatmap: null,
+    // 本周账单周报
+    weekSummary: null
   },
 
   onLoad() {
@@ -104,6 +106,17 @@ Page({
     // 本月消费热力日历
     const heatmap = getMonthHeatmap(yearMonth);
 
+    // 本周账单周报（加入柱状图高度百分比）
+    const weekSummaryRaw = getWeekSummary();
+    const maxBarAmount = weekSummaryRaw.maxAmount || 1;
+    const weekSummary = {
+      ...weekSummaryRaw,
+      days: weekSummaryRaw.days.map(d => ({
+        ...d,
+        barHeight: d.isFuture ? 0 : Math.round((d.expense / maxBarAmount) * 100)
+      }))
+    };
+
     // 近6个月净储蓄折线数据
     const trendMonths = getRecentMonthsSummary(6);
     const { trendInsight, trendInsightEmoji } = this._buildTrendInsight(trendMonths);
@@ -132,7 +145,8 @@ Page({
       heatmap,
       trendMonths,
       trendInsight,
-      trendInsightEmoji
+      trendInsightEmoji,
+      weekSummary
     });
 
     // 绘制折线图（数据加载后再绘制）

@@ -189,6 +189,55 @@
     </view>
   </view>
 
+  <!-- 本周账单周报卡片 -->
+  <view wx:if="{{weekSummary}}" class="card week-card">
+    <view class="week-header">
+      <view class="week-title-row">
+        <text class="week-icon">📅</text>
+        <text class="week-title">本周账单</text>
+      </view>
+      <view class="week-net-tag {{weekSummary.weekNet >= 0 ? 'week-tag-pos' : 'week-tag-neg'}}">
+        <text class="week-tag-text">结余 {{weekSummary.weekNet >= 0 ? '+' : ''}}{{weekSummary.weekNet}}</text>
+      </view>
+    </view>
+
+    <!-- 每日柱状图 -->
+    <view class="week-bars">
+      <block wx:for="{{weekSummary.days}}" wx:key="dateStr">
+        <view class="week-bar-col {{item.isToday ? 'week-bar-today' : ''}}">
+          <view class="week-bar-wrap">
+            <view
+              class="week-bar-fill {{item.isFuture ? 'week-bar-future' : (item.expense > 0 ? 'week-bar-active' : 'week-bar-zero')}}"
+              style="height: {{item.isFuture ? 4 : (item.barHeight < 8 && item.expense > 0 ? 8 : item.barHeight)}}rpx;"
+            ></view>
+          </view>
+          <text class="week-bar-label {{item.isToday ? 'week-bar-label-today' : ''}}">{{item.label}}</text>
+          <text wx:if="{{item.expense > 0 && !item.isFuture}}" class="week-bar-amount">{{item.expense}}</text>
+          <text wx:elif="{{item.isFuture}}" class="week-bar-amount week-bar-future-text">-</text>
+          <text wx:else class="week-bar-amount week-bar-zero-text">0</text>
+        </view>
+      </block>
+    </view>
+
+    <!-- 周汇总行 -->
+    <view class="week-summary-row">
+      <view class="week-summary-item">
+        <text class="week-summary-label">本周支出</text>
+        <text class="week-summary-val week-expense-val">¥{{weekSummary.weekExpense}}</text>
+      </view>
+      <view class="week-summary-divider"></view>
+      <view class="week-summary-item">
+        <text class="week-summary-label">本周收入</text>
+        <text class="week-summary-val week-income-val">¥{{weekSummary.weekIncome}}</text>
+      </view>
+      <view wx:if="{{weekSummary.topCategory}}" class="week-summary-divider"></view>
+      <view wx:if="{{weekSummary.topCategory}}" class="week-summary-item">
+        <text class="week-summary-label">消费最多</text>
+        <text class="week-summary-val week-top-val">{{weekSummary.topCategory}}</text>
+      </view>
+    </view>
+  </view>
+
   <!-- 打卡连击卡片 -->
   <view class="card streak-card">
     <view class="streak-header">

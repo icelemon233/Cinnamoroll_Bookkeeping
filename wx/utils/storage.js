@@ -513,6 +513,98 @@ function getRecentMonthsSummary(n) {
   return result;
 }
 
+/**
+ * 获取本周（周一~今天）每日收支数据
+ * @returns {{
+ *   days: Array<{ dateStr: string, label: string, shortLabel: string, income: number, expense: number, isToday: boolean, isFuture: boolean }>,
+ *   weekIncome: number,
+ *   weekExpense: number,
+ *   weekNet: number,
+ *   maxAmount: number,
+ *   topCategory: string | null,
+ *   topCategoryAmount: number
+ * }}
+ */
+function getWeekSummary() {
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+  // 找到本周一（周一=1，周日=0转为7）
+  const dayOfWeek = now.getDay() === 0 ? 7 : now.getDay(); // 1=Mon...7=Sun
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - (dayOfWeek - 1));
+
+  const WEEK_LABELS = ['一', '二', '三', '四', '五', '六', '日'];
+  const SHORT_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+
+  const allRecords = getRecords();
+
+  // 构建本周7天数组
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i);
+    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const isFuture = dateStr > todayStr;
+    const isToday = dateStr === todayStr;
+
+    let income = 0, expense = 0;
+    if (!isFuture) {
+      allRecords.forEach(r => {
+        if (r.date !== dateStr) return;
+        if (r.type === 'income') income += Number(r.amount) || 0;
+        else expense += Number(r.amount) || 0;
+      });
+    }
+
+    days.push({
+      dateStr,
+      label: WEEK_LABELS[i],
+      shortLabel: SHORT_LABELS[i],
+      income: parseFloat(income.toFixed(2)),
+      expense: parseFloat(expense.toFixed(2)),
+      isToday,
+      isFuture
+    });
+  }
+
+  // 汇总
+  let weekIncome = 0, weekExpense = 0;
+  days.forEach(d => {
+    weekIncome += d.income;
+    weekExpense += d.expense;
+  });
+  weekIncome = parseFloat(weekIncome.toFixed(2));
+  weekExpense = parseFloat(weekExpense.toFixed(2));
+  const weekNet = parseFloat((weekIncome - weekExpense).toFixed(2));
+  const maxAmount = Math.max(...days.map(d => d.expense), 0);
+
+  // 本周支出最多分类
+  const categoryMap = {};
+  allRecords.forEach(r => {
+    if (!r.date || r.type !== 'expense') return;
+    if (r.date < days[0].dateStr || r.date > todayStr) return;
+    const cat = r.category || '其他';
+    categoryMap[cat] = (categoryMap[cat] || 0) + (Number(r.amount) || 0);
+  });
+  let topCategory = null, topCategoryAmount = 0;
+  Object.keys(categoryMap).forEach(cat => {
+    if (categoryMap[cat] > topCategoryAmount) {
+      topCategoryAmount = categoryMap[cat];
+      topCategory = cat;
+    }
+  });
+
+  return {
+    days,
+    weekIncome,
+    weekExpense,
+    weekNet,
+    maxAmount,
+    topCategory,
+    topCategoryAmount: parseFloat(topCategoryAmount.toFixed(2))
+  };
+}
+
 module.exports = {
   getRecords,
   saveRecord,
@@ -531,5 +623,6 @@ module.exports = {
   getStreakDays,
   getTodaySummary,
   getMonthHeatmap,
-  getRecentMonthsSummary
+  getRecentMonthsSummary,
+  getWeekSummary
 };

@@ -843,3 +843,176 @@
   color: #4FB8D4;
   font-weight: 600;
 }
+
+/* ─── 本周账单周报卡片 ───────────────────────────────── */
+.week-card {
+  padding: 28rpx 28rpx 22rpx;
+}
+
+.week-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24rpx;
+}
+
+.week-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.week-icon {
+  font-size: 34rpx;
+}
+
+.week-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #2D4A6B;
+}
+
+.week-net-tag {
+  padding: 6rpx 18rpx;
+  border-radius: 30rpx;
+  font-size: 24rpx;
+  font-weight: 600;
+}
+
+.week-tag-pos {
+  background: #E8F8F0;
+  color: #3DAA72;
+}
+
+.week-tag-neg {
+  background: #FFF0F4;
+  color: #FF8BAB;
+}
+
+.week-tag-text {
+  font-size: 24rpx;
+  font-weight: 600;
+}
+
+/* 柱状图区域 */
+.week-bars {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  height: 160rpx;
+  margin-bottom: 20rpx;
+  padding: 0 8rpx;
+}
+
+.week-bar-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  gap: 6rpx;
+}
+
+.week-bar-wrap {
+  width: 100%;
+  height: 100rpx;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.week-bar-fill {
+  width: 38rpx;
+  border-radius: 8rpx 8rpx 4rpx 4rpx;
+  min-height: 4rpx;
+  transition: height 0.3s ease;
+}
+
+.week-bar-active {
+  background: linear-gradient(180deg, #7EC8E3 0%, #4FB8D4 100%);
+}
+
+.week-bar-zero {
+  background: #EEF8FB;
+  min-height: 4rpx;
+  height: 4rpx !important;
+}
+
+.week-bar-future {
+  background: #F0F5F8;
+  height: 4rpx !important;
+}
+
+/* 今天高亮 */
+.week-bar-today .week-bar-fill.week-bar-active {
+  background: linear-gradient(180deg, #FFB3C6 0%, #FF8BAB 100%);
+}
+
+.week-bar-label {
+  font-size: 22rpx;
+  color: #9BAAB8;
+  font-weight: 500;
+}
+
+.week-bar-label-today {
+  color: #FF8BAB;
+  font-weight: 700;
+}
+
+.week-bar-amount {
+  font-size: 18rpx;
+  color: #6B8AAA;
+}
+
+.week-bar-future-text {
+  color: #C8D8E4;
+}
+
+.week-bar-zero-text {
+  color: #C8D8E4;
+}
+
+/* 汇总行 */
+.week-summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding-top: 20rpx;
+  border-top: 1rpx solid #EEF8FB;
+}
+
+.week-summary-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6rpx;
+  flex: 1;
+}
+
+.week-summary-divider {
+  width: 1rpx;
+  height: 40rpx;
+  background: #EEF8FB;
+}
+
+.week-summary-label {
+  font-size: 22rpx;
+  color: #9BAAB8;
+}
+
+.week-summary-val {
+  font-size: 28rpx;
+  font-weight: 700;
+}
+
+.week-expense-val {
+  color: #FF8BAB;
+}
+
+.week-income-val {
+  color: #4FB8D4;
+}
+
+.week-top-val {
+  color: #2D4A6B;
+  font-size: 26rpx;
+}
