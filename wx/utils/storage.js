@@ -605,6 +605,36 @@ function getWeekSummary() {
   };
 }
 
+/**
+ * 获取指定分类下最近的 N 条历史记录，用于记账页快速填入
+ * @param {string} category - 分类名称
+ * @param {string} type - 'expense' | 'income'
+ * @param {number} limit - 最多返回条数，默认 3
+ * @returns {Array<{ amount: number, note: string, date: string }>}
+ *   已去重（按 amount+note 组合），按时间倒序
+ */
+function getRecentCategoryRecords(category, type, limit) {
+  const n = limit || 3;
+  const records = getRecords();
+  const seen = new Set();
+  const result = [];
+
+  for (const r of records) {
+    if (r.category !== category || r.type !== type) continue;
+    const key = `${r.amount}|${r.note || ''}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push({
+      amount: r.amount,
+      note: r.note || '',
+      date: r.date || ''
+    });
+    if (result.length >= n) break;
+  }
+
+  return result;
+}
+
 module.exports = {
   getRecords,
   saveRecord,
@@ -624,5 +654,6 @@ module.exports = {
   getTodaySummary,
   getMonthHeatmap,
   getRecentMonthsSummary,
-  getWeekSummary
+  getWeekSummary,
+  getRecentCategoryRecords
 };

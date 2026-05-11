@@ -1,5 +1,5 @@
 // pages/add/add.js - 记账页（支持新增和编辑两种模式）
-const { saveRecord, updateRecord, getRecordById, getTodaySummary } = require('../../utils/storage');
+const { saveRecord, updateRecord, getRecordById, getTodaySummary, getRecentCategoryRecords } = require('../../utils/storage');
 
 const EXPENSE_CATEGORIES = [
   { name: '餐饮', emoji: '🍜' },
@@ -68,6 +68,9 @@ Page({
     date: '',                    // YYYY-MM-DD
     showKeyboard: true,
     quickNotes: QUICK_NOTES['餐饮'] || [],  // 当前分类的常用备注标签
+    // 最近相似记录（同分类同类型，最近3条去重）
+    recentRecords: [],
+    hasRecentRecords: false,
     // 快捷日期：今天 / 昨天 / 前天（用于高亮对应按钮）
     todayStr: '',
     yesterdayStr: '',
@@ -91,6 +94,7 @@ Page({
         selectedCategory: '工资',
         quickNotes: QUICK_NOTES['工资'] || []
       });
+      this._loadRecentRecords('工资', 'income');
     }
 
     // 编辑模式：从 options 中读取 recordId
@@ -114,12 +118,16 @@ Page({
           ...quickDates
         });
         wx.setNavigationBarTitle({ title: '编辑记录' });
+        // 编辑模式也加载最近记录（供参考，但不会主动覆盖当前值）
+        this._loadRecentRecords(record.category, record.type);
         return;
       }
     }
 
     const { todayStr, yesterdayStr, dayBeforeStr } = quickDates;
     this.setData({ date: todayStr, todayStr, yesterdayStr, dayBeforeStr });
+    // 加载默认分类（餐饮/支出）的最近记录
+    this._loadRecentRecords('餐饮', 'expense');
   },
 
   // ─── 快捷日期 ──────────────────────────────────────────
@@ -177,6 +185,7 @@ Page({
     const selectedCategory = categories[0].name;
     const quickNotes = QUICK_NOTES[selectedCategory] || [];
     this.setData({ type, categories, selectedCategory, quickNotes });
+    this._loadRecentRecords(selectedCategory, type);
   },
 
   // 对加减表达式求值（安全实现，仅处理正数加减）
@@ -207,11 +216,30 @@ Page({
     this.setData({ amountStr, hasOperator, amountResult });
   },
 
+  // 加载最近相似记录（同分类同类型，最多3条去重）
+  _loadRecentRecords(category, type) {
+    const records = getRecentCategoryRecords(category, type, 3);
+    this.setData({
+      recentRecords: records,
+      hasRecentRecords: records.length > 0
+    });
+  },
+
+  // 点击最近相似记录 → 一键填入金额 + 备注
+  tapRecentRecord(e) {
+    const { amount, note } = e.currentTarget.dataset;
+    const amountStr = String(amount);
+    this._updateExprState(amountStr);
+    this.setData({ note: note || '' });
+    wx.vibrateShort({ type: 'light' }).catch(() => {});
+  },
+
   // 选择分类
   selectCategory(e) {
     const category = e.currentTarget.dataset.category;
     const quickNotes = QUICK_NOTES[category] || [];
     this.setData({ selectedCategory: category, quickNotes });
+    this._loadRecentRecords(category, this.data.type);
   },
 
   // 点击常用备注标签快速填入

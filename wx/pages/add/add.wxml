@@ -129,6 +129,29 @@
     </view>
   </view>
 
+  <!-- 最近相似记录（同分类同类型，一键复用金额+备注，非编辑模式显示） -->
+  <view wx:if="{{!isEditMode && hasRecentRecords}}" class="recent-records-section">
+    <view class="recent-records-header">
+      <text class="recent-records-label">🕐 最近 {{selectedCategory}} 记录</text>
+      <text class="recent-records-hint">点击快速填入</text>
+    </view>
+    <scroll-view scroll-x class="recent-records-scroll" enhanced="{{true}}" show-scrollbar="{{false}}">
+      <view class="recent-records-row">
+        <view
+          class="recent-record-chip"
+          wx:for="{{recentRecords}}"
+          wx:key="index"
+          data-amount="{{item.amount}}"
+          data-note="{{item.note}}"
+          bindtap="tapRecentRecord"
+        >
+          <text class="recent-chip-amount {{type === 'income' ? 'income-text' : 'expense-text'}}">¥{{item.amount}}</text>
+          <text wx:if="{{item.note}}" class="recent-chip-note">{{item.note}}</text>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
   <!-- 数字键盘（支持加减运算符，可连续计算总金额） -->
   <view class="keyboard">
     <view class="keyboard-row">

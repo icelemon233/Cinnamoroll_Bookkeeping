@@ -340,6 +340,80 @@
   background: #F0F8FF;
 }
 
+/* ─── 最近相似记录 ───────────────────────────────── */
+.recent-records-section {
+  margin-bottom: 20rpx;
+  padding: 20rpx 28rpx;
+  background: #FFFFFF;
+  border-radius: 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(79, 184, 212, 0.08);
+}
+
+.recent-records-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16rpx;
+}
+
+.recent-records-label {
+  font-size: 26rpx;
+  color: #3D5A6E;
+  font-weight: 600;
+}
+
+.recent-records-hint {
+  font-size: 22rpx;
+  color: #C8D8E4;
+}
+
+.recent-records-scroll {
+  width: 100%;
+  white-space: nowrap;
+}
+
+.recent-records-row {
+  display: inline-flex;
+  flex-direction: row;
+  gap: 16rpx;
+  padding: 4rpx 0;
+}
+
+.recent-record-chip {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 16rpx 28rpx;
+  background: #F5FBFD;
+  border: 1.5rpx solid #D8EEF5;
+  border-radius: 20rpx;
+  flex-shrink: 0;
+  gap: 4rpx;
+  min-width: 120rpx;
+  transition: all 0.15s;
+}
+
+.recent-record-chip:active {
+  background: #E0F5FA;
+  border-color: #4FB8D4;
+  transform: scale(0.97);
+}
+
+.recent-chip-amount {
+  font-size: 32rpx;
+  font-weight: 700;
+}
+
+.recent-chip-note {
+  font-size: 22rpx;
+  color: #9BAAB8;
+  max-width: 160rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* 数字键盘 */
 .keyboard {
   background: #FFFFFF;
