@@ -742,8 +742,13 @@ Page({
     const n = trendData.length;
     if (n === 0) return;
 
-    // 计算最大值（收入/支出取大者）
-    const maxVal = trendData.reduce((max, d) => Math.max(max, d.income, d.expense), 1);
+    // 计算最大值（收入/支出/净值绝对值三者取大）
+    const maxBarVal = trendData.reduce((max, d) => Math.max(max, d.income, d.expense), 1);
+    const maxNetAbs = trendData.reduce((max, d) => Math.max(max, Math.abs(d.net)), 0);
+    const maxVal = Math.max(maxBarVal, maxNetAbs, 1);
+
+    // 净值折线的零基准线 Y 坐标（底部）
+    const baseY = padTop + chartH;
 
     // 每组宽度
     const groupW = chartW / n;
@@ -778,7 +783,14 @@ Page({
     ctx.lineTo(padLeft, padTop + chartH);
     ctx.stroke();
 
-    // 绘制柱子
+    // ── 收集净值折线各点坐标 ──
+    const netPoints = trendData.map((d, i) => {
+      const groupX = padLeft + i * groupW + groupW / 2;
+      const netY = baseY - chartH * (d.net / maxVal);
+      return { x: groupX, y: netY, net: d.net, hasData: d.income > 0 || d.expense > 0 };
+    });
+
+    // ── 绘制柱子 ──
     trendData.forEach((d, i) => {
       const groupX = padLeft + i * groupW + groupW / 2;
 
@@ -818,9 +830,44 @@ Page({
       ctx.fillText(d.label, groupX, padTop + chartH + 8);
     });
 
-    // 图例
+    // ── 绘制净值折线（叠加在柱子上层）──
+    const validPoints = netPoints.filter(p => p.hasData);
+    if (validPoints.length >= 2) {
+      // 折线路径（虚线风格）
+      ctx.save();
+      ctx.setLineDash([5, 3]);
+      ctx.strokeStyle = 'rgba(130, 90, 200, 0.65)';
+      ctx.lineWidth = 2;
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      let started = false;
+      netPoints.forEach(p => {
+        if (!p.hasData) { started = false; return; }
+        const clampedY = Math.max(padTop + 4, Math.min(baseY, p.y));
+        if (!started) { ctx.moveTo(p.x, clampedY); started = true; }
+        else ctx.lineTo(p.x, clampedY);
+      });
+      ctx.stroke();
+      ctx.restore();
+
+      // 折线数据点（实心圆）
+      netPoints.forEach(p => {
+        if (!p.hasData) return;
+        const clampedY = Math.max(padTop + 4, Math.min(baseY, p.y));
+        const dotColor = p.net >= 0 ? '#7EC879' : '#FF8BAB';
+        ctx.beginPath();
+        ctx.arc(p.x, clampedY, 4, 0, 2 * Math.PI);
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fill();
+        ctx.strokeStyle = dotColor;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      });
+    }
+
+    // ── 图例（支出 / 收入 / 净结余）──
     const legendY = padTop + 2;
-    const legendX = padLeft + chartW - 120;
+    const legendX = padLeft + chartW - 170;
     // 支出图例
     ctx.fillStyle = '#FF8BAB';
     ctx.fillRect(legendX, legendY, 14, 10);
@@ -831,9 +878,28 @@ Page({
     ctx.fillText('支出', legendX + 18, legendY + 5);
     // 收入图例
     ctx.fillStyle = '#4FB8D4';
-    ctx.fillRect(legendX + 56, legendY, 14, 10);
+    ctx.fillRect(legendX + 52, legendY, 14, 10);
     ctx.fillStyle = '#7A9AAB';
-    ctx.fillText('收入', legendX + 74, legendY + 5);
+    ctx.fillText('收入', legendX + 70, legendY + 5);
+    // 净结余图例（虚线 + 圆点）
+    ctx.save();
+    ctx.setLineDash([4, 2]);
+    ctx.strokeStyle = 'rgba(130, 90, 200, 0.65)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(legendX + 104, legendY + 5);
+    ctx.lineTo(legendX + 118, legendY + 5);
+    ctx.stroke();
+    ctx.restore();
+    ctx.beginPath();
+    ctx.arc(legendX + 111, legendY + 5, 3, 0, 2 * Math.PI);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fill();
+    ctx.strokeStyle = '#7EC879';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = '#7A9AAB';
+    ctx.fillText('结余', legendX + 122, legendY + 5);
   },
 
   // 绘制顶部圆角矩形
@@ -863,7 +929,11 @@ Page({
     const n = trendData.length;
     if (n === 0) return;
 
-    const maxVal = trendData.reduce((max, d) => Math.max(max, d.income, d.expense), 1);
+    const maxBarVal = trendData.reduce((max, d) => Math.max(max, d.income, d.expense), 1);
+    const maxNetAbs = trendData.reduce((max, d) => Math.max(max, Math.abs(d.net)), 0);
+    const maxVal = Math.max(maxBarVal, maxNetAbs, 1);
+    const baseY = padTop + chartH;
+
     const groupW = chartW / n;
     const barW = Math.min(groupW * 0.28, 18);
     const barGap = 4;
@@ -884,6 +954,14 @@ Page({
       ctx.fillText(val >= 1000 ? `${(val / 1000).toFixed(1)}k` : String(val), padLeft - 4, y + 4);
     }
 
+    // 收集净值折线坐标
+    const netPoints = trendData.map((d, i) => {
+      const groupX = padLeft + i * groupW + groupW / 2;
+      const netY = baseY - chartH * (d.net / maxVal);
+      return { x: groupX, y: Math.max(padTop + 4, Math.min(baseY, netY)), hasData: d.income > 0 || d.expense > 0 };
+    });
+
+    // 绘制柱子
     trendData.forEach((d, i) => {
       const groupX = padLeft + i * groupW + groupW / 2;
 
@@ -904,6 +982,31 @@ Page({
       ctx.setTextAlign('center');
       ctx.fillText(d.label, groupX, padTop + chartH + 14);
     });
+
+    // 绘制净值折线（旧版 API，无虚线支持，用细实线代替）
+    const validPoints = netPoints.filter(p => p.hasData);
+    if (validPoints.length >= 2) {
+      ctx.setStrokeStyle('rgba(130,90,200,0.7)');
+      ctx.setLineWidth(2);
+      ctx.beginPath();
+      let started = false;
+      netPoints.forEach(p => {
+        if (!p.hasData) { started = false; return; }
+        if (!started) { ctx.moveTo(p.x, p.y); started = true; }
+        else ctx.lineTo(p.x, p.y);
+      });
+      ctx.stroke();
+
+      // 数据点圆圈
+      netPoints.forEach((p, i) => {
+        if (!p.hasData) return;
+        const net = trendData[i].net;
+        ctx.setFillStyle(net >= 0 ? '#7EC879' : '#FF8BAB');
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 3.5, 0, 2 * Math.PI);
+        ctx.fill();
+      });
+    }
   },
 
   // ─── 饼图相关 ─────────────────────────────────────────
