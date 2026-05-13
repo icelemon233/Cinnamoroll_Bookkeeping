@@ -536,6 +536,36 @@ Page({
     this.setData({ statsType }, () => this.loadStats());
   },
 
+  // ─── 分类跳转 ─────────────────────────────────────────
+
+  /**
+   * 点击饼图分类列表项 → 跳转账单列表页并自动筛选该分类
+   * @param {object} e - 事件对象，dataset.category 为分类名称
+   */
+  onCategoryTap(e) {
+    const { category } = e.currentTarget.dataset;
+    if (!category) return;
+    const { statsType } = this.data;
+    // 通过 globalData 传递筛选参数（tabBar 页面切换不支持 URL 参数）
+    const app = getApp();
+    app.globalData.listFilter = { category, type: statsType };
+    wx.vibrateShort({ type: 'light' }).catch(() => {});
+    wx.switchTab({ url: '/pages/list/list' });
+  },
+
+  /**
+   * 点击环比分类行 → 跳转账单列表页并自动筛选该分类（支出视角）
+   * @param {object} e - 事件对象，dataset.category 为分类名称
+   */
+  onCompareCategoryTap(e) {
+    const { category } = e.currentTarget.dataset;
+    if (!category) return;
+    const app = getApp();
+    app.globalData.listFilter = { category, type: 'expense' };
+    wx.vibrateShort({ type: 'light' }).catch(() => {});
+    wx.switchTab({ url: '/pages/list/list' });
+  },
+
   // ─── 视图模式切换 ─────────────────────────────────────
 
   switchViewMode(e) {

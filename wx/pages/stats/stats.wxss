@@ -791,3 +791,39 @@
   line-height: 1.5;
   flex: 1;
 }
+
+/* ─── 分类列表标题行（含点击提示）────────────────────── */
+.list-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+}
+
+.list-title-hint {
+  font-size: 22rpx;
+  color: #4FB8D4;
+  opacity: 0.85;
+}
+
+/* 可点击的分类行 */
+.category-row-tap {
+  cursor: pointer;
+  position: relative;
+}
+
+.category-row-hover {
+  background: rgba(79, 184, 212, 0.07);
+  border-radius: 12rpx;
+}
+
+/* 分类行右侧箭头 */
+.cat-chevron {
+  font-size: 32rpx;
+  color: #B0D8E8;
+  margin-left: 8rpx;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+/* 环比行可点击样式复用 category-row-hover（已在 compare-row 上绑定） */

@@ -47,6 +47,31 @@ Page({
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().setData({ selected: 2 });
     }
+
+    // 检查来自统计页的分类跳转筛选参数
+    const app = getApp();
+    const listFilter = app.globalData.listFilter;
+    if (listFilter) {
+      // 消费后立即清除，避免下次 onShow 重复触发
+      app.globalData.listFilter = null;
+      // 重置到当前月份，并应用分类+类型筛选
+      this._initMonth();
+      this.setData(
+        { filterCategory: listFilter.category, filterType: listFilter.type || 'all' },
+        () => {
+          this.loadData();
+          this._buildTopCategories(this.data.filterMonth);
+          // 轻提示：正在筛选 xx 分类
+          wx.showToast({
+            title: `筛选：${listFilter.category}`,
+            icon: 'none',
+            duration: 1500
+          });
+        }
+      );
+      return;
+    }
+
     this.loadData();
     this._buildTopCategories(this.data.filterMonth);
   },

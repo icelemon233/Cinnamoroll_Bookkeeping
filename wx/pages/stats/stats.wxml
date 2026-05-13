@@ -128,11 +128,18 @@
 
       <!-- 分类列表 -->
       <view class="card category-list">
-        <text class="list-title">分类明细</text>
+        <view class="list-title-row">
+          <text class="list-title">分类明细</text>
+          <text class="list-title-hint">点击分类查看明细 →</text>
+        </view>
         <view
-          class="category-row"
+          class="category-row category-row-tap"
           wx:for="{{categoryList}}"
           wx:key="category"
+          data-category="{{item.category}}"
+          bindtap="onCategoryTap"
+          hover-class="category-row-hover"
+          hover-stay-time="150"
         >
           <view class="cat-color-dot" style="background: {{item.color}};"></view>
           <view class="cat-info">
@@ -145,6 +152,7 @@
             <text class="cat-amount">¥{{item.amount}}</text>
             <text class="cat-percent">{{item.percent}}%</text>
           </view>
+          <text class="cat-chevron">›</text>
         </view>
       </view>
 
@@ -344,7 +352,10 @@
 
     <!-- 分类环比列表 -->
     <view wx:if="{{compareData && compareData.items.length > 0}}" class="card compare-list-card">
-      <text class="list-title">支出分类环比</text>
+      <view class="list-title-row">
+        <text class="list-title">支出分类环比</text>
+        <text class="list-title-hint">点击查看明细 →</text>
+      </view>
       <view class="compare-legend-row">
         <view class="compare-legend-item">
           <view class="compare-legend-dot compare-cur-dot"></view>
@@ -359,6 +370,10 @@
         class="compare-row"
         wx:for="{{compareData.items}}"
         wx:key="category"
+        data-category="{{item.category}}"
+        bindtap="onCompareCategoryTap"
+        hover-class="category-row-hover"
+        hover-stay-time="150"
       >
         <view class="compare-row-header">
           <view class="compare-cat-label">

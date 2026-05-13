@@ -11,6 +11,8 @@ App({
 
   globalData: {
     userInfo: null,
+    // 统计页跳转账单列表时携带的筛选参数（tabBar 页面无法通过 URL 传参，故用 globalData 中转）
+    listFilter: null,  // { category: string, type: string } | null
     // 支出分类配置
     expenseCategories: [
       { name: '餐饮', emoji: '🍜' },
