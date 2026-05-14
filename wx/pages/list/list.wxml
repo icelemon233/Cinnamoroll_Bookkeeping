@@ -120,13 +120,24 @@
     </scroll-view>
   </view>
 
-  <!-- 操作提示 -->
-  <view wx:if="{{!isEmpty && !isSearchMode}}" class="hint-bar hint-bar-row">
-    <text class="hint-text">共 {{searchResultCount}} 条</text>
-    <text class="hint-divider">·</text>
-    <text class="hint-text sort-hint {{sortMode === 'amount' ? 'sort-hint-active' : ''}}" bindtap="toggleSortMode">
-      {{sortMode === 'amount' ? '💰 按金额' : '📅 按日期'}}
-    </text>
+  <!-- 操作提示 / 多选模式提示栏 -->
+  <view wx:if="{{!isEmpty}}">
+    <view wx:if="{{isSelectMode}}" class="select-hint-bar">
+      <view class="select-all-btn" bindtap="toggleSelectAll">
+        <text class="select-all-text">全选</text>
+      </view>
+      <text class="select-count-text">已选 {{selectedCount}} 条</text>
+      <view class="select-exit-btn" bindtap="exitSelectMode">
+        <text class="select-exit-text">取消</text>
+      </view>
+    </view>
+    <view wx:else class="hint-bar hint-bar-row" wx:if="{{!isSearchMode}}">
+      <text class="hint-text">共 {{searchResultCount}} 条</text>
+      <text class="hint-divider">·</text>
+      <text class="hint-text sort-hint {{sortMode === 'amount' ? 'sort-hint-active' : ''}}" bindtap="toggleSortMode">
+        {{sortMode === 'amount' ? '💰 按金额' : '📅 按日期'}}
+      </text>
+    </view>
   </view>
 
   <!-- 空状态 -->
@@ -149,7 +160,7 @@
         </view>
       </view>
       <view
-        class="record-item"
+        class="record-item {{isSelectMode && selectedIds.includes(record.id + '') ? 'record-item-selected' : ''}}"
         wx:for="{{item.records}}"
         wx:for-item="record"
         wx:key="id"
@@ -157,6 +168,10 @@
         bindtap="onRecordTap"
         bindlongpress="onLongPress"
       >
+        <!-- 多选模式勾选框 -->
+        <view wx:if="{{isSelectMode}}" class="record-checkbox {{selectedIds.includes(record.id + '') ? 'record-checkbox-checked' : ''}}">
+          <text wx:if="{{selectedIds.includes(record.id + '')}}" class="checkbox-check">✓</text>
+        </view>
         <view class="record-icon"><text>{{record.emoji}}</text></view>
         <view class="record-body">
           <text class="record-category">{{record.category}}</text>
@@ -166,6 +181,20 @@
           <text class="record-amount {{record.type === 'income' ? 'income-text' : 'expense-text'}}">{{record.amountDisplay}}</text>
         </view>
       </view>
+    </view>
+  </view>
+
+  <!-- 多选模式底部占位（避免操作栏遮挡内容） -->
+  <view wx:if="{{isSelectMode}}" class="batch-spacer"></view>
+
+  <!-- 多选模式底部操作栏 -->
+  <view wx:if="{{isSelectMode}}" class="batch-action-bar">
+    <view class="batch-cancel-btn" bindtap="exitSelectMode">
+      <text>取消</text>
+    </view>
+    <view class="batch-delete-btn {{selectedCount === 0 ? 'batch-btn-disabled' : ''}}" bindtap="deleteSelected">
+      <text class="batch-delete-icon">🗑️</text>
+      <text>删除{{selectedCount > 0 ? ' ' + selectedCount + ' 条' : ''}}</text>
     </view>
   </view>
 

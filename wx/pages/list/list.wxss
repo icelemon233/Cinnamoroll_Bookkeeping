@@ -703,3 +703,140 @@
 .detail-delete-btn .detail-action-text {
   color: #E06080;
 }
+
+/* ─── 多选模式 ───────────────────────────────────────────── */
+
+/* 多选提示栏（替换普通 hint-bar） */
+.select-hint-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16rpx 32rpx;
+  background: #EEF8FB;
+  border-radius: 16rpx;
+  margin: 0 24rpx 16rpx;
+}
+
+.select-all-btn {
+  padding: 8rpx 20rpx;
+  background: #4FB8D4;
+  border-radius: 20rpx;
+}
+
+.select-all-text {
+  font-size: 26rpx;
+  color: #fff;
+  font-weight: 500;
+}
+
+.select-count-text {
+  font-size: 28rpx;
+  color: #3D5A6E;
+  font-weight: 500;
+}
+
+.select-exit-btn {
+  padding: 8rpx 20rpx;
+  background: #CBD8E0;
+  border-radius: 20rpx;
+}
+
+.select-exit-text {
+  font-size: 26rpx;
+  color: #5A7585;
+}
+
+/* 条目选中态 */
+.record-item-selected {
+  background: #EEF8FB;
+  border-radius: 12rpx;
+  margin: 0 -8rpx;
+  padding-left: 8rpx !important;
+  padding-right: 8rpx !important;
+}
+
+/* 勾选框 */
+.record-checkbox {
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 50%;
+  border: 3rpx solid #CBD8E0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 16rpx;
+  flex-shrink: 0;
+  background: #fff;
+  transition: all 0.15s;
+}
+
+.record-checkbox-checked {
+  background: #4FB8D4;
+  border-color: #4FB8D4;
+}
+
+.checkbox-check {
+  font-size: 26rpx;
+  color: #fff;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* 底部批量操作栏 */
+.batch-action-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  padding: 20rpx 32rpx;
+  padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
+  background: #fff;
+  box-shadow: 0 -4rpx 24rpx rgba(79, 184, 212, 0.15);
+  gap: 20rpx;
+  z-index: 100;
+}
+
+.batch-cancel-btn {
+  flex: 1;
+  padding: 24rpx 0;
+  border-radius: 48rpx;
+  border: 2rpx solid #CBD8E0;
+  text-align: center;
+  font-size: 30rpx;
+  color: #5A7585;
+}
+
+.batch-delete-btn {
+  flex: 2;
+  padding: 24rpx 0;
+  border-radius: 48rpx;
+  background: linear-gradient(135deg, #FF8BAB, #FF6090);
+  text-align: center;
+  font-size: 30rpx;
+  color: #fff;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+}
+
+.batch-btn-disabled {
+  background: #CBD8E0;
+}
+
+.batch-delete-icon {
+  font-size: 30rpx;
+}
+
+/* 多选模式时页面底部留白，避免被操作栏遮挡 */
+page.select-mode-active {
+  padding-bottom: 160rpx;
+}
+
+/* 多选模式底部占位 */
+.batch-spacer {
+  height: 160rpx;
+}

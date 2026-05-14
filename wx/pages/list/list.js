@@ -34,7 +34,11 @@ Page({
     showTopCard: false,       // 当月有支出数据时显示
     // 详情弹窗
     showDetail: false,
-    detailRecord: null        // 当前查看的账单记录
+    detailRecord: null,       // 当前查看的账单记录
+    // 批量删除多选模式
+    isSelectMode: false,
+    selectedIds: [],          // 已选中的记录 id 列表（字符串）
+    selectedCount: 0
   },
 
   onLoad() {
@@ -327,6 +331,11 @@ Page({
   // ─── 详情弹窗 ─────────────────────────────────────────
 
   onRecordTap(e) {
+    // 多选模式下点击 = 切换选中
+    if (this.data.isSelectMode) {
+      this.onSelectToggle(e);
+      return;
+    }
     const { id } = e.currentTarget.dataset;
     let targetRecord = null;
     for (const group of this.data.allGroups) {
@@ -374,17 +383,73 @@ Page({
 
   onCardTap() {},
 
-  // ─── 长按操作（兼容保留） ─────────────────────────────
+  // ─── 长按操作：进入多选模式 ───────────────────────────
 
   onLongPress(e) {
-    const id = e.currentTarget.dataset.id;
-    wx.showActionSheet({
-      itemList: ['✏️ 编辑', '🗑️ 删除'],
+    const id = String(e.currentTarget.dataset.id);
+    if (this.data.isSelectMode) return; // 已在多选模式，忽略
+    // 进入多选模式并默认选中当前条目
+    wx.vibrateShort({ type: 'medium' }).catch(() => {});
+    this.setData({
+      isSelectMode: true,
+      selectedIds: [id],
+      selectedCount: 1,
+      showDetail: false,
+      detailRecord: null
+    });
+  },
+
+  // 多选模式下点击条目：切换选中状态
+  onSelectToggle(e) {
+    const id = String(e.currentTarget.dataset.id);
+    let { selectedIds } = this.data;
+    if (selectedIds.includes(id)) {
+      selectedIds = selectedIds.filter(sid => sid !== id);
+    } else {
+      selectedIds = [...selectedIds, id];
+    }
+    this.setData({ selectedIds, selectedCount: selectedIds.length });
+  },
+
+  // 退出多选模式
+  exitSelectMode() {
+    this.setData({ isSelectMode: false, selectedIds: [], selectedCount: 0 });
+  },
+
+  // 全选/取消全选
+  toggleSelectAll() {
+    const { allGroups, selectedIds } = this.data;
+    const allIds = [];
+    allGroups.forEach(g => g.records.forEach(r => allIds.push(String(r.id))));
+    const isAllSelected = allIds.length > 0 && allIds.every(id => selectedIds.includes(id));
+    if (isAllSelected) {
+      this.setData({ selectedIds: [], selectedCount: 0 });
+    } else {
+      this.setData({ selectedIds: allIds, selectedCount: allIds.length });
+    }
+  },
+
+  // 删除选中的记录
+  deleteSelected() {
+    const { selectedIds } = this.data;
+    if (selectedIds.length === 0) {
+      wx.showToast({ title: '请先选择账单', icon: 'none' });
+      return;
+    }
+    wx.showModal({
+      title: '确认删除',
+      content: `确认删除选中的 ${selectedIds.length} 条账单？`,
+      confirmText: '删除',
+      confirmColor: '#FF8BAB',
+      cancelText: '取消',
       success: (res) => {
-        if (res.tapIndex === 0) {
-          wx.navigateTo({ url: `/pages/add/add?recordId=${id}` });
-        } else if (res.tapIndex === 1) {
-          this._confirmDelete(id);
+        if (res.confirm) {
+          const { deleteRecord } = require('../../utils/storage');
+          selectedIds.forEach(id => deleteRecord(id));
+          wx.showToast({ title: `已删除 ${selectedIds.length} 条`, icon: 'success', duration: 1000 });
+          this.setData({ isSelectMode: false, selectedIds: [], selectedCount: 0 });
+          this.loadData();
+          this._buildTopCategories(this.data.filterMonth);
         }
       }
     });
