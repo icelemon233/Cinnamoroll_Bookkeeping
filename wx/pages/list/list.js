@@ -1,5 +1,5 @@
 // pages/list/list.js - 账单列表页
-const { getRecords, deleteRecord, groupByDate, formatDate, exportToCSV, downloadCSV, getMonthSummary } = require('../../utils/storage');
+const { getRecords, deleteRecord, groupByDate, formatDate, exportToCSV, downloadCSV, getMonthSummary, getSearchHistory, saveSearchHistory, deleteSearchHistory, clearSearchHistory } = require('../../utils/storage');
 
 // 分类 emoji 映射（与 add 页保持一致）
 const CATEGORY_EMOJI = {
@@ -24,6 +24,9 @@ Page({
     searchKeyword: '',
     isSearchMode: false,
     searchResultCount: 0,
+    // 搜索历史
+    searchHistory: [],
+    showSearchHistory: false,
     // 分类筛选
     filterCategory: '',       // '' = 不限，否则为分类名称
     categoryChips: [],        // [{ name, emoji, count }] 当月/搜索范围内有记录的分类
@@ -176,15 +179,86 @@ Page({
 
   onSearchInput(e) {
     const keyword = e.detail.value.trim();
-    this.setData({ searchKeyword: keyword, isSearchMode: keyword.length > 0, filterCategory: '' }, () => this.loadData());
+    this.setData({
+      searchKeyword: keyword,
+      isSearchMode: keyword.length > 0,
+      filterCategory: '',
+      showSearchHistory: keyword.length === 0  // 输入清空时重新展示历史
+    }, () => this.loadData());
   },
 
   clearSearch() {
-    this.setData({ searchKeyword: '', isSearchMode: false, filterCategory: '' }, () => this.loadData());
+    const history = getSearchHistory();
+    this.setData({
+      searchKeyword: '',
+      isSearchMode: false,
+      filterCategory: '',
+      showSearchHistory: history.length > 0,
+      searchHistory: history
+    }, () => this.loadData());
   },
 
   onSearchFocus() {
-    // 聚焦时不切换搜索模式，等有输入才切
+    // 聚焦时展示搜索历史（若有）
+    const history = getSearchHistory();
+    if (history.length > 0) {
+      this.setData({ showSearchHistory: true, searchHistory: history });
+    }
+  },
+
+  onSearchBlur() {
+    // 延迟隐藏，确保点击历史条目时事件能触发
+    setTimeout(() => {
+      this.setData({ showSearchHistory: false });
+    }, 200);
+  },
+
+  // 点击历史搜索词：直接触发搜索
+  onHistoryTap(e) {
+    const keyword = e.currentTarget.dataset.keyword;
+    if (!keyword) return;
+    this.setData({
+      searchKeyword: keyword,
+      isSearchMode: true,
+      filterCategory: '',
+      showSearchHistory: false
+    }, () => {
+      // 将此词移到历史记录最前面
+      saveSearchHistory(keyword);
+      this.loadData();
+    });
+  },
+
+  // 删除单条搜索历史
+  onDeleteHistory(e) {
+    e.stopPropagation && e.stopPropagation();
+    const keyword = e.currentTarget.dataset.keyword;
+    deleteSearchHistory(keyword);
+    const history = getSearchHistory();
+    this.setData({
+      searchHistory: history,
+      showSearchHistory: history.length > 0
+    });
+  },
+
+  // 清空全部搜索历史
+  onClearAllHistory() {
+    clearSearchHistory();
+    this.setData({ searchHistory: [], showSearchHistory: false });
+  },
+
+  // 搜索确认（按下键盘搜索键）
+  onSearchConfirm(e) {
+    const keyword = (e.detail.value || '').trim();
+    if (keyword) {
+      saveSearchHistory(keyword);
+      this.setData({
+        searchKeyword: keyword,
+        isSearchMode: true,
+        filterCategory: '',
+        showSearchHistory: false
+      }, () => this.loadData());
+    }
   },
 
   // ─── 分类筛选 ─────────────────────────────────────────

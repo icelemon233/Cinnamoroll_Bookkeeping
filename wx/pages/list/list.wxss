@@ -54,6 +54,93 @@
   margin-bottom: 16rpx;
 }
 
+/* ─── 搜索历史面板 ──────────────────────────────────────── */
+.search-history-panel {
+  background: #FFFFFF;
+  border-radius: 24rpx;
+  padding: 24rpx 28rpx;
+  margin-bottom: 16rpx;
+  box-shadow: 0 4rpx 20rpx rgba(79, 184, 212, 0.12);
+}
+
+.search-history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+}
+
+.search-history-title {
+  font-size: 26rpx;
+  color: #9BAAB8;
+  font-weight: 500;
+}
+
+.search-history-clear {
+  padding: 8rpx 20rpx;
+  border-radius: 100rpx;
+  background: #F0F8FF;
+}
+
+.search-history-clear-text {
+  font-size: 24rpx;
+  color: #B0C4D0;
+}
+
+.search-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.search-history-item {
+  display: flex;
+  align-items: center;
+  padding: 18rpx 16rpx;
+  border-radius: 16rpx;
+  gap: 16rpx;
+  transition: background 0.15s;
+}
+
+.search-history-item:active {
+  background: #F0F8FF;
+}
+
+.search-history-icon {
+  font-size: 26rpx;
+  flex-shrink: 0;
+  opacity: 0.5;
+}
+
+.search-history-kw {
+  flex: 1;
+  font-size: 28rpx;
+  color: #3D5A6E;
+  font-weight: 400;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.search-history-del {
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.search-history-del:active {
+  background: #FFE0E8;
+}
+
+.search-history-del-icon {
+  font-size: 22rpx;
+  color: #C8D8E4;
+}
+
 /* ─── 月份切换导航栏 ──────────────────────────────────────── */
 .month-nav {
   display: flex;

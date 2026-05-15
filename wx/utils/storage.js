@@ -635,6 +635,56 @@ function getRecentCategoryRecords(category, type, limit) {
   return result;
 }
 
+// ─── 搜索历史记录 ──────────────────────────────────────────
+
+const SEARCH_HISTORY_KEY = 'search_history';
+const SEARCH_HISTORY_MAX = 8; // 最多保存 8 条历史
+
+/**
+ * 获取搜索历史记录列表
+ * @returns {string[]} 最近搜索词数组，从新到旧排列
+ */
+function getSearchHistory() {
+  return wx.getStorageSync(SEARCH_HISTORY_KEY) || [];
+}
+
+/**
+ * 保存一条搜索词到历史记录
+ * 相同关键词会移到最前面；超出上限时删除最旧的条目
+ * @param {string} keyword - 搜索关键词（trim 后不为空）
+ */
+function saveSearchHistory(keyword) {
+  if (!keyword || !keyword.trim()) return;
+  const kw = keyword.trim();
+  let history = getSearchHistory();
+  // 去重：已存在则先移除
+  history = history.filter(h => h !== kw);
+  // 插到最前面
+  history.unshift(kw);
+  // 截断至最大条数
+  if (history.length > SEARCH_HISTORY_MAX) {
+    history = history.slice(0, SEARCH_HISTORY_MAX);
+  }
+  wx.setStorageSync(SEARCH_HISTORY_KEY, history);
+}
+
+/**
+ * 删除单条搜索历史记录
+ * @param {string} keyword
+ */
+function deleteSearchHistory(keyword) {
+  let history = getSearchHistory();
+  history = history.filter(h => h !== keyword);
+  wx.setStorageSync(SEARCH_HISTORY_KEY, history);
+}
+
+/**
+ * 清空所有搜索历史
+ */
+function clearSearchHistory() {
+  wx.setStorageSync(SEARCH_HISTORY_KEY, []);
+}
+
 module.exports = {
   getRecords,
   saveRecord,
@@ -655,5 +705,9 @@ module.exports = {
   getMonthHeatmap,
   getRecentMonthsSummary,
   getWeekSummary,
-  getRecentCategoryRecords
+  getRecentCategoryRecords,
+  getSearchHistory,
+  saveSearchHistory,
+  deleteSearchHistory,
+  clearSearchHistory
 };

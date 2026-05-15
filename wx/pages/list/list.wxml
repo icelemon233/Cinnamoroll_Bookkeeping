@@ -12,10 +12,41 @@
         value="{{searchKeyword}}"
         bindinput="onSearchInput"
         bindfocus="onSearchFocus"
+        bindblur="onSearchBlur"
+        bindconfirm="onSearchConfirm"
         confirm-type="search"
       />
       <view wx:if="{{searchKeyword}}" class="search-clear" bindtap="clearSearch">
         <text class="clear-icon">✕</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 搜索历史浮层（聚焦且有历史时显示） -->
+  <view wx:if="{{showSearchHistory && searchHistory.length > 0}}" class="search-history-panel">
+    <view class="search-history-header">
+      <text class="search-history-title">🕐 最近搜索</text>
+      <view class="search-history-clear" bindtap="onClearAllHistory">
+        <text class="search-history-clear-text">清空</text>
+      </view>
+    </view>
+    <view class="search-history-list">
+      <view
+        class="search-history-item"
+        wx:for="{{searchHistory}}"
+        wx:key="*this"
+        data-keyword="{{item}}"
+        bindtap="onHistoryTap"
+      >
+        <text class="search-history-icon">🔍</text>
+        <text class="search-history-kw">{{item}}</text>
+        <view
+          class="search-history-del"
+          data-keyword="{{item}}"
+          catchtap="onDeleteHistory"
+        >
+          <text class="search-history-del-icon">✕</text>
+        </view>
       </view>
     </view>
   </view>
