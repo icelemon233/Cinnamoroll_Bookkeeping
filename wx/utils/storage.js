@@ -195,6 +195,52 @@ function setMonthBudget(yearMonth, amount) {
   wx.setStorageSync(BUDGET_KEY, budgets);
 }
 
+// ─────────────────────────────────────────────
+// 分类预算
+// ─────────────────────────────────────────────
+
+const CAT_BUDGET_KEY = 'category_budgets'; // { 'YYYY-MM': { category: amount } }
+
+/**
+ * 获取指定月份某分类的预算
+ * @param {string} yearMonth - 'YYYY-MM'
+ * @param {string} category  - 分类名称
+ * @returns {number} 预算金额，0 表示未设置
+ */
+function getCategoryBudget(yearMonth, category) {
+  const all = wx.getStorageSync(CAT_BUDGET_KEY) || {};
+  const monthBudgets = all[yearMonth] || {};
+  return Number(monthBudgets[category]) || 0;
+}
+
+/**
+ * 获取指定月份所有分类预算
+ * @param {string} yearMonth - 'YYYY-MM'
+ * @returns {{ [category: string]: number }}
+ */
+function getCategoryBudgets(yearMonth) {
+  const all = wx.getStorageSync(CAT_BUDGET_KEY) || {};
+  return all[yearMonth] || {};
+}
+
+/**
+ * 设置指定月份某分类的预算
+ * @param {string} yearMonth - 'YYYY-MM'
+ * @param {string} category  - 分类名称
+ * @param {number} amount    - 预算金额，0 表示清除
+ */
+function setCategoryBudget(yearMonth, category, amount) {
+  const all = wx.getStorageSync(CAT_BUDGET_KEY) || {};
+  if (!all[yearMonth]) all[yearMonth] = {};
+  if (!amount || amount <= 0) {
+    delete all[yearMonth][category];
+    if (Object.keys(all[yearMonth]).length === 0) delete all[yearMonth];
+  } else {
+    all[yearMonth][category] = parseFloat(Number(amount).toFixed(2));
+  }
+  wx.setStorageSync(CAT_BUDGET_KEY, all);
+}
+
 /**
  * 搜索账单记录
  * @param {string} keyword - 搜索关键词（匹配备注、分类）
@@ -709,5 +755,8 @@ module.exports = {
   getSearchHistory,
   saveSearchHistory,
   deleteSearchHistory,
-  clearSearchHistory
+  clearSearchHistory,
+  getCategoryBudget,
+  getCategoryBudgets,
+  setCategoryBudget
 };

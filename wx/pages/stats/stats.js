@@ -1,5 +1,5 @@
-// pages/stats/stats.js - 统计页（饼图 + 趋势柱状图 + 年度总览）
-const { getCategoryStats, getMonthSummary } = require('../../utils/storage');
+// pages/stats/stats.js - 统计页（饼图 + 趋势柱状图 + 年度总览 + 分类预算）
+const { getCategoryStats, getMonthSummary, getCategoryBudgets, setCategoryBudget } = require('../../utils/storage');
 
 // 饼图颜色（Cinnamoroll 蓝色系列）
 const COLORS = [
@@ -63,7 +63,11 @@ Page({
     // 智能分析卡片（仅饼图模式 / 支出视角）
     insightCard: null,         // { dailyAvg, predicted, vsLastMonth, vsLastMonthPct, isUp, tip, tipEmoji, showPrediction }
     // 分类环比数据
-    compareData: null          // { curExpense, prevExpense, expenseDiff, expenseDiffAbs, items, tip, tipEmoji }
+    compareData: null,         // { curExpense, prevExpense, expenseDiff, expenseDiffAbs, items, tip, tipEmoji }
+    // 分类预算数据
+    catBudgetItems: [],        // [{ category, emoji, spent, budget, hasBudget, percent, isOver, remain }]
+    catBudgetTip: '',
+    catBudgetTipEmoji: ''
   },
 
   onLoad() {
@@ -398,6 +402,8 @@ Page({
         this._loadTrendData();
       } else if (viewMode === 'compare') {
         this._loadCompareData();
+      } else if (viewMode === 'budget') {
+        this._loadCatBudgetData();
       }
     });
   },
@@ -578,6 +584,8 @@ Page({
         this._loadAnnualData();
       } else if (viewMode === 'compare') {
         this._loadCompareData();
+      } else if (viewMode === 'budget') {
+        this._loadCatBudgetData();
       } else {
         // 切回饼图，重新绘制
         if (!this.data.isEmpty) {
@@ -705,6 +713,112 @@ Page({
       return { tipEmoji: '🐾', tip: `支出较上月增加 ¥${Math.abs(diff).toFixed(2)}，幅度在可控范围内～` };
     }
     return { tipEmoji: '✨', tip: `支出较上月减少 ¥${Math.abs(diff).toFixed(2)}，节约进行中！` };
+  },
+
+  // ─── 分类预算 ──────────────────────────────────────────
+
+  /**
+   * 加载当月各分类支出与预算对比数据
+   */
+  _loadCatBudgetData() {
+    const { yearMonth } = this.data;
+    const summary = getMonthSummary(yearMonth);
+    const budgets = getCategoryBudgets(yearMonth);
+
+    // 统计当月支出各分类金额
+    const spentMap = {};
+    summary.records.filter(r => r.type === 'expense').forEach(r => {
+      const cat = r.category || '其他';
+      spentMap[cat] = (spentMap[cat] || 0) + (Number(r.amount) || 0);
+    });
+
+    // 合并有支出记录 + 有预算设置的分类
+    const allCats = Array.from(new Set([
+      ...Object.keys(spentMap),
+      ...Object.keys(budgets)
+    ]));
+
+    const items = allCats.map(cat => {
+      const spent = parseFloat((spentMap[cat] || 0).toFixed(2));
+      const budget = Number(budgets[cat]) || 0;
+      const hasBudget = budget > 0;
+      const percent = hasBudget ? Math.min(100, parseFloat((spent / budget * 100).toFixed(1))) : 0;
+      const isOver = hasBudget && spent > budget;
+      const remain = hasBudget ? parseFloat((budget - spent).toFixed(2)) : 0;
+      return {
+        category: cat,
+        emoji: CATEGORY_EMOJI[cat] || '📦',
+        spent,
+        budget,
+        hasBudget,
+        percent,
+        isOver,
+        remain: Math.abs(remain)
+      };
+    }).sort((a, b) => {
+      // 排序：超预算 > 已设预算 > 无预算；同组内按支出降序
+      if (a.isOver !== b.isOver) return a.isOver ? -1 : 1;
+      if (a.hasBudget !== b.hasBudget) return a.hasBudget ? -1 : 1;
+      return b.spent - a.spent;
+    });
+
+    // 生成提示文案
+    const overCount = items.filter(i => i.isOver).length;
+    const hasBudgetCount = items.filter(i => i.hasBudget).length;
+    let catBudgetTip = '';
+    let catBudgetTipEmoji = '';
+    if (items.length === 0) {
+      catBudgetTip = '本月还没有支出记录，快去记账吧～';
+      catBudgetTipEmoji = '🌸';
+    } else if (hasBudgetCount === 0) {
+      catBudgetTip = '点击分类右侧「设预算」为每个分类设置月度限额';
+      catBudgetTipEmoji = '🎯';
+    } else if (overCount > 0) {
+      catBudgetTip = `有 ${overCount} 个分类超预算，注意控制支出哦～`;
+      catBudgetTipEmoji = '⚠️';
+    } else {
+      catBudgetTip = '所有分类都在预算内，消费很自律！';
+      catBudgetTipEmoji = '🎉';
+    }
+
+    this.setData({ catBudgetItems: items, catBudgetTip, catBudgetTipEmoji });
+  },
+
+  /**
+   * 点击设置/修改某分类预算
+   */
+  onSetCatBudget(e) {
+    const { category } = e.currentTarget.dataset;
+    if (!category) return;
+    const { yearMonth } = this.data;
+    const budgets = getCategoryBudgets(yearMonth);
+    const current = budgets[category] || 0;
+
+    wx.showModal({
+      title: `设置「${category}」预算`,
+      placeholderText: current > 0 ? `当前: ¥${current}` : '输入月度限额（元）',
+      editable: true,
+      content: current > 0 ? String(current) : '',
+      confirmText: '确定',
+      cancelText: current > 0 ? '清除预算' : '取消',
+      success: (res) => {
+        if (res.confirm) {
+          const val = parseFloat(res.content);
+          if (isNaN(val) || val < 0) {
+            wx.showToast({ title: '请输入有效金额', icon: 'none' });
+            return;
+          }
+          setCategoryBudget(yearMonth, category, val);
+          wx.vibrateShort({ type: 'light' }).catch(() => {});
+          this._loadCatBudgetData();
+        } else if (res.cancel && current > 0) {
+          // 清除预算
+          setCategoryBudget(yearMonth, category, 0);
+          wx.vibrateShort({ type: 'light' }).catch(() => {});
+          this._loadCatBudgetData();
+        }
+      }
+    });
   },
 
   // ─── 趋势数据加载 ─────────────────────────────────────

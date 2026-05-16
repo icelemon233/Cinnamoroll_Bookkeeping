@@ -1,7 +1,7 @@
 <!-- pages/stats/stats.wxml - 统计页 -->
 <view class="container">
 
-  <!-- 顶部：视图模式切换（饼图 / 趋势 / 年度 / 环比） -->
+  <!-- 顶部：视图模式切换（饼图 / 趋势 / 年度 / 环比 / 预算） -->
   <view class="view-mode-switcher">
     <view
       class="view-mode-btn {{viewMode === 'pie' ? 'view-mode-active' : ''}}"
@@ -23,6 +23,11 @@
       data-mode="compare"
       bindtap="switchViewMode"
     >🔄 环比</view>
+    <view
+      class="view-mode-btn {{viewMode === 'budget' ? 'view-mode-active' : ''}}"
+      data-mode="budget"
+      bindtap="switchViewMode"
+    >🎯 预算</view>
   </view>
 
   <!-- ═══════ 饼图模式 ═══════ -->
@@ -414,6 +419,87 @@
     <view wx:if="{{compareData && compareData.items.length > 0}}" class="compare-tip-row">
       <text class="compare-tip-emoji">{{compareData.tipEmoji}}</text>
       <text class="compare-tip-text">{{compareData.tip}}</text>
+    </view>
+
+  </block>
+
+  <!-- ═══════ 分类预算模式 ═══════ -->
+  <block wx:if="{{viewMode === 'budget'}}">
+
+    <!-- 月份切换栏 -->
+    <view class="month-nav">
+      <view class="month-arrow" bindtap="prevMonth">
+        <text class="arrow-text">‹</text>
+      </view>
+      <text class="month-title">{{currentMonth}} 分类预算</text>
+      <view class="month-arrow {{isCurrentMonth ? 'arrow-disabled' : ''}}" bindtap="nextMonth">
+        <text class="arrow-text">›</text>
+      </view>
+    </view>
+
+    <!-- 提示文案 -->
+    <view class="compare-tip-row" wx:if="{{catBudgetTip}}">
+      <text class="compare-tip-emoji">{{catBudgetTipEmoji}}</text>
+      <text class="compare-tip-text">{{catBudgetTip}}</text>
+    </view>
+
+    <!-- 空状态 -->
+    <view wx:if="{{catBudgetItems.length === 0}}" class="empty-state">
+      <text class="empty-icon">🌸</text>
+      <text class="empty-text">本月还没有支出记录～</text>
+    </view>
+
+    <!-- 分类预算列表 -->
+    <view wx:else class="card cat-budget-card">
+      <view class="list-title-row">
+        <text class="list-title">支出分类限额</text>
+        <text class="list-title-hint">点击「设预算」设置限额</text>
+      </view>
+
+      <view
+        class="cat-budget-row"
+        wx:for="{{catBudgetItems}}"
+        wx:key="category"
+      >
+        <!-- 分类名 + 超预算标志 -->
+        <view class="cat-budget-header">
+          <view class="cat-budget-label">
+            <text class="cat-budget-emoji">{{item.emoji}}</text>
+            <text class="cat-budget-name">{{item.category}}</text>
+            <view wx:if="{{item.isOver}}" class="cat-budget-over-badge">超预算</view>
+          </view>
+          <view
+            class="cat-budget-set-btn"
+            data-category="{{item.category}}"
+            bindtap="onSetCatBudget"
+          >
+            <text class="cat-budget-set-text">{{item.hasBudget ? '修改' : '设预算'}}</text>
+          </view>
+        </view>
+
+        <!-- 金额行 -->
+        <view class="cat-budget-amounts">
+          <text class="cat-budget-spent expense-text">¥{{item.spent}}</text>
+          <text wx:if="{{item.hasBudget}}" class="cat-budget-slash"> / </text>
+          <text wx:if="{{item.hasBudget}}" class="cat-budget-limit">¥{{item.budget}}</text>
+          <view wx:if="{{item.hasBudget}}" class="cat-budget-remain-wrap">
+            <text wx:if="{{!item.isOver}}" class="cat-budget-remain-ok">还剩 ¥{{item.remain}}</text>
+            <text wx:else class="cat-budget-remain-over">超出 ¥{{item.remain}}</text>
+          </view>
+        </view>
+
+        <!-- 进度条 -->
+        <view wx:if="{{item.hasBudget}}" class="cat-budget-bar-bg">
+          <view
+            class="cat-budget-bar-fill {{item.isOver ? 'cat-budget-bar-over' : item.percent >= 80 ? 'cat-budget-bar-warn' : 'cat-budget-bar-ok'}}"
+            style="width: {{item.percent}}%;"
+          ></view>
+        </view>
+        <view wx:if="{{item.hasBudget}}" class="cat-budget-percent-row">
+          <text class="cat-budget-percent-text {{item.isOver ? 'budget-over-text' : item.percent >= 80 ? 'budget-warn-text' : ''}}">已用 {{item.percent}}%</text>
+        </view>
+
+      </view>
     </view>
 
   </block>

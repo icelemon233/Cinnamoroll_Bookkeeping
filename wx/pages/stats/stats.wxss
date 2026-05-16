@@ -238,11 +238,13 @@
 .view-mode-btn {
   flex: 1;
   text-align: center;
-  padding: 18rpx 0;
+  padding: 16rpx 4rpx;
   border-radius: 100rpx;
-  font-size: 26rpx;
+  font-size: 24rpx;
   color: #9BAAB8;
   transition: all 0.2s;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .view-mode-active {
@@ -827,3 +829,149 @@
 }
 
 /* 环比行可点击样式复用 category-row-hover（已在 compare-row 上绑定） */
+
+/* ═══════════════════════════════════════════════
+   分类预算模式
+   ═══════════════════════════════════════════════ */
+
+.cat-budget-card {
+  padding: 28rpx 24rpx;
+}
+
+.cat-budget-row {
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #EBF7FB;
+}
+
+.cat-budget-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+/* 头部：分类名 + 操作按钮 */
+.cat-budget-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10rpx;
+}
+
+.cat-budget-label {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  flex: 1;
+}
+
+.cat-budget-emoji {
+  font-size: 32rpx;
+}
+
+.cat-budget-name {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #3D5A6E;
+}
+
+.cat-budget-over-badge {
+  font-size: 20rpx;
+  color: #FFFFFF;
+  background: #FF8BAB;
+  border-radius: 20rpx;
+  padding: 2rpx 12rpx;
+  margin-left: 8rpx;
+  font-weight: 600;
+}
+
+.cat-budget-set-btn {
+  padding: 6rpx 18rpx;
+  border: 1.5rpx solid #4FB8D4;
+  border-radius: 20rpx;
+  flex-shrink: 0;
+}
+
+.cat-budget-set-text {
+  font-size: 22rpx;
+  color: #4FB8D4;
+  font-weight: 500;
+}
+
+/* 金额行 */
+.cat-budget-amounts {
+  display: flex;
+  align-items: baseline;
+  gap: 4rpx;
+  margin-bottom: 10rpx;
+}
+
+.cat-budget-spent {
+  font-size: 30rpx;
+  font-weight: 700;
+}
+
+.cat-budget-slash {
+  font-size: 24rpx;
+  color: #B0C4D0;
+}
+
+.cat-budget-limit {
+  font-size: 26rpx;
+  color: #7A9AAB;
+}
+
+.cat-budget-remain-wrap {
+  margin-left: auto;
+}
+
+.cat-budget-remain-ok {
+  font-size: 22rpx;
+  color: #7EC879;
+}
+
+.cat-budget-remain-over {
+  font-size: 22rpx;
+  color: #FF8BAB;
+  font-weight: 600;
+}
+
+/* 进度条 */
+.cat-budget-bar-bg {
+  width: 100%;
+  height: 10rpx;
+  background: #EBF7FB;
+  border-radius: 8rpx;
+  overflow: hidden;
+  margin-bottom: 6rpx;
+}
+
+.cat-budget-bar-fill {
+  height: 100%;
+  border-radius: 8rpx;
+  transition: width 0.4s ease;
+}
+
+.cat-budget-bar-ok {
+  background: linear-gradient(90deg, #4FB8D4, #7EC8E3);
+}
+
+.cat-budget-bar-warn {
+  background: linear-gradient(90deg, #F5A623, #F7C86A);
+}
+
+.cat-budget-bar-over {
+  background: linear-gradient(90deg, #FF6B8A, #FF8BAB);
+}
+
+.cat-budget-percent-row {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.cat-budget-percent-text {
+  font-size: 20rpx;
+  color: #9BAAB8;
+}
+
+.budget-warn-text {
+  color: #F5A623 !important;
+}
