@@ -1,5 +1,5 @@
 // pages/index/index.js - 首页
-const { getRecords, getMonthSummary, groupByDate, formatDate, getMonthBudget, setMonthBudget, getStreakDays, getTodaySummary, getMonthHeatmap, getRecentMonthsSummary, getWeekSummary } = require('../../utils/storage');
+const { getRecords, getMonthSummary, groupByDate, formatDate, getMonthBudget, setMonthBudget, getStreakDays, getTodaySummary, getMonthHeatmap, getRecentMonthsSummary, getWeekSummary, getFinanceHealthScore } = require('../../utils/storage');
 
 // 分类 emoji 映射（与 add 页保持一致）
 const CATEGORY_EMOJI = {
@@ -42,7 +42,9 @@ Page({
     // 本月消费热力日历
     heatmap: null,
     // 本周账单周报
-    weekSummary: null
+    weekSummary: null,
+    // 财务健康评分
+    healthScore: null
   },
 
   onLoad() {
@@ -106,6 +108,9 @@ Page({
     // 本月消费热力日历
     const heatmap = getMonthHeatmap(yearMonth);
 
+    // 财务健康评分
+    const healthScore = getFinanceHealthScore(yearMonth);
+
     // 本周账单周报（加入柱状图高度百分比）
     const weekSummaryRaw = getWeekSummary();
     const maxBarAmount = weekSummaryRaw.maxAmount || 1;
@@ -146,7 +151,8 @@ Page({
       trendMonths,
       trendInsight,
       trendInsightEmoji,
-      weekSummary
+      weekSummary,
+      healthScore
     });
 
     // 绘制折线图（数据加载后再绘制）

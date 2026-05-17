@@ -731,6 +731,130 @@ function clearSearchHistory() {
   wx.setStorageSync(SEARCH_HISTORY_KEY, []);
 }
 
+/**
+ * 计算财务健康评分
+ *
+ * 评分维度（总分 100）：
+ *   1. 收支比健康度（40分）：本月收入 > 0 时，储蓄率越高分越高；无收入但无支出给满分
+ *   2. 记账习惯（25分）：基于当前连续记账天数
+ *   3. 预算执行（20分）：设置预算且不超支给满分，未设置给一半，超支给 0
+ *   4. 近3月趋势（15分）：连续三月有净储蓄给满分，两月给 2/3，一月给 1/3，皆无给 0
+ *
+ * @param {string} yearMonth - 当前月份，如 '2026-05'
+ * @returns {{
+ *   score: number,           // 0-100 整数
+ *   level: string,           // '优秀' | '良好' | '一般' | '需改善'
+ *   levelEmoji: string,
+ *   levelColor: string,      // 主色调（用于进度环）
+ *   tip: string,             // 核心建议文案（一句话）
+ *   dimensions: Array<{ label: string, score: number, maxScore: number, icon: string }>
+ * }}
+ */
+function getFinanceHealthScore(yearMonth) {
+  // ── 维度1：收支比健康度（40分）──
+  const summary = getMonthSummary(yearMonth);
+  let dim1 = 0;
+  if (summary.income > 0) {
+    // 储蓄率 = net / income，0~1 线性映射到 0~40分，超支时为 0
+    const savingRate = Math.max(0, summary.net / summary.income);
+    dim1 = Math.min(40, Math.round(savingRate * 40));
+  } else if (summary.expense === 0) {
+    // 本月既无收入也无支出：可能刚开始，给满分（不惩罚）
+    dim1 = 40;
+  } else {
+    // 有支出无收入，说明纯花费，给 0
+    dim1 = 0;
+  }
+
+  // ── 维度2：记账习惯（25分）──
+  const { streak, longestStreak } = getStreakDays();
+  // 综合当前连击和历史最长连击，取较大值作为参考，上限 30 天对应满分
+  const habitRef = Math.max(streak, longestStreak);
+  let dim2 = 0;
+  if (habitRef >= 30) dim2 = 25;
+  else if (habitRef >= 14) dim2 = 20;
+  else if (habitRef >= 7)  dim2 = 15;
+  else if (habitRef >= 3)  dim2 = 10;
+  else if (habitRef >= 1)  dim2 = 5;
+  else dim2 = 0;
+
+  // ── 维度3：预算执行（20分）──
+  const budget = getMonthBudget(yearMonth);
+  let dim3 = 0;
+  if (budget > 0) {
+    if (summary.expense <= budget) {
+      // 有预算且未超支，按使用率给分（用了少一点给满分，用到边缘略扣分）
+      const usageRate = summary.expense / budget; // 0~1
+      if (usageRate <= 0.9) dim3 = 20;
+      else dim3 = Math.round((1 - usageRate) * 20 / 0.1); // 90%~100%线性降到0
+      dim3 = Math.max(0, dim3);
+    } else {
+      dim3 = 0; // 超预算
+    }
+  } else {
+    // 未设预算：给一半分作为鼓励
+    dim3 = 10;
+  }
+
+  // ── 维度4：近3月净储蓄趋势（15分）──
+  const recent3 = getRecentMonthsSummary(3);
+  // 排除当前月（数据不完整），看前两个月；若当月为完整月，一起算
+  const savingMonths = recent3.filter(m => m.net > 0).length;
+  let dim4 = 0;
+  if (savingMonths >= 3) dim4 = 15;
+  else if (savingMonths === 2) dim4 = 10;
+  else if (savingMonths === 1) dim4 = 5;
+  else dim4 = 0;
+
+  const score = dim1 + dim2 + dim3 + dim4;
+
+  // ── 等级和颜色 ──
+  let level, levelEmoji, levelColor;
+  if (score >= 85) {
+    level = '优秀'; levelEmoji = '🏆'; levelColor = '#4FB8D4';
+  } else if (score >= 65) {
+    level = '良好'; levelEmoji = '🌟'; levelColor = '#7EC8E3';
+  } else if (score >= 40) {
+    level = '一般'; levelEmoji = '🌱'; levelColor = '#F0B966';
+  } else {
+    level = '需改善'; levelEmoji = '💪'; levelColor = '#FF8BAB';
+  }
+
+  // ── 最薄弱维度 → 生成建议 ──
+  const dims = [
+    { key: 'spending', score: dim1, maxScore: 40 },
+    { key: 'habit',    score: dim2, maxScore: 25 },
+    { key: 'budget',   score: dim3, maxScore: 20 },
+    { key: 'trend',    score: dim4, maxScore: 15 }
+  ];
+  const weakest = dims.reduce((a, b) => (a.score / a.maxScore < b.score / b.maxScore ? a : b));
+
+  const tipMap = {
+    spending: summary.income > 0
+      ? `本月储蓄率偏低，尝试控制非必要支出 💰`
+      : '记录收入来源，让财务画面更完整 📊',
+    habit: streak === 0
+      ? '今天还没记账哦，坚持每日记录更准确 📝'
+      : `连续记账 ${streak} 天，继续保持好习惯 🔥`,
+    budget: budget === 0
+      ? '设置月度预算，帮助控制消费节奏 🎯'
+      : `预算使用已超支，下月提前规划分类开销 ⚠️`,
+    trend: '近几个月储蓄偏少，制定存钱目标有助于积累 🐾'
+  };
+
+  const tip = tipMap[weakest.key];
+
+  // ── 维度详情（用于展示） ──
+  const dimensions = [
+    { label: '收支比', score: dim1, maxScore: 40, icon: '💰' },
+    { label: '记账习惯', score: dim2, maxScore: 25, icon: '📝' },
+    { label: '预算执行', score: dim3, maxScore: 20, icon: '🎯' },
+    { label: '储蓄趋势', score: dim4, maxScore: 15, icon: '📈' }
+  ];
+
+  return { score, level, levelEmoji, levelColor, tip, dimensions };
+}
+
 module.exports = {
   getRecords,
   saveRecord,
@@ -758,5 +882,6 @@ module.exports = {
   clearSearchHistory,
   getCategoryBudget,
   getCategoryBudgets,
-  setCategoryBudget
+  setCategoryBudget,
+  getFinanceHealthScore
 };

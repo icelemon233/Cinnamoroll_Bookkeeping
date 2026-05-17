@@ -1016,3 +1016,164 @@
   color: #2D4A6B;
   font-size: 26rpx;
 }
+
+/* ─── 财务健康评分卡片 ─────────────────────────────── */
+.health-card {
+  padding: 32rpx 28rpx 28rpx;
+}
+
+.health-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28rpx;
+}
+
+.health-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.health-icon {
+  font-size: 32rpx;
+}
+
+.health-title {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #2D4A6B;
+}
+
+.health-level-badge {
+  padding: 6rpx 20rpx;
+  border-radius: 20rpx;
+  border: 1rpx solid;
+}
+
+.health-level-text {
+  font-size: 24rpx;
+  font-weight: 600;
+}
+
+/* 分数行 */
+.health-score-row {
+  display: flex;
+  align-items: center;
+  gap: 28rpx;
+  margin-bottom: 24rpx;
+}
+
+/* 环形进度（CSS conic-gradient） */
+.health-score-circle-wrap {
+  flex-shrink: 0;
+}
+
+.health-ring-bg {
+  position: relative;
+  width: 140rpx;
+  height: 140rpx;
+  border-radius: 50%;
+}
+
+.health-ring-fill {
+  width: 140rpx;
+  height: 140rpx;
+  border-radius: 50%;
+}
+
+.health-ring-inner {
+  position: absolute;
+  top: 14rpx;
+  left: 14rpx;
+  width: 112rpx;
+  height: 112rpx;
+  border-radius: 50%;
+  background: #FFFFFF;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.health-score-num {
+  font-size: 44rpx;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.health-score-unit {
+  font-size: 20rpx;
+  color: #9BAAB8;
+  margin-top: 2rpx;
+}
+
+/* 四维度 */
+.health-dims {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+}
+
+.health-dim-item {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.health-dim-icon {
+  font-size: 24rpx;
+  width: 32rpx;
+  text-align: center;
+}
+
+.health-dim-bar-bg {
+  flex: 1;
+  height: 10rpx;
+  background: #EEF7FB;
+  border-radius: 10rpx;
+  overflow: hidden;
+}
+
+.health-dim-bar-fill {
+  height: 100%;
+  border-radius: 10rpx;
+  transition: width 0.4s ease;
+}
+
+.health-dim-label {
+  font-size: 20rpx;
+  color: #9BAAB8;
+  width: 76rpx;
+  text-align: right;
+}
+
+.health-dim-score {
+  font-size: 20rpx;
+  color: #B8C8D8;
+  width: 64rpx;
+  text-align: right;
+}
+
+/* 建议文案行 */
+.health-tip-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10rpx;
+  background: #F5FBFD;
+  border-radius: 16rpx;
+  padding: 18rpx 20rpx;
+}
+
+.health-tip-icon {
+  font-size: 26rpx;
+  flex-shrink: 0;
+}
+
+.health-tip-text {
+  font-size: 24rpx;
+  color: #5A7A8A;
+  line-height: 1.6;
+  flex: 1;
+}

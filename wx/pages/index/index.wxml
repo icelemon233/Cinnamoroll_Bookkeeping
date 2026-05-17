@@ -238,6 +238,53 @@
     </view>
   </view>
 
+  <!-- 财务健康评分卡片 -->
+  <view wx:if="{{healthScore}}" class="card health-card">
+    <view class="health-header">
+      <view class="health-title-row">
+        <text class="health-icon">💊</text>
+        <text class="health-title">财务健康评分</text>
+      </view>
+      <view class="health-level-badge" style="background-color: {{healthScore.levelColor}}20; border-color: {{healthScore.levelColor}}40;">
+        <text class="health-level-text" style="color: {{healthScore.levelColor}};">{{healthScore.levelEmoji}} {{healthScore.level}}</text>
+      </view>
+    </view>
+
+    <!-- 分数 + 环形进度 -->
+    <view class="health-score-row">
+      <view class="health-score-circle-wrap">
+        <!-- 用多层 view 模拟环形进度（纯 CSS） -->
+        <view class="health-ring-bg">
+          <view class="health-ring-fill" style="background: conic-gradient({{healthScore.levelColor}} {{healthScore.score * 3.6}}deg, #EEF7FB {{healthScore.score * 3.6}}deg);"></view>
+          <view class="health-ring-inner">
+            <text class="health-score-num" style="color: {{healthScore.levelColor}};">{{healthScore.score}}</text>
+            <text class="health-score-unit">分</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 四维度小格 -->
+      <view class="health-dims">
+        <block wx:for="{{healthScore.dimensions}}" wx:key="label">
+          <view class="health-dim-item">
+            <text class="health-dim-icon">{{item.icon}}</text>
+            <view class="health-dim-bar-bg">
+              <view class="health-dim-bar-fill" style="width: {{Math.round(item.score / item.maxScore * 100)}}%; background-color: {{healthScore.levelColor}};"></view>
+            </view>
+            <text class="health-dim-label">{{item.label}}</text>
+            <text class="health-dim-score">{{item.score}}/{{item.maxScore}}</text>
+          </view>
+        </block>
+      </view>
+    </view>
+
+    <!-- 建议文案 -->
+    <view class="health-tip-row">
+      <text class="health-tip-icon">💡</text>
+      <text class="health-tip-text">{{healthScore.tip}}</text>
+    </view>
+  </view>
+
   <!-- 打卡连击卡片 -->
   <view class="card streak-card">
     <view class="streak-header">
