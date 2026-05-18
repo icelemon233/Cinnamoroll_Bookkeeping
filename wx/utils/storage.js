@@ -855,6 +855,174 @@ function getFinanceHealthScore(yearMonth) {
   return { score, level, levelEmoji, levelColor, tip, dimensions };
 }
 
+// ─────────────────────────────────────────────
+// 月度复盘报告
+// ─────────────────────────────────────────────
+
+/**
+ * 分类 emoji 映射（内部使用）
+ */
+const REPORT_CATEGORY_EMOJI = {
+  '餐饮': '🍜', '交通': '🚌', '购物': '🛍️', '娱乐': '🎮',
+  '住房': '🏠', '医疗': '💊', '教育': '📚', '运动': '🏃',
+  '旅行': '✈️', '宠物': '🐾', '日用': '🧴',
+  '工资': '💼', '奖金': '🎁', '副业': '💡', '理财': '📈', '红包': '🧧',
+  '其他': '📦'
+};
+
+/**
+ * 生成月度复盘文字报告
+ * @param {string} yearMonth - 'YYYY-MM'
+ * @returns {string} 可直接复制/分享的纯文字报告
+ */
+function generateMonthReport(yearMonth) {
+  if (!yearMonth) {
+    const now = new Date();
+    const m = now.getMonth() + 1;
+    yearMonth = `${now.getFullYear()}-${m < 10 ? '0' + m : m}`;
+  }
+
+  const [year, month] = yearMonth.split('-');
+  const monthLabel = `${year}年${month}月`;
+
+  const summary = getMonthSummary(yearMonth);
+  const { income, expense, net, records } = summary;
+
+  // 没有任何数据时，返回提示
+  if (records.length === 0) {
+    return `📒 ${monthLabel} 月度复盘\n\n本月暂无账单记录，快去记一笔吧～ 🐾`;
+  }
+
+  // ── 基础统计 ──
+  const recordCount = records.length;
+  const expenseRecords = records.filter(r => r.type === 'expense');
+  const incomeRecords  = records.filter(r => r.type === 'income');
+
+  // 计算有账单的天数
+  const recordDays = new Set(records.map(r => r.date)).size;
+
+  // 日均支出（只算有记录的天数，避免除以0）
+  const avgDailyExpense = recordDays > 0
+    ? parseFloat((expense / recordDays).toFixed(2))
+    : 0;
+
+  // ── 分类排名 ──
+  const catMap = {};
+  expenseRecords.forEach(r => {
+    const cat = r.category || '其他';
+    catMap[cat] = (catMap[cat] || 0) + (Number(r.amount) || 0);
+  });
+  const catList = Object.keys(catMap)
+    .map(cat => ({ cat, amount: parseFloat(catMap[cat].toFixed(2)) }))
+    .sort((a, b) => b.amount - a.amount);
+
+  // ── 上月对比 ──
+  const [y, m] = [parseInt(year), parseInt(month)];
+  const prevDate = new Date(y, m - 2, 1); // JS月从0开始，m-2就是上上个月
+  const prevYM = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
+  const prevSummary = getMonthSummary(prevYM);
+  const prevExpense = prevSummary.expense;
+  const hasCompare = prevSummary.records.length > 0;
+
+  // ── 储蓄率 ──
+  const savingRate = income > 0
+    ? Math.round((net / income) * 100)
+    : null;
+
+  // ── 最大单笔支出 ──
+  const maxRecord = expenseRecords.length > 0
+    ? expenseRecords.reduce((max, r) => (Number(r.amount) > Number(max.amount) ? r : max), expenseRecords[0])
+    : null;
+
+  // ─── 组装报告文字 ───
+
+  const lines = [];
+
+  // 标题
+  lines.push(`📒 ${monthLabel} 月度复盘`);
+  lines.push('─'.repeat(20));
+
+  // 收支概览
+  lines.push('💰 收支概览');
+  if (income > 0) lines.push(`  收入：¥${income}`);
+  lines.push(`  支出：¥${expense}`);
+  if (income > 0) {
+    const netSign = net >= 0 ? '+' : '';
+    lines.push(`  结余：${netSign}¥${net}`);
+    if (savingRate !== null) {
+      lines.push(`  储蓄率：${savingRate}%`);
+    }
+  }
+  lines.push('');
+
+  // 记账概况
+  lines.push('📝 记账概况');
+  lines.push(`  共记账 ${recordCount} 条，覆盖 ${recordDays} 天`);
+  if (expense > 0) {
+    lines.push(`  日均支出：¥${avgDailyExpense}（仅计有记录天数）`);
+  }
+  lines.push('');
+
+  // Top3 支出分类
+  if (catList.length > 0) {
+    lines.push('🏆 支出分类 TOP' + Math.min(3, catList.length));
+    const medals = ['🥇', '🥈', '🥉'];
+    catList.slice(0, 3).forEach((item, i) => {
+      const emoji = REPORT_CATEGORY_EMOJI[item.cat] || '📦';
+      const pct = expense > 0 ? ` (${(item.amount / expense * 100).toFixed(1)}%)` : '';
+      lines.push(`  ${medals[i]} ${emoji}${item.cat}：¥${item.amount}${pct}`);
+    });
+    lines.push('');
+  }
+
+  // 最大单笔支出
+  if (maxRecord) {
+    const maxEmoji = REPORT_CATEGORY_EMOJI[maxRecord.category] || '📦';
+    const noteStr = maxRecord.note ? `「${maxRecord.note}」` : '';
+    lines.push(`💸 最大单笔支出`);
+    lines.push(`  ${maxEmoji}${maxRecord.category} ${noteStr}¥${maxRecord.amount}（${maxRecord.date}）`);
+    lines.push('');
+  }
+
+  // 与上月对比
+  if (hasCompare) {
+    const diff = parseFloat((expense - prevExpense).toFixed(2));
+    const diffSign = diff > 0 ? '+' : '';
+    const diffEmoji = diff > 0 ? '📈' : (diff < 0 ? '📉' : '➡️');
+    const prevMonth = `${prevDate.getFullYear()}年${String(prevDate.getMonth() + 1).padStart(2, '0')}月`;
+    lines.push(`${diffEmoji} 与上月对比（${prevMonth}）`);
+    lines.push(`  上月支出：¥${prevExpense}`);
+    lines.push(`  本月${diff > 0 ? '多花' : diff < 0 ? '少花' : '持平'} ${diffSign}¥${Math.abs(diff)}`);
+    lines.push('');
+  }
+
+  // 简洁小建议（规则驱动）
+  const tips = [];
+  if (savingRate !== null && savingRate < 20) {
+    tips.push('储蓄率偏低，可尝试为每个分类设置月度预算 🎯');
+  }
+  if (catList.length > 0 && catList[0].amount / expense > 0.5) {
+    const topCat = catList[0].cat;
+    tips.push(`「${topCat}」占总支出超过一半，下月可重点关注 💡`);
+  }
+  if (recordDays < 7 && recordCount > 0) {
+    tips.push('记账天数较少，坚持每天记录账单会更准确哦 📝');
+  }
+  if (net > 0 && income > 0 && savingRate >= 30) {
+    tips.push(`储蓄率达到 ${savingRate}%，保持这个好习惯 🌟`);
+  }
+  if (tips.length > 0) {
+    lines.push('💡 小建议');
+    tips.slice(0, 2).forEach(t => lines.push(`  · ${t}`));
+    lines.push('');
+  }
+
+  lines.push('─'.repeat(20));
+  lines.push('由肉桂卷记账小程序生成 🐾');
+
+  return lines.join('\n');
+}
+
 module.exports = {
   getRecords,
   saveRecord,
@@ -883,5 +1051,6 @@ module.exports = {
   getCategoryBudget,
   getCategoryBudgets,
   setCategoryBudget,
-  getFinanceHealthScore
+  getFinanceHealthScore,
+  generateMonthReport
 };

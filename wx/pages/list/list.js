@@ -1,5 +1,5 @@
 // pages/list/list.js - 账单列表页
-const { getRecords, deleteRecord, groupByDate, formatDate, exportToCSV, downloadCSV, getMonthSummary, getSearchHistory, saveSearchHistory, deleteSearchHistory, clearSearchHistory } = require('../../utils/storage');
+const { getRecords, deleteRecord, groupByDate, formatDate, exportToCSV, downloadCSV, getMonthSummary, getSearchHistory, saveSearchHistory, deleteSearchHistory, clearSearchHistory, generateMonthReport } = require('../../utils/storage');
 
 // 分类 emoji 映射（与 add 页保持一致）
 const CATEGORY_EMOJI = {
@@ -554,10 +554,46 @@ Page({
 
   onExport() {
     wx.showActionSheet({
-      itemList: ['📊 导出为 CSV'],
+      itemList: ['📊 导出为 CSV', '📒 生成月度复盘报告'],
       success: (res) => {
         if (res.tapIndex === 0) {
           this._exportCSV();
+        } else if (res.tapIndex === 1) {
+          this._showMonthReport();
+        }
+      }
+    });
+  },
+
+  /**
+   * 生成月度复盘报告并弹窗展示，支持一键复制
+   */
+  _showMonthReport() {
+    const { filterMonth, isSearchMode } = this.data;
+    // 搜索模式下使用当前月；否则用列表正在浏览的月份
+    const now = new Date();
+    const nowYM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const targetYM = (!isSearchMode && filterMonth) ? filterMonth : nowYM;
+
+    const reportText = generateMonthReport(targetYM);
+
+    // 先展示复制确认弹窗
+    wx.showModal({
+      title: '📒 月度复盘报告',
+      content: reportText,
+      confirmText: '复制报告',
+      cancelText: '关闭',
+      success: (res) => {
+        if (res.confirm) {
+          wx.setClipboardData({
+            data: reportText,
+            success: () => {
+              wx.showToast({ title: '已复制到剪贴板 ✨', icon: 'none', duration: 1800 });
+            },
+            fail: () => {
+              wx.showToast({ title: '复制失败，请重试', icon: 'none' });
+            }
+          });
         }
       }
     });
