@@ -492,3 +492,69 @@
 .key-save:active {
   opacity: 0.88;
 }
+
+/* ─── 常用金额快捷区 ─────────────────────────────────── */
+.top-amounts-section {
+  margin: 0 0 16rpx;
+  padding: 0 24rpx;
+}
+
+.top-amounts-header {
+  margin-bottom: 12rpx;
+}
+
+.top-amounts-label {
+  font-size: 24rpx;
+  color: #9BAAB8;
+  font-weight: 500;
+}
+
+.top-amounts-scroll {
+  width: 100%;
+}
+
+.top-amounts-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  white-space: nowrap;
+  padding-bottom: 4rpx;
+}
+
+.top-amount-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #F5FAFC;
+  border: 2rpx solid #D8EEF5;
+  border-radius: 32rpx;
+  padding: 10rpx 28rpx;
+  margin-right: 16rpx;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+
+.top-amount-chip:active {
+  background: #D8EEF5;
+  border-color: #7EC8E3;
+  transform: scale(0.96);
+}
+
+.top-amount-chip-active {
+  background: #E8F5FA;
+  border-color: #4FB8D4;
+}
+
+.top-amount-text {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #4A5568;
+}
+
+.top-amount-chip-active .top-amount-text {
+  color: #4FB8D4;
+}
+
+.top-amount-text.income-text {
+  color: #48BB78;
+}

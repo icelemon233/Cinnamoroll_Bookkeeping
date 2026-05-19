@@ -681,6 +681,32 @@ function getRecentCategoryRecords(category, type, limit) {
   return result;
 }
 
+/**
+ * 获取指定分类/类型的高频常用金额
+ * 统计历史记录中每个金额出现频率，返回 top-N 去重金额
+ * @param {string} category - 分类名称
+ * @param {string} type - 'expense' | 'income'
+ * @param {number} limit - 最多返回条数，默认 5
+ * @returns {number[]} 常用金额数组（降频排序，最多 limit 个）
+ */
+function getTopAmounts(category, type, limit) {
+  const n = limit || 5;
+  const records = getRecords();
+  const freqMap = {};
+
+  for (const r of records) {
+    if (r.category !== category || r.type !== type) continue;
+    const amt = Number(r.amount);
+    if (!amt || amt <= 0) continue;
+    freqMap[amt] = (freqMap[amt] || 0) + 1;
+  }
+
+  return Object.entries(freqMap)
+    .sort((a, b) => b[1] - a[1] || Number(a[0]) - Number(b[0]))
+    .slice(0, n)
+    .map(([amt]) => Number(amt));
+}
+
 // ─── 搜索历史记录 ──────────────────────────────────────────
 
 const SEARCH_HISTORY_KEY = 'search_history';
@@ -1044,6 +1070,7 @@ module.exports = {
   getRecentMonthsSummary,
   getWeekSummary,
   getRecentCategoryRecords,
+  getTopAmounts,
   getSearchHistory,
   saveSearchHistory,
   deleteSearchHistory,

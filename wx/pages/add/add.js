@@ -1,5 +1,5 @@
 // pages/add/add.js - 记账页（支持新增和编辑两种模式）
-const { saveRecord, updateRecord, getRecordById, getTodaySummary, getRecentCategoryRecords } = require('../../utils/storage');
+const { saveRecord, updateRecord, getRecordById, getTodaySummary, getRecentCategoryRecords, getTopAmounts } = require('../../utils/storage');
 
 const EXPENSE_CATEGORIES = [
   { name: '餐饮', emoji: '🍜' },
@@ -79,7 +79,10 @@ Page({
     todayExpense: 0,
     todayIncome: 0,
     todayCount: 0,
-    hasTodayRecords: false
+    hasTodayRecords: false,
+    // 常用金额快捷（当前分类/类型的高频金额，最多5个）
+    topAmounts: [],
+    hasTopAmounts: false
   },
 
   onLoad(options) {
@@ -95,6 +98,7 @@ Page({
         quickNotes: QUICK_NOTES['工资'] || []
       });
       this._loadRecentRecords('工资', 'income');
+      this._loadTopAmounts('工资', 'income');
     }
 
     // 编辑模式：从 options 中读取 recordId
@@ -118,16 +122,18 @@ Page({
           ...quickDates
         });
         wx.setNavigationBarTitle({ title: '编辑记录' });
-        // 编辑模式也加载最近记录（供参考，但不会主动覆盖当前值）
+        // 编辑模式也加载最近记录和常用金额（供参考，但不会主动覆盖当前值）
         this._loadRecentRecords(record.category, record.type);
+        this._loadTopAmounts(record.category, record.type);
         return;
       }
     }
 
     const { todayStr, yesterdayStr, dayBeforeStr } = quickDates;
     this.setData({ date: todayStr, todayStr, yesterdayStr, dayBeforeStr });
-    // 加载默认分类（餐饮/支出）的最近记录
+    // 加载默认分类（餐饮/支出）的最近记录和常用金额
     this._loadRecentRecords('餐饮', 'expense');
+    this._loadTopAmounts('餐饮', 'expense');
   },
 
   // ─── 快捷日期 ──────────────────────────────────────────
@@ -186,6 +192,7 @@ Page({
     const quickNotes = QUICK_NOTES[selectedCategory] || [];
     this.setData({ type, categories, selectedCategory, quickNotes });
     this._loadRecentRecords(selectedCategory, type);
+    this._loadTopAmounts(selectedCategory, type);
   },
 
   // 对加减表达式求值（安全实现，仅处理正数加减）
@@ -225,6 +232,23 @@ Page({
     });
   },
 
+  // 加载当前分类/类型的高频常用金额（最多5个）
+  _loadTopAmounts(category, type) {
+    const amounts = getTopAmounts(category, type, 5);
+    this.setData({
+      topAmounts: amounts,
+      hasTopAmounts: amounts.length > 0
+    });
+  },
+
+  // 点击常用金额快捷按钮 → 直接填入金额
+  tapTopAmount(e) {
+    const amount = e.currentTarget.dataset.amount;
+    const amountStr = String(amount);
+    this._updateExprState(amountStr);
+    wx.vibrateShort({ type: 'light' }).catch(() => {});
+  },
+
   // 点击最近相似记录 → 一键填入金额 + 备注
   tapRecentRecord(e) {
     const { amount, note } = e.currentTarget.dataset;
@@ -240,6 +264,7 @@ Page({
     const quickNotes = QUICK_NOTES[category] || [];
     this.setData({ selectedCategory: category, quickNotes });
     this._loadRecentRecords(category, this.data.type);
+    this._loadTopAmounts(category, this.data.type);
   },
 
   // 点击常用备注标签快速填入
@@ -368,8 +393,9 @@ Page({
         selectedCategory: '餐饮',
         quickNotes: QUICK_NOTES['餐饮'] || []
       });
-      // 刷新今日速览（保存后立即更新数据）
+      // 刷新今日速览（保存后立即更新数据），同时刷新常用金额（新记录可能影响频率）
       this._loadTodaySummary();
+      this._loadTopAmounts('餐饮', 'expense');
     }, 500);
   }
 });

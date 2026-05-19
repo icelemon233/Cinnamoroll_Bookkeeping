@@ -152,6 +152,26 @@
     </scroll-view>
   </view>
 
+  <!-- 常用金额快捷（基于历史记账频率自动生成，有数据时显示） -->
+  <view wx:if="{{hasTopAmounts}}" class="top-amounts-section">
+    <view class="top-amounts-header">
+      <text class="top-amounts-label">⚡ 常用金额</text>
+    </view>
+    <scroll-view scroll-x class="top-amounts-scroll" enhanced="{{true}}" show-scrollbar="{{false}}">
+      <view class="top-amounts-row">
+        <view
+          class="top-amount-chip {{amountStr === String(item) ? 'top-amount-chip-active' : ''}}"
+          wx:for="{{topAmounts}}"
+          wx:key="*this"
+          data-amount="{{item}}"
+          bindtap="tapTopAmount"
+        >
+          <text class="top-amount-text {{type === 'income' ? 'income-text' : ''}}">¥{{item}}</text>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
   <!-- 数字键盘（支持加减运算符，可连续计算总金额） -->
   <view class="keyboard">
     <view class="keyboard-row">
