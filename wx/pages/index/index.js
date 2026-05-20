@@ -1,5 +1,5 @@
 // pages/index/index.js - 首页
-const { getRecords, getMonthSummary, groupByDate, formatDate, getMonthBudget, setMonthBudget, getStreakDays, getTodaySummary, getMonthHeatmap, getRecentMonthsSummary, getWeekSummary, getFinanceHealthScore } = require('../../utils/storage');
+const { getRecords, getMonthSummary, groupByDate, formatDate, getMonthBudget, setMonthBudget, getStreakDays, getTodaySummary, getMonthHeatmap, getRecentMonthsSummary, getWeekSummary, getFinanceHealthScore, getSavingGoal, setSavingGoal, getSavingGoalProgress } = require('../../utils/storage');
 
 // 分类 emoji 映射（与 add 页保持一致）
 const CATEGORY_EMOJI = {
@@ -44,7 +44,9 @@ Page({
     // 本周账单周报
     weekSummary: null,
     // 财务健康评分
-    healthScore: null
+    healthScore: null,
+    // 月度储蓄目标
+    savingGoalProgress: null  // null = 未设置目标
   },
 
   onLoad() {
@@ -111,6 +113,9 @@ Page({
     // 财务健康评分
     const healthScore = getFinanceHealthScore(yearMonth);
 
+    // 月度储蓄目标进度
+    const savingGoalProgress = getSavingGoalProgress(yearMonth);
+
     // 本周账单周报（加入柱状图高度百分比）
     const weekSummaryRaw = getWeekSummary();
     const maxBarAmount = weekSummaryRaw.maxAmount || 1;
@@ -152,7 +157,8 @@ Page({
       trendInsight,
       trendInsightEmoji,
       weekSummary,
-      healthScore
+      healthScore,
+      savingGoalProgress
     });
 
     // 绘制折线图（数据加载后再绘制）
@@ -430,6 +436,43 @@ Page({
         setMonthBudget(yearMonth, amount);
         wx.showToast({ title: '预算已设置 ✨', icon: 'success', duration: 1200 });
         this.loadData();
+      }
+    });
+  },
+
+  // 设置/修改月度储蓄目标
+  onSetSavingGoal() {
+    const { yearMonth, currentMonth, savingGoalProgress } = this.data;
+    const current = savingGoalProgress ? savingGoalProgress.goal : 0;
+
+    wx.showModal({
+      title: `设置 ${currentMonth} 储蓄目标`,
+      editable: true,
+      placeholderText: current > 0 ? String(current) : '输入本月期望存多少钱',
+      content: '',
+      confirmText: '确定',
+      cancelText: current > 0 ? '清除目标' : '取消',
+      success: (res) => {
+        if (res.confirm) {
+          const input = (res.content || '').trim();
+          if (input === '') {
+            wx.showToast({ title: '请输入目标金额 🐾', icon: 'none' });
+            return;
+          }
+          const amount = parseFloat(input);
+          if (isNaN(amount) || amount <= 0) {
+            wx.showToast({ title: '请输入有效金额 🐾', icon: 'none' });
+            return;
+          }
+          setSavingGoal(yearMonth, amount);
+          wx.showToast({ title: '储蓄目标已设置 ✨', icon: 'success', duration: 1200 });
+          this.loadData();
+        } else if (res.cancel && current > 0) {
+          // 清除目标
+          setSavingGoal(yearMonth, 0);
+          wx.showToast({ title: '目标已清除', icon: 'none' });
+          this.loadData();
+        }
       }
     });
   },

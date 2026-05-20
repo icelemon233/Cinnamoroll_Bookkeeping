@@ -131,6 +131,61 @@
     </view>
   </view>
 
+  <!-- 月度储蓄目标卡片 -->
+  <view class="card saving-goal-card">
+    <view class="saving-goal-header">
+      <view class="saving-goal-title-row">
+        <text class="saving-goal-icon">🐷</text>
+        <text class="saving-goal-title">月度储蓄目标</text>
+      </view>
+      <view class="saving-goal-set-btn" bindtap="onSetSavingGoal">
+        <text class="saving-goal-set-text">{{savingGoalProgress ? '修改' : '设置'}}</text>
+      </view>
+    </view>
+
+    <!-- 未设置目标 -->
+    <view wx:if="{{!savingGoalProgress}}" class="saving-goal-empty">
+      <text class="saving-goal-empty-text">设置本月储蓄目标，追踪存钱进度 🐾</text>
+    </view>
+
+    <!-- 已设置目标 -->
+    <view wx:else class="saving-goal-content">
+      <!-- 金额行 -->
+      <view class="saving-goal-amounts">
+        <view class="saving-goal-actual-wrap">
+          <text class="saving-goal-label">实际结余</text>
+          <text class="saving-goal-actual {{savingGoalProgress.actual >= 0 ? 'saving-goal-actual-pos' : 'saving-goal-actual-neg'}}">
+            {{savingGoalProgress.actual >= 0 ? '+' : ''}}¥{{savingGoalProgress.actual}}
+          </text>
+        </view>
+        <view class="saving-goal-divider-v"></view>
+        <view class="saving-goal-target-wrap">
+          <text class="saving-goal-label">目标</text>
+          <text class="saving-goal-target">¥{{savingGoalProgress.goal}}</text>
+        </view>
+        <view class="saving-goal-badge {{savingGoalProgress.isAchieved ? 'saving-goal-badge-done' : 'saving-goal-badge-pending'}}">
+          <text class="saving-goal-badge-text">
+            {{savingGoalProgress.isAchieved ? '已达标 ✓' : savingGoalProgress.percent + '%'}}
+          </text>
+        </view>
+      </view>
+
+      <!-- 进度条 -->
+      <view class="saving-goal-bar-bg">
+        <view
+          class="saving-goal-bar-fill {{savingGoalProgress.isAchieved ? 'saving-goal-bar-done' : 'saving-goal-bar-ing'}}"
+          style="width: {{savingGoalProgress.percent}}%;"
+        ></view>
+      </view>
+
+      <!-- 提示文案 -->
+      <view class="saving-goal-tip-row">
+        <text class="saving-goal-tip-emoji">{{savingGoalProgress.tipEmoji}}</text>
+        <text class="saving-goal-tip-text">{{savingGoalProgress.tipText}}</text>
+      </view>
+    </view>
+  </view>
+
   <!-- 本月消费热力日历卡片 -->
   <view wx:if="{{heatmap}}" class="card heatmap-card">
     <view class="heatmap-header">

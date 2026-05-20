@@ -1017,6 +1017,186 @@
   font-size: 26rpx;
 }
 
+/* ─── 月度储蓄目标卡片 ─────────────────────────────── */
+.saving-goal-card {
+  padding: 28rpx 32rpx;
+  margin-bottom: 24rpx;
+}
+
+.saving-goal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+}
+
+.saving-goal-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.saving-goal-icon {
+  font-size: 36rpx;
+}
+
+.saving-goal-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #3D5A6E;
+}
+
+.saving-goal-set-btn {
+  background: #EEF8FB;
+  border-radius: 100rpx;
+  padding: 8rpx 28rpx;
+}
+
+.saving-goal-set-text {
+  font-size: 26rpx;
+  color: #4FB8D4;
+  font-weight: 500;
+}
+
+/* 未设置目标 */
+.saving-goal-empty {
+  padding: 12rpx 0 8rpx;
+}
+
+.saving-goal-empty-text {
+  font-size: 26rpx;
+  color: #B8CCD8;
+}
+
+/* 已设置目标内容 */
+.saving-goal-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+/* 金额行 */
+.saving-goal-amounts {
+  display: flex;
+  align-items: flex-end;
+  gap: 20rpx;
+}
+
+.saving-goal-actual-wrap,
+.saving-goal-target-wrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.saving-goal-label {
+  font-size: 22rpx;
+  color: #9BAAB8;
+  margin-bottom: 4rpx;
+}
+
+.saving-goal-actual {
+  font-size: 44rpx;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.saving-goal-actual-pos {
+  color: #3DAA72;
+}
+
+.saving-goal-actual-neg {
+  color: #FF8BAB;
+}
+
+.saving-goal-target {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #9BAAB8;
+  line-height: 1.1;
+}
+
+.saving-goal-divider-v {
+  width: 1rpx;
+  height: 56rpx;
+  background: #E8F4F8;
+  margin-bottom: 4rpx;
+}
+
+.saving-goal-badge {
+  margin-left: auto;
+  border-radius: 100rpx;
+  padding: 8rpx 24rpx;
+  display: flex;
+  align-items: center;
+}
+
+.saving-goal-badge-done {
+  background: #E8F8EF;
+}
+
+.saving-goal-badge-pending {
+  background: #EEF8FB;
+}
+
+.saving-goal-badge-text {
+  font-size: 26rpx;
+  font-weight: 700;
+}
+
+.saving-goal-badge-done .saving-goal-badge-text {
+  color: #3DAA72;
+}
+
+.saving-goal-badge-pending .saving-goal-badge-text {
+  color: #4FB8D4;
+}
+
+/* 进度条 */
+.saving-goal-bar-bg {
+  width: 100%;
+  height: 18rpx;
+  background: #EEF8FB;
+  border-radius: 100rpx;
+  overflow: hidden;
+}
+
+.saving-goal-bar-fill {
+  height: 100%;
+  border-radius: 100rpx;
+  transition: width 0.5s ease;
+  min-width: 0;
+}
+
+.saving-goal-bar-ing {
+  background: linear-gradient(90deg, #7EC8E3, #4FB8D4);
+}
+
+.saving-goal-bar-done {
+  background: linear-gradient(90deg, #6EDFA0, #3DAA72);
+}
+
+/* 提示文案 */
+.saving-goal-tip-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10rpx;
+  background: #F5FBFD;
+  border-radius: 16rpx;
+  padding: 14rpx 20rpx;
+}
+
+.saving-goal-tip-emoji {
+  font-size: 28rpx;
+  flex-shrink: 0;
+}
+
+.saving-goal-tip-text {
+  font-size: 24rpx;
+  color: #5A7A8A;
+  flex: 1;
+  line-height: 1.6;
+}
+
 /* ─── 财务健康评分卡片 ─────────────────────────────── */
 .health-card {
   padding: 32rpx 28rpx 28rpx;

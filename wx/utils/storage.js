@@ -1049,6 +1049,108 @@ function generateMonthReport(yearMonth) {
   return lines.join('\n');
 }
 
+// ─────────────────────────────────────────────
+// 月度储蓄目标
+// ─────────────────────────────────────────────
+
+const SAVING_GOAL_KEY = 'saving_goals'; // { 'YYYY-MM': number }
+
+/**
+ * 获取指定月份的储蓄目标
+ * @param {string} yearMonth - 'YYYY-MM'，默认当前月
+ * @returns {number} 储蓄目标金额，0 表示未设置
+ */
+function getSavingGoal(yearMonth) {
+  if (!yearMonth) {
+    const now = new Date();
+    const m = now.getMonth() + 1;
+    yearMonth = `${now.getFullYear()}-${m < 10 ? '0' + m : m}`;
+  }
+  const goals = wx.getStorageSync(SAVING_GOAL_KEY) || {};
+  return Number(goals[yearMonth]) || 0;
+}
+
+/**
+ * 设置指定月份的储蓄目标
+ * @param {string} yearMonth - 'YYYY-MM'
+ * @param {number} amount - 目标金额，0 表示清除
+ */
+function setSavingGoal(yearMonth, amount) {
+  const goals = wx.getStorageSync(SAVING_GOAL_KEY) || {};
+  if (!amount || amount <= 0) {
+    delete goals[yearMonth];
+  } else {
+    goals[yearMonth] = parseFloat(Number(amount).toFixed(2));
+  }
+  wx.setStorageSync(SAVING_GOAL_KEY, goals);
+}
+
+/**
+ * 获取月度储蓄目标进度数据
+ * @param {string} yearMonth - 'YYYY-MM'
+ * @returns {Object|null}
+ *   {
+ *     goal: number,         // 目标金额
+ *     actual: number,       // 实际净结余（income - expense）
+ *     percent: number,      // 完成进度 0-100
+ *     isAchieved: boolean,  // 是否已达标
+ *     diff: number,         // 距离目标的差值（正=还需，负=已超额）
+ *     tipText: string,
+ *     tipEmoji: string
+ *   }
+ * 若未设置目标则返回 null
+ */
+function getSavingGoalProgress(yearMonth) {
+  const goal = getSavingGoal(yearMonth);
+  if (!goal || goal <= 0) return null;
+
+  const summary = getMonthSummary(yearMonth);
+  const actual = summary.net; // 收入 - 支出 = 净结余
+
+  const percent = goal > 0 ? Math.min(100, parseFloat((actual / goal * 100).toFixed(1))) : 0;
+  const isAchieved = actual >= goal;
+  const diff = parseFloat((goal - actual).toFixed(2)); // 正=还差多少，负=已超额
+
+  // 生成激励文案
+  let tipText = '';
+  let tipEmoji = '🐾';
+
+  if (actual <= 0) {
+    tipText = '本月还没有结余，继续记录收支来追踪进度～';
+    tipEmoji = '🌱';
+  } else if (isAchieved) {
+    const extra = Math.abs(diff);
+    if (extra > 0) {
+      tipText = `目标已达成！还超额储蓄了 ¥${extra}，太棒了 🎉`;
+    } else {
+      tipText = '恰好达成储蓄目标，收支控制得很好！';
+    }
+    tipEmoji = '🎉';
+  } else if (percent >= 80) {
+    tipText = `已完成 ${percent}%，距目标还差 ¥${diff}，加油冲刺！`;
+    tipEmoji = '💪';
+  } else if (percent >= 50) {
+    tipText = `已完成一半！还差 ¥${diff} 就能达成目标～`;
+    tipEmoji = '✨';
+  } else if (percent >= 20) {
+    tipText = `完成了 ${percent}%，注意控制支出，争取达成目标～`;
+    tipEmoji = '🎯';
+  } else {
+    tipText = `刚刚起步，离目标还差 ¥${diff}，多记录多规划～`;
+    tipEmoji = '🌸';
+  }
+
+  return {
+    goal,
+    actual,
+    percent: Math.max(0, percent), // 结余为负时显示 0
+    isAchieved,
+    diff,
+    tipText,
+    tipEmoji
+  };
+}
+
 module.exports = {
   getRecords,
   saveRecord,
@@ -1079,5 +1181,8 @@ module.exports = {
   getCategoryBudgets,
   setCategoryBudget,
   getFinanceHealthScore,
-  generateMonthReport
+  generateMonthReport,
+  getSavingGoal,
+  setSavingGoal,
+  getSavingGoalProgress
 };
