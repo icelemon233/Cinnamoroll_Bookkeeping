@@ -251,6 +251,28 @@
           {{annualSummary.isPositive ? '+' : ''}}¥{{annualSummary.netSaving}}
         </text>
       </view>
+
+      <!-- 储蓄率 + 月均 -->
+      <view class="annual-extra-row">
+        <view class="annual-extra-item">
+          <text class="annual-extra-emoji">💰</text>
+          <text class="annual-extra-label">储蓄率</text>
+          <text class="annual-extra-val {{annualSummary.savingRatePositive ? 'income-text' : 'expense-text'}}">{{annualSummary.savingRateLabel}}</text>
+        </view>
+        <view class="annual-extra-divider"></view>
+        <view class="annual-extra-item">
+          <text class="annual-extra-emoji">📅</text>
+          <text class="annual-extra-label">月均支出</text>
+          <text class="annual-extra-val expense-text">¥{{annualSummary.avgMonthExpense}}</text>
+        </view>
+        <view class="annual-extra-divider"></view>
+        <view class="annual-extra-item">
+          <text class="annual-extra-emoji">📅</text>
+          <text class="annual-extra-label">月均收入</text>
+          <text class="annual-extra-val income-text">¥{{annualSummary.avgMonthIncome}}</text>
+        </view>
+      </view>
+
       <view class="annual-highlight-row">
         <view class="annual-highlight-item">
           <text class="annual-highlight-emoji">📌</text>
@@ -262,6 +284,17 @@
           <text class="annual-highlight-label">收入最多</text>
           <text class="annual-highlight-month income-text">{{annualSummary.bestIncomeMonth}}</text>
         </view>
+        <view class="annual-highlight-item">
+          <text class="annual-highlight-emoji">🌿</text>
+          <text class="annual-highlight-label">支出最少</text>
+          <text class="annual-highlight-month income-text">{{annualSummary.bestSaveMonth}}</text>
+        </view>
+      </view>
+
+      <!-- 复制年度报告按钮 -->
+      <view class="annual-copy-btn" bindtap="onCopyAnnualReport">
+        <text class="annual-copy-icon">📋</text>
+        <text class="annual-copy-text">复制年度报告</text>
       </view>
     </view>
 

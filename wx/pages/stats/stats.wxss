@@ -403,6 +403,73 @@
   font-weight: 800;
 }
 
+/* 储蓄率 + 月均 */
+.annual-extra-row {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  background: rgba(79, 184, 212, 0.06);
+  border-radius: 16rpx;
+  padding: 20rpx 12rpx;
+  margin-bottom: 20rpx;
+}
+
+.annual-extra-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6rpx;
+  flex: 1;
+}
+
+.annual-extra-emoji {
+  font-size: 32rpx;
+}
+
+.annual-extra-label {
+  font-size: 20rpx;
+  color: #9BAAB8;
+}
+
+.annual-extra-val {
+  font-size: 28rpx;
+  font-weight: 700;
+}
+
+.annual-extra-divider {
+  width: 1rpx;
+  height: 60rpx;
+  background: #E0EFF5;
+}
+
+/* 复制年度报告按钮 */
+.annual-copy-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10rpx;
+  margin-top: 24rpx;
+  padding: 18rpx 0;
+  background: linear-gradient(135deg, #E8F6FA, #F0F8FF);
+  border: 1rpx solid #C8E8F2;
+  border-radius: 20rpx;
+  active-opacity: 0.7;
+}
+
+.annual-copy-btn:active {
+  opacity: 0.7;
+}
+
+.annual-copy-icon {
+  font-size: 32rpx;
+}
+
+.annual-copy-text {
+  font-size: 28rpx;
+  color: #4FB8D4;
+  font-weight: 600;
+}
+
 .annual-highlight-row {
   display: flex;
   justify-content: space-around;

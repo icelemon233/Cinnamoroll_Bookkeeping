@@ -142,6 +142,28 @@ Page({
       if (d.income > bestIncomeVal) { bestIncomeVal = d.income; bestIncomeMonth = d.label; }
     });
 
+    // 月均（有数据的月份）
+    const activeMonths = annualData.filter(d => d.income > 0 || d.expense > 0).length || 1;
+    const avgMonthIncome = parseFloat((totalIncome / activeMonths).toFixed(2));
+    const avgMonthExpense = parseFloat((totalExpense / activeMonths).toFixed(2));
+
+    // 储蓄率（总收入 > 0 时计算）
+    const savingRate = totalIncome > 0
+      ? parseFloat(((netSaving / totalIncome) * 100).toFixed(1))
+      : null;
+    const savingRateLabel = savingRate === null ? '—' : `${savingRate}%`;
+    const savingRatePositive = savingRate !== null && savingRate >= 0;
+
+    // 最低支出月（有消费记录的月份中）
+    let bestSaveMonth = '';
+    let bestSaveVal = Infinity;
+    annualData.forEach(d => {
+      if (d.expense > 0 && d.expense < bestSaveVal) {
+        bestSaveVal = d.expense;
+        bestSaveMonth = d.label;
+      }
+    });
+
     const annualSummary = {
       totalIncome,
       totalExpense,
@@ -150,11 +172,58 @@ Page({
       bestExpenseVal,
       bestIncomeMonth: bestIncomeVal > 0 ? bestIncomeMonth : '—',
       bestIncomeVal,
-      isPositive: netSaving >= 0
+      isPositive: netSaving >= 0,
+      avgMonthIncome,
+      avgMonthExpense,
+      savingRateLabel,
+      savingRatePositive,
+      bestSaveMonth: bestSaveMonth || '—',
+      bestSaveVal: bestSaveVal === Infinity ? 0 : bestSaveVal
     };
 
     this.setData({ annualData, annualSummary }, () => {
       this.drawAnnualChart(annualData);
+    });
+  },
+
+  // 一键复制年度报告文本
+  onCopyAnnualReport() {
+    const { annualData, annualSummary, annualYear } = this.data;
+    if (!annualSummary) return;
+
+    const sign = annualSummary.isPositive ? '+' : '';
+    let lines = [
+      `📊 ${annualYear} 年度收支报告`,
+      `━━━━━━━━━━━━━━━━`,
+      `年度总收入：¥${annualSummary.totalIncome}`,
+      `年度总支出：¥${annualSummary.totalExpense}`,
+      `年度净结余：${sign}¥${annualSummary.netSaving}`,
+      `储蓄率：${annualSummary.savingRateLabel}`,
+      `月均收入：¥${annualSummary.avgMonthIncome}`,
+      `月均支出：¥${annualSummary.avgMonthExpense}`,
+      ``,
+      `📌 收入最多：${annualSummary.bestIncomeMonth}（¥${annualSummary.bestIncomeVal}）`,
+      `📌 支出最多：${annualSummary.bestExpenseMonth}（¥${annualSummary.bestExpenseVal}）`,
+      `📌 支出最少：${annualSummary.bestSaveMonth}${annualSummary.bestSaveVal > 0 ? `（¥${annualSummary.bestSaveVal}）` : ''}`,
+      ``,
+      `月度明细：`
+    ];
+
+    annualData.forEach(d => {
+      const hasData = d.income > 0 || d.expense > 0;
+      if (hasData) {
+        const netSign = d.net >= 0 ? '+' : '';
+        lines.push(`  ${d.label}  支出¥${d.expense}  收入¥${d.income}  结余${netSign}¥${d.net}`);
+      }
+    });
+
+    lines.push(``, `— 由记账小程序生成 🐾`);
+    const text = lines.join('\n');
+
+    wx.setClipboardData({
+      data: text,
+      success: () => wx.showToast({ title: '报告已复制 ✨', icon: 'success', duration: 1500 }),
+      fail: () => wx.showToast({ title: '复制失败，请重试', icon: 'none' })
     });
   },
 
