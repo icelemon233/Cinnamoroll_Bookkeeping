@@ -558,3 +558,50 @@
 .top-amount-text.income-text {
   color: #48BB78;
 }
+
+/* ─── 备注智能联想下拉 ───────────────────────────────── */
+.note-input-row {
+  position: relative;
+}
+
+.note-suggestions-wrap {
+  background: #FFFFFF;
+  border-radius: 0 0 20rpx 20rpx;
+  box-shadow: 0 8rpx 24rpx rgba(79, 184, 212, 0.14);
+  border: 1.5rpx solid #E0EFF5;
+  border-top: none;
+  margin: 0 -28rpx;
+  overflow: hidden;
+  z-index: 10;
+}
+
+.note-suggestion-item {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+  padding: 20rpx 28rpx;
+  border-bottom: 1rpx solid #F5FAFD;
+  transition: background 0.12s;
+}
+
+.note-suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.note-suggestion-item:active {
+  background: #EDF7FB;
+}
+
+.note-suggestion-icon {
+  font-size: 28rpx;
+  flex-shrink: 0;
+}
+
+.note-suggestion-text {
+  font-size: 28rpx;
+  color: #3D5A6E;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

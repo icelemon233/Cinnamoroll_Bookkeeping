@@ -100,7 +100,7 @@
       </view>
     </view>
     <view class="divider-light"></view>
-    <view class="form-row">
+    <view class="form-row note-input-row">
       <text class="form-label-inline">📝 备注</text>
       <input
         class="form-input"
@@ -110,6 +110,19 @@
         bindinput="onNoteInput"
         maxlength="30"
       />
+    </view>
+    <!-- 备注智能联想下拉 -->
+    <view wx:if="{{showNoteSuggestions}}" class="note-suggestions-wrap">
+      <view
+        class="note-suggestion-item"
+        wx:for="{{noteSuggestions}}"
+        wx:key="*this"
+        data-suggestion="{{item}}"
+        bindtap="tapNoteSuggestion"
+      >
+        <text class="note-suggestion-icon">🕐</text>
+        <text class="note-suggestion-text">{{item}}</text>
+      </view>
     </view>
     <!-- 常用备注快捷标签 -->
     <view wx:if="{{quickNotes.length > 0}}" class="quick-notes-row">

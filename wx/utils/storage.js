@@ -1151,6 +1151,63 @@ function getSavingGoalProgress(yearMonth) {
   };
 }
 
+// ─────────────────────────────────────────────
+// 备注智能联想补全
+// ─────────────────────────────────────────────
+
+/**
+ * 根据关键词从历史记录中获取备注联想建议
+ *
+ * 优先级排序：
+ *   1. 当前分类/类型下的历史备注（权重高）
+ *   2. 其他分类的历史备注
+ * 同一备注按出现频率排序，去重后返回
+ *
+ * @param {string} keyword        - 用户已输入的关键词（trim 后）
+ * @param {string} category       - 当前选中分类（用于提升权重）
+ * @param {string} type           - 'expense' | 'income'
+ * @param {number} [limit=6]      - 最多返回条数
+ * @returns {string[]}            - 匹配的备注文字数组
+ */
+function getNoteAutoComplete(keyword, category, type, limit) {
+  const n = limit || 6;
+  if (!keyword || !keyword.trim()) return [];
+  const kw = keyword.trim().toLowerCase();
+
+  const records = getRecords();
+  // 统计每条备注出现频率，同时标记是否来自当前分类
+  const noteMap = {}; // { note: { count, sameCat } }
+
+  for (const r of records) {
+    if (!r.note || !r.note.trim()) continue;
+    const note = r.note.trim();
+    const noteLower = note.toLowerCase();
+    // 必须包含关键词
+    if (!noteLower.includes(kw)) continue;
+    // 跳过与关键词完全相同的条目（用户已输入，无需再建议）
+    if (noteLower === kw) continue;
+
+    if (!noteMap[note]) {
+      noteMap[note] = { count: 0, sameCat: false };
+    }
+    noteMap[note].count++;
+    if (r.category === category && r.type === type) {
+      noteMap[note].sameCat = true;
+    }
+  }
+
+  // 排序：同分类优先，其次按频率降序
+  return Object.entries(noteMap)
+    .sort((a, b) => {
+      const [, av] = a;
+      const [, bv] = b;
+      if (av.sameCat !== bv.sameCat) return bv.sameCat ? 1 : -1;
+      return bv.count - av.count;
+    })
+    .slice(0, n)
+    .map(([note]) => note);
+}
+
 module.exports = {
   getRecords,
   saveRecord,
@@ -1184,5 +1241,6 @@ module.exports = {
   generateMonthReport,
   getSavingGoal,
   setSavingGoal,
-  getSavingGoalProgress
+  getSavingGoalProgress,
+  getNoteAutoComplete
 };

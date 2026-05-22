@@ -1,5 +1,5 @@
 // pages/add/add.js - 记账页（支持新增和编辑两种模式）
-const { saveRecord, updateRecord, getRecordById, getTodaySummary, getRecentCategoryRecords, getTopAmounts } = require('../../utils/storage');
+const { saveRecord, updateRecord, getRecordById, getTodaySummary, getRecentCategoryRecords, getTopAmounts, getNoteAutoComplete } = require('../../utils/storage');
 
 const EXPENSE_CATEGORIES = [
   { name: '餐饮', emoji: '🍜' },
@@ -82,7 +82,10 @@ Page({
     hasTodayRecords: false,
     // 常用金额快捷（当前分类/类型的高频金额，最多5个）
     topAmounts: [],
-    hasTopAmounts: false
+    hasTopAmounts: false,
+    // 备注智能联想
+    noteSuggestions: [],      // 当前联想建议列表
+    showNoteSuggestions: false // 是否展示联想下拉
   },
 
   onLoad(options) {
@@ -190,7 +193,7 @@ Page({
     const categories = type === 'expense' ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
     const selectedCategory = categories[0].name;
     const quickNotes = QUICK_NOTES[selectedCategory] || [];
-    this.setData({ type, categories, selectedCategory, quickNotes });
+    this.setData({ type, categories, selectedCategory, quickNotes, noteSuggestions: [], showNoteSuggestions: false });
     this._loadRecentRecords(selectedCategory, type);
     this._loadTopAmounts(selectedCategory, type);
   },
@@ -262,7 +265,7 @@ Page({
   selectCategory(e) {
     const category = e.currentTarget.dataset.category;
     const quickNotes = QUICK_NOTES[category] || [];
-    this.setData({ selectedCategory: category, quickNotes });
+    this.setData({ selectedCategory: category, quickNotes, noteSuggestions: [], showNoteSuggestions: false });
     this._loadRecentRecords(category, this.data.type);
     this._loadTopAmounts(category, this.data.type);
   },
@@ -270,7 +273,7 @@ Page({
   // 点击常用备注标签快速填入
   tapQuickNote(e) {
     const tag = e.currentTarget.dataset.tag;
-    this.setData({ note: tag });
+    this.setData({ note: tag, noteSuggestions: [], showNoteSuggestions: false });
   },
 
   // 数字键盘点击（支持加减运算符）
@@ -327,9 +330,41 @@ Page({
     this._updateExprState(amountStr);
   },
 
-  // 备注输入
+  // 备注输入（实时触发联想）
   onNoteInput(e) {
-    this.setData({ note: e.detail.value });
+    const note = e.detail.value;
+    this.setData({ note });
+    this._updateNoteSuggestions(note);
+  },
+
+  // 更新备注联想列表
+  _updateNoteSuggestions(keyword) {
+    const { selectedCategory, type } = this.data;
+    if (!keyword || !keyword.trim()) {
+      this.setData({ noteSuggestions: [], showNoteSuggestions: false });
+      return;
+    }
+    const suggestions = getNoteAutoComplete(keyword.trim(), selectedCategory, type, 6);
+    this.setData({
+      noteSuggestions: suggestions,
+      showNoteSuggestions: suggestions.length > 0
+    });
+  },
+
+  // 点击联想建议 → 填入备注
+  tapNoteSuggestion(e) {
+    const suggestion = e.currentTarget.dataset.suggestion;
+    this.setData({
+      note: suggestion,
+      noteSuggestions: [],
+      showNoteSuggestions: false
+    });
+    wx.vibrateShort({ type: 'light' }).catch(() => {});
+  },
+
+  // 关闭联想列表（点击其他区域时）
+  closeNoteSuggestions() {
+    this.setData({ noteSuggestions: [], showNoteSuggestions: false });
   },
 
   // 日期选择
@@ -391,7 +426,9 @@ Page({
         type: 'expense',
         categories: EXPENSE_CATEGORIES,
         selectedCategory: '餐饮',
-        quickNotes: QUICK_NOTES['餐饮'] || []
+        quickNotes: QUICK_NOTES['餐饮'] || [],
+        noteSuggestions: [],
+        showNoteSuggestions: false
       });
       // 刷新今日速览（保存后立即更新数据），同时刷新常用金额（新记录可能影响频率）
       this._loadTodaySummary();
