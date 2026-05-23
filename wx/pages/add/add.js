@@ -1,5 +1,5 @@
 // pages/add/add.js - 记账页（支持新增和编辑两种模式）
-const { saveRecord, updateRecord, getRecordById, getTodaySummary, getRecentCategoryRecords, getTopAmounts, getNoteAutoComplete } = require('../../utils/storage');
+const { saveRecord, updateRecord, getRecordById, getTodaySummary, getRecentCategoryRecords, getTopAmounts, getNoteAutoComplete, getTemplates, saveTemplate, deleteTemplate } = require('../../utils/storage');
 
 const EXPENSE_CATEGORIES = [
   { name: '餐饮', emoji: '🍜' },
@@ -85,7 +85,10 @@ Page({
     hasTopAmounts: false,
     // 备注智能联想
     noteSuggestions: [],      // 当前联想建议列表
-    showNoteSuggestions: false // 是否展示联想下拉
+    showNoteSuggestions: false, // 是否展示联想下拉
+    // 快捷记账模板
+    templates: [],            // 所有模板列表
+    hasTemplates: false       // 是否有模板（控制区块显隐）
   },
 
   onLoad(options) {
@@ -174,6 +177,122 @@ Page({
       this.getTabBar().setData({ selected: 1 });
     }
     this._loadTodaySummary();
+    this._loadTemplates();
+  },
+
+  // 加载快捷记账模板列表
+  _loadTemplates() {
+    const templates = getTemplates();
+    this.setData({ templates, hasTemplates: templates.length > 0 });
+  },
+
+  // 点击模板 → 一键填入类型/分类/金额/备注
+  tapTemplate(e) {
+    const { id } = e.currentTarget.dataset;
+    const tpl = this.data.templates.find(t => String(t.id) === String(id));
+    if (!tpl) return;
+
+    const EXPENSE_CATEGORIES = [
+      { name: '餐饮', emoji: '🍜' }, { name: '交通', emoji: '🚌' },
+      { name: '购物', emoji: '🛍️' }, { name: '娱乐', emoji: '🎮' },
+      { name: '住房', emoji: '🏠' }, { name: '医疗', emoji: '💊' },
+      { name: '教育', emoji: '📚' }, { name: '运动', emoji: '🏃' },
+      { name: '旅行', emoji: '✈️' }, { name: '宠物', emoji: '🐾' },
+      { name: '日用', emoji: '🧴' }, { name: '其他', emoji: '📦' }
+    ];
+    const INCOME_CATEGORIES = [
+      { name: '工资', emoji: '💼' }, { name: '奖金', emoji: '🎁' },
+      { name: '副业', emoji: '💡' }, { name: '理财', emoji: '📈' },
+      { name: '红包', emoji: '🧧' }, { name: '其他', emoji: '📦' }
+    ];
+
+    const categories = tpl.type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
+    const QUICK_NOTES_LOCAL = {
+      '餐饮': ['午餐', '早餐', '晚餐', '聚餐', '外卖', '下午茶', '夜宵'],
+      '交通': ['打车', '地铁', '公交', '加油', '高铁', '停车费', '共享单车'],
+      '购物': ['日常购物', '网购', '超市', '服装', '数码', '书籍'],
+      '娱乐': ['电影', 'KTV', '游戏', '演唱会', '展览', '桌游'],
+      '住房': ['房租', '水费', '电费', '燃气费', '物业费', '宽带'],
+      '医疗': ['看病', '买药', '体检', '口腔', '眼科'],
+      '教育': ['课程', '培训', '书本', '文具', '考试报名'],
+      '运动': ['健身房', '游泳', '羽毛球', '跑步装备', '瑜伽'],
+      '旅行': ['机票', '酒店', '景区门票', '餐饮', '纪念品'],
+      '宠物': ['猫粮', '狗粮', '零食', '玩具', '宠物医院', '洗澡美容'],
+      '日用': ['洗护用品', '纸巾', '清洁用品', '厨房用品', '收纳'],
+      '其他': ['零花钱', '转账', '礼金', '捐款'],
+      '工资': ['月薪', '绩效', '年终奖', '补贴'],
+      '奖金': ['季度奖', '项目奖金', '优秀员工奖'],
+      '副业': ['接单', '兼职', '稿费', '讲课费'],
+      '理财': ['基金收益', '股票', '利息', '分红'],
+      '红包': ['春节红包', '生日红包', '微信红包']
+    };
+    const quickNotes = QUICK_NOTES_LOCAL[tpl.category] || [];
+
+    this.setData({
+      type: tpl.type,
+      categories,
+      selectedCategory: tpl.category,
+      amountStr: String(tpl.amount),
+      amountResult: '',
+      hasOperator: false,
+      note: tpl.note || '',
+      quickNotes,
+      noteSuggestions: [],
+      showNoteSuggestions: false
+    });
+    this._loadRecentRecords(tpl.category, tpl.type);
+    this._loadTopAmounts(tpl.category, tpl.type);
+    wx.vibrateShort({ type: 'light' }).catch(() => {});
+    wx.showToast({ title: '已填入模板 ✨', icon: 'none', duration: 800 });
+  },
+
+  // 长按模板 → 弹出操作菜单（删除）
+  longPressTemplate(e) {
+    const { id, name, amount } = e.currentTarget.dataset;
+    wx.vibrateShort({ type: 'medium' }).catch(() => {});
+    wx.showActionSheet({
+      itemList: [`🗑️ 删除「${name || '¥' + amount}」`],
+      success: (res) => {
+        if (res.tapIndex === 0) {
+          deleteTemplate(id);
+          this._loadTemplates();
+          wx.showToast({ title: '已删除模板', icon: 'success', duration: 800 });
+        }
+      }
+    });
+  },
+
+  // 保存当前记录为模板（在 saveRecord 成功后可选触发）
+  saveAsTemplate() {
+    const { type, selectedCategory, amountStr, note } = this.data;
+    const amount = this._evalExpr(amountStr) || parseFloat(amountStr);
+    if (!amountStr || isNaN(amount) || amount <= 0) {
+      wx.showToast({ title: '请先填写有效金额', icon: 'none' });
+      return;
+    }
+
+    // 模板命名：默认用「分类+备注」或「分类+金额」
+    const defaultName = note
+      ? `${selectedCategory} · ${note}`
+      : `${selectedCategory} ¥${amount}`;
+
+    wx.showModal({
+      title: '保存为模板',
+      editable: true,
+      placeholderText: defaultName,
+      content: '',
+      confirmText: '保存',
+      cancelText: '取消',
+      success: (res) => {
+        if (!res.confirm) return;
+        const name = (res.content || '').trim() || defaultName;
+        const { success } = saveTemplate({ type, category: selectedCategory, amount, note, name });
+        if (success) {
+          this._loadTemplates();
+          wx.showToast({ title: '模板已保存 🐾', icon: 'success', duration: 1200 });
+        }
+      }
+    });
   },
 
   // 加载今日消费概览

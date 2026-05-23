@@ -1208,6 +1208,58 @@ function getNoteAutoComplete(keyword, category, type, limit) {
     .map(([note]) => note);
 }
 
+// ─────────────────────────────────────────────
+// 快捷记账模板
+// ─────────────────────────────────────────────
+
+const TEMPLATES_KEY = 'record_templates';
+const TEMPLATES_MAX = 10; // 最多保存 10 个模板
+
+/**
+ * 获取所有快捷记账模板
+ * @returns {Array<{ id: number, type: string, category: string, amount: number, note: string, name: string }>}
+ */
+function getTemplates() {
+  return wx.getStorageSync(TEMPLATES_KEY) || [];
+}
+
+/**
+ * 保存一个快捷记账模板
+ * 若已达上限（10个），移除最旧的那条
+ * @param {{ type: string, category: string, amount: number, note: string, name: string }} tpl
+ * @returns {{ success: boolean, templates: Array }}
+ */
+function saveTemplate(tpl) {
+  const templates = getTemplates();
+  if (templates.length >= TEMPLATES_MAX) {
+    // 移除最旧的（数组末尾）
+    templates.pop();
+  }
+  const newTpl = {
+    id: Date.now(),
+    type: tpl.type || 'expense',
+    category: tpl.category || '其他',
+    amount: parseFloat(Number(tpl.amount).toFixed(2)),
+    note: (tpl.note || '').trim(),
+    name: (tpl.name || '').trim()
+  };
+  templates.unshift(newTpl);
+  wx.setStorageSync(TEMPLATES_KEY, templates);
+  return { success: true, templates };
+}
+
+/**
+ * 删除指定 id 的模板
+ * @param {number|string} id
+ * @returns {{ success: boolean, templates: Array }}
+ */
+function deleteTemplate(id) {
+  const templates = getTemplates();
+  const filtered = templates.filter(t => String(t.id) !== String(id));
+  wx.setStorageSync(TEMPLATES_KEY, filtered);
+  return { success: templates.length !== filtered.length, templates: filtered };
+}
+
 module.exports = {
   getRecords,
   saveRecord,
@@ -1242,5 +1294,8 @@ module.exports = {
   getSavingGoal,
   setSavingGoal,
   getSavingGoalProgress,
-  getNoteAutoComplete
+  getNoteAutoComplete,
+  getTemplates,
+  saveTemplate,
+  deleteTemplate
 };

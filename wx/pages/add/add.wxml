@@ -1,6 +1,34 @@
 <!-- pages/add/add.wxml - 记账页（支持新增/编辑两种模式） -->
 <view class="container">
 
+  <!-- 快捷记账模板（非编辑模式下显示） -->
+  <view wx:if="{{!isEditMode && hasTemplates}}" class="templates-section">
+    <view class="templates-header">
+      <view class="templates-header-left">
+        <text class="templates-icon">⚡</text>
+        <text class="templates-label">快捷模板</text>
+      </view>
+      <text class="templates-hint">长按可删除</text>
+    </view>
+    <scroll-view scroll-x class="templates-scroll" enhanced="{{true}}" show-scrollbar="{{false}}">
+      <view class="templates-row">
+        <view
+          class="template-chip"
+          wx:for="{{templates}}"
+          wx:key="id"
+          data-id="{{item.id}}"
+          data-name="{{item.name}}"
+          data-amount="{{item.amount}}"
+          bindtap="tapTemplate"
+          bindlongpress="longPressTemplate"
+        >
+          <text class="template-chip-name">{{item.name || item.category}}</text>
+          <text class="template-chip-amount {{item.type === 'income' ? 'income-text' : 'expense-text'}}">{{item.type === 'income' ? '+' : '-'}}¥{{item.amount}}</text>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
   <!-- 今日速览横幅（非编辑模式下显示） -->
   <view wx:if="{{!isEditMode}}" class="today-banner">
     <view class="today-banner-inner">
@@ -183,6 +211,14 @@
         </view>
       </view>
     </scroll-view>
+  </view>
+
+  <!-- 存为模板快捷入口（非编辑模式，已填写金额时显示） -->
+  <view wx:if="{{!isEditMode && amountStr && amountStr !== '0'}}" class="save-template-row">
+    <view class="save-template-btn" bindtap="saveAsTemplate">
+      <text class="save-template-icon">📌</text>
+      <text class="save-template-text">存为模板</text>
+    </view>
   </view>
 
   <!-- 数字键盘（支持加减运算符，可连续计算总金额） -->
