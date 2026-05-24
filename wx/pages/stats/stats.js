@@ -63,7 +63,8 @@ Page({
     // 智能分析卡片（仅饼图模式 / 支出视角）
     insightCard: null,         // { dailyAvg, predicted, vsLastMonth, vsLastMonthPct, isUp, tip, tipEmoji, showPrediction }
     // 分类环比数据
-    compareData: null,         // { curExpense, prevExpense, expenseDiff, expenseDiffAbs, items, tip, tipEmoji }
+    compareType: 'expense',    // 'expense' | 'income'：环比查看类型
+    compareData: null,         // { curVal, prevVal, diff, diffAbs, items, tip, tipEmoji, compareType }
     // 分类预算数据
     catBudgetItems: [],        // [{ category, emoji, spent, budget, hasBudget, percent, isOver, remain }]
     catBudgetTip: '',
@@ -636,7 +637,8 @@ Page({
     const { category } = e.currentTarget.dataset;
     if (!category) return;
     const app = getApp();
-    app.globalData.listFilter = { category, type: 'expense' };
+    // 跳转时传当前环比类型（expense / income）
+    app.globalData.listFilter = { category, type: this.data.compareType || 'expense' };
     wx.vibrateShort({ type: 'light' }).catch(() => {});
     wx.switchTab({ url: '/pages/list/list' });
   },
@@ -667,10 +669,20 @@ Page({
   // ─── 分类环比数据加载 ──────────────────────────────────
 
   /**
-   * 加载当月 vs 上月的分类支出对比数据
+   * 切换环比查看类型（支出 / 收入）
+   */
+  switchCompareType(e) {
+    const compareType = e.currentTarget.dataset.type;
+    if (compareType === this.data.compareType) return;
+    wx.vibrateShort({ type: 'light' }).catch(() => {});
+    this.setData({ compareType }, () => this._loadCompareData());
+  },
+
+  /**
+   * 加载当月 vs 上月的分类对比数据（支持 expense / income 两种类型）
    */
   _loadCompareData() {
-    const { yearMonth } = this.data;
+    const { yearMonth, compareType } = this.data;
     const [year, month] = yearMonth.split('-').map(Number);
 
     // 上月 YYYY-MM
@@ -682,13 +694,16 @@ Page({
     const curSummary = getMonthSummary(yearMonth);
     const prevSummary = getMonthSummary(prevYM);
 
-    const curExpense = parseFloat(curSummary.expense.toFixed(2));
-    const prevExpense = parseFloat(prevSummary.expense.toFixed(2));
+    const isExpense = compareType !== 'income';
 
-    // 按分类汇总本月和上月支出
+    // 本月/上月总额
+    const curVal = parseFloat((isExpense ? curSummary.expense : curSummary.income).toFixed(2));
+    const prevVal = parseFloat((isExpense ? prevSummary.expense : prevSummary.income).toFixed(2));
+
+    // 按分类汇总
     const buildCatMap = (records) => {
       const map = {};
-      records.filter(r => r.type === 'expense').forEach(r => {
+      records.filter(r => r.type === compareType).forEach(r => {
         const cat = r.category || '其他';
         map[cat] = (map[cat] || 0) + (Number(r.amount) || 0);
       });
@@ -725,19 +740,25 @@ Page({
           prevPct: Math.round(prevAmount / maxVal * 100)
         };
       })
-      // 按本月金额降序排列，本月无支出的放后面
+      // 按本月金额降序排列
       .sort((a, b) => b.curAmount - a.curAmount || b.prevAmount - a.prevAmount);
 
     // 生成对比洞察文案
-    const expenseDiff = parseFloat((curExpense - prevExpense).toFixed(2));
-    const expenseDiffAbs = Math.abs(expenseDiff);
-    const { tip, tipEmoji } = this._buildCompareTip(curExpense, prevExpense, items);
+    const diff = parseFloat((curVal - prevVal).toFixed(2));
+    const diffAbs = parseFloat(Math.abs(diff).toFixed(2));
+    const { tip, tipEmoji } = this._buildCompareTip(curVal, prevVal, items, compareType);
 
     const compareData = {
-      curExpense,
-      prevExpense,
-      expenseDiff,
-      expenseDiffAbs: parseFloat(expenseDiffAbs.toFixed(2)),
+      curVal,
+      prevVal,
+      diff,
+      diffAbs,
+      // 保留旧字段名以防其他引用（指向相同数据）
+      curExpense: curVal,
+      prevExpense: prevVal,
+      expenseDiff: diff,
+      expenseDiffAbs: diffAbs,
+      compareType,
       items,
       tip,
       tipEmoji
@@ -749,39 +770,64 @@ Page({
   /**
    * 生成环比对比洞察文案（Cinnamoroll 风格）
    */
-  _buildCompareTip(curExpense, prevExpense, items) {
-    if (curExpense === 0 && prevExpense === 0) {
-      return { tipEmoji: '🌱', tip: '两个月都没有支出记录，快来记账吧～' };
+  _buildCompareTip(curVal, prevVal, items, compareType) {
+    const isExpense = compareType !== 'income';
+    const label = isExpense ? '支出' : '收入';
+
+    if (curVal === 0 && prevVal === 0) {
+      return { tipEmoji: '🌱', tip: `两个月都没有${label}记录，快来记账吧～` };
     }
-    if (prevExpense === 0) {
-      return { tipEmoji: '✨', tip: '上月没有记录，本月已开始记账，继续保持！' };
+    if (prevVal === 0) {
+      return { tipEmoji: '✨', tip: `上月没有${label}记录，本月已开始记账，继续保持！` };
     }
 
-    const diff = curExpense - prevExpense;
-    const pct = parseFloat(Math.abs(diff / prevExpense * 100).toFixed(1));
+    const diff = curVal - prevVal;
+    const pct = parseFloat(Math.abs(diff / prevVal * 100).toFixed(1));
 
     // 找出增幅最大的分类
     const risingCats = items
       .filter(i => i.diff > 0 && i.prevAmount > 0)
       .sort((a, b) => b.diff - a.diff);
 
-    if (diff > 0 && pct >= 20) {
-      const topRise = risingCats[0];
-      if (topRise) {
-        return { tipEmoji: '⚠️', tip: `支出较上月多 ${pct}%，「${topRise.category}」增幅最大，注意控制哦～` };
+    if (isExpense) {
+      // 支出：上升是坏事
+      if (diff > 0 && pct >= 20) {
+        const topRise = risingCats[0];
+        if (topRise) {
+          return { tipEmoji: '⚠️', tip: `支出较上月多 ${pct}%，「${topRise.category}」增幅最大，注意控制哦～` };
+        }
+        return { tipEmoji: '⚠️', tip: `支出较上月多了 ${pct}%，注意控制支出～` };
       }
-      return { tipEmoji: '⚠️', tip: `支出较上月多了 ${pct}%，注意控制支出～` };
+      if (diff < 0 && pct >= 20) {
+        return { tipEmoji: '🎉', tip: `支出较上月少了 ${pct}%，省钱好棒！继续保持 🐾` };
+      }
+      if (Math.abs(diff) < 1) {
+        return { tipEmoji: '📊', tip: '本月支出与上月基本持平，消费节奏稳定～' };
+      }
+      if (diff > 0) {
+        return { tipEmoji: '🐾', tip: `支出较上月增加 ¥${Math.abs(diff).toFixed(2)}，幅度在可控范围内～` };
+      }
+      return { tipEmoji: '✨', tip: `支出较上月减少 ¥${Math.abs(diff).toFixed(2)}，节约进行中！` };
+    } else {
+      // 收入：上升是好事
+      if (diff > 0 && pct >= 20) {
+        const topRise = risingCats[0];
+        if (topRise) {
+          return { tipEmoji: '🎉', tip: `收入较上月多 ${pct}%，「${topRise.category}」增幅最大，加油！` };
+        }
+        return { tipEmoji: '🎉', tip: `收入较上月多了 ${pct}%，继续保持！🐾` };
+      }
+      if (diff < 0 && pct >= 20) {
+        return { tipEmoji: '📉', tip: `收入较上月少了 ${pct}%，注意收入来源哦～` };
+      }
+      if (Math.abs(diff) < 1) {
+        return { tipEmoji: '📊', tip: '本月收入与上月基本持平，节奏稳定～' };
+      }
+      if (diff > 0) {
+        return { tipEmoji: '✨', tip: `收入较上月增加 ¥${Math.abs(diff).toFixed(2)}，不错哦！` };
+      }
+      return { tipEmoji: '🐾', tip: `收入较上月减少 ¥${Math.abs(diff).toFixed(2)}，下个月继续加油！` };
     }
-    if (diff < 0 && pct >= 20) {
-      return { tipEmoji: '🎉', tip: `支出较上月少了 ${pct}%，省钱好棒！继续保持 🐾` };
-    }
-    if (Math.abs(diff) < 1) {
-      return { tipEmoji: '📊', tip: '本月支出与上月基本持平，消费节奏稳定～' };
-    }
-    if (diff > 0) {
-      return { tipEmoji: '🐾', tip: `支出较上月增加 ¥${Math.abs(diff).toFixed(2)}，幅度在可控范围内～` };
-    }
-    return { tipEmoji: '✨', tip: `支出较上月减少 ¥${Math.abs(diff).toFixed(2)}，节约进行中！` };
   },
 
   // ─── 分类预算 ──────────────────────────────────────────

@@ -630,6 +630,51 @@
 
 /* ═══════ 环比对比模式 ═══════ */
 
+/* 收入/支出切换 tab */
+.compare-type-tabs {
+  display: flex;
+  background: #F0F8FF;
+  border-radius: 24rpx;
+  padding: 6rpx;
+  margin-bottom: 20rpx;
+  gap: 6rpx;
+}
+
+.compare-type-tab {
+  flex: 1;
+  text-align: center;
+  padding: 14rpx 0;
+  border-radius: 20rpx;
+  transition: background 0.2s;
+}
+
+.compare-type-tab-text {
+  font-size: 26rpx;
+  color: #9BAAB8;
+}
+
+.compare-type-active .compare-type-tab-text {
+  font-weight: 600;
+}
+
+.compare-type-expense {
+  background: #FFFFFF;
+  box-shadow: 0 2rpx 8rpx rgba(255, 139, 171, 0.18);
+}
+
+.compare-type-expense .compare-type-tab-text {
+  color: #FF8BAB;
+}
+
+.compare-type-income {
+  background: #FFFFFF;
+  box-shadow: 0 2rpx 8rpx rgba(79, 184, 212, 0.18);
+}
+
+.compare-type-income .compare-type-tab-text {
+  color: #4FB8D4;
+}
+
 /* 顶部总计对比卡片 */
 .compare-overview {
   padding: 28rpx 32rpx;
@@ -718,6 +763,10 @@
 
 .compare-cur-dot {
   background: #FF8BAB;
+}
+
+.compare-cur-dot-income {
+  background: #4FB8D4;
 }
 
 .compare-prev-dot {
@@ -833,6 +882,10 @@
 
 .compare-bar-cur {
   background: linear-gradient(90deg, #FF8BAB, #FFCCD8);
+}
+
+.compare-bar-cur-income {
+  background: linear-gradient(90deg, #4FB8D4, #A8D8EA);
 }
 
 .compare-bar-prev {

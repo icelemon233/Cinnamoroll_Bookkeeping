@@ -361,23 +361,45 @@
       </view>
     </view>
 
+    <!-- 收入 / 支出切换 tab -->
+    <view class="compare-type-tabs">
+      <view
+        class="compare-type-tab {{compareType === 'expense' ? 'compare-type-active compare-type-expense' : ''}}"
+        data-type="expense"
+        bindtap="switchCompareType"
+      >
+        <text class="compare-type-tab-text">💸 支出</text>
+      </view>
+      <view
+        class="compare-type-tab {{compareType === 'income' ? 'compare-type-active compare-type-income' : ''}}"
+        data-type="income"
+        bindtap="switchCompareType"
+      >
+        <text class="compare-type-tab-text">💰 收入</text>
+      </view>
+    </view>
+
     <!-- 总计对比概览 -->
     <view class="compare-overview card" wx:if="{{compareData}}">
       <view class="compare-overview-row">
         <view class="compare-ov-item">
-          <text class="compare-ov-label">本月支出</text>
-          <text class="compare-ov-val expense-text">¥{{compareData.curExpense}}</text>
+          <text class="compare-ov-label">本月{{compareType === 'income' ? '收入' : '支出'}}</text>
+          <text class="compare-ov-val {{compareType === 'income' ? 'income-text' : 'expense-text'}}">¥{{compareData.curVal}}</text>
         </view>
         <view class="compare-ov-arrow">
-          <text class="compare-ov-vs-text {{compareData.expenseDiff > 0 ? 'vs-up-text' : compareData.expenseDiff < 0 ? 'vs-down-text' : ''}}">
-            {{compareData.expenseDiff > 0 ? '▲' : compareData.expenseDiff < 0 ? '▼' : '='}}
-            {{compareData.expenseDiffAbs > 0 ? '¥' + compareData.expenseDiffAbs : '持平'}}
+          <text class="compare-ov-vs-text {{
+            compareType === 'income'
+              ? (compareData.diff > 0 ? 'vs-down-text' : compareData.diff < 0 ? 'vs-up-text' : '')
+              : (compareData.diff > 0 ? 'vs-up-text' : compareData.diff < 0 ? 'vs-down-text' : '')
+          }}">
+            {{compareData.diff > 0 ? '▲' : compareData.diff < 0 ? '▼' : '='}}
+            {{compareData.diffAbs > 0 ? '¥' + compareData.diffAbs : '持平'}}
           </text>
           <text class="compare-ov-vs-label">较上月</text>
         </view>
         <view class="compare-ov-item">
-          <text class="compare-ov-label">上月支出</text>
-          <text class="compare-ov-val compare-prev-text">¥{{compareData.prevExpense}}</text>
+          <text class="compare-ov-label">上月{{compareType === 'income' ? '收入' : '支出'}}</text>
+          <text class="compare-ov-val compare-prev-text">¥{{compareData.prevVal}}</text>
         </view>
       </view>
     </view>
@@ -391,12 +413,12 @@
     <!-- 分类环比列表 -->
     <view wx:if="{{compareData && compareData.items.length > 0}}" class="card compare-list-card">
       <view class="list-title-row">
-        <text class="list-title">支出分类环比</text>
+        <text class="list-title">{{compareType === 'income' ? '收入' : '支出'}}分类环比</text>
         <text class="list-title-hint">点击查看明细 →</text>
       </view>
       <view class="compare-legend-row">
         <view class="compare-legend-item">
-          <view class="compare-legend-dot compare-cur-dot"></view>
+          <view class="compare-legend-dot {{compareType === 'income' ? 'compare-cur-dot-income' : 'compare-cur-dot'}}"></view>
           <text class="compare-legend-label">本月</text>
         </view>
         <view class="compare-legend-item">
@@ -418,7 +440,11 @@
             <text class="compare-cat-emoji">{{item.emoji}}</text>
             <text class="compare-cat-name">{{item.category}}</text>
           </view>
-          <view class="compare-diff-badge {{item.diff > 0 ? 'badge-up' : item.diff < 0 ? 'badge-down' : 'badge-even'}}">
+          <view class="compare-diff-badge {{
+            compareType === 'income'
+              ? (item.diff > 0 ? 'badge-down' : item.diff < 0 ? 'badge-up' : 'badge-even')
+              : (item.diff > 0 ? 'badge-up' : item.diff < 0 ? 'badge-down' : 'badge-even')
+          }}">
             <text class="compare-diff-text">
               {{item.diff > 0 ? '▲' : item.diff < 0 ? '▼' : '—'}}
               {{item.diffPct > 0 ? item.diffPct + '%' : ''}}
@@ -427,10 +453,10 @@
         </view>
         <!-- 本月 bar -->
         <view class="compare-bar-row">
-          <text class="compare-bar-amount compare-cur-amount expense-text">¥{{item.curAmount}}</text>
+          <text class="compare-bar-amount compare-cur-amount {{compareType === 'income' ? 'income-text' : 'expense-text'}}">¥{{item.curAmount}}</text>
           <view class="compare-bar-track">
             <view
-              class="compare-bar-fill compare-bar-cur"
+              class="compare-bar-fill {{compareType === 'income' ? 'compare-bar-cur-income' : 'compare-bar-cur'}}"
               style="width: {{item.curPct}}%"
             ></view>
           </view>
