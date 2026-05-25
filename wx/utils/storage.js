@@ -1260,6 +1260,73 @@ function deleteTemplate(id) {
   return { success: templates.length !== filtered.length, templates: filtered };
 }
 
+// ─────────────────────────────────────────────
+// 分类消费排行榜（跨时间段）
+// ─────────────────────────────────────────────
+
+/**
+ * 获取指定时间范围内的分类消费排行榜
+ *
+ * @param {string} startYM - 起始月份 'YYYY-MM'（含）
+ * @param {string} endYM   - 结束月份 'YYYY-MM'（含）
+ * @param {string} [type='expense'] - 'expense' | 'income'
+ * @returns {{
+ *   items: Array<{ category: string, amount: number, percent: number, count: number, avgAmount: number }>,
+ *   total: number,
+ *   months: number,
+ *   dailyAvg: number
+ * }}
+ */
+function getCategoryRanking(startYM, endYM, type) {
+  const rankType = type || 'expense';
+  const allRecords = getRecords();
+
+  // 过滤时间范围和类型
+  const filtered = allRecords.filter(r => {
+    if (!r.date || r.type !== rankType) return false;
+    const ym = r.date.substring(0, 7); // 'YYYY-MM'
+    return ym >= startYM && ym <= endYM;
+  });
+
+  // 统计各分类金额与次数
+  const categoryMap = {}; // { cat: { amount, count } }
+  let total = 0;
+
+  filtered.forEach(r => {
+    const cat = r.category || '其他';
+    if (!categoryMap[cat]) categoryMap[cat] = { amount: 0, count: 0 };
+    const amt = Number(r.amount) || 0;
+    categoryMap[cat].amount += amt;
+    categoryMap[cat].count += 1;
+    total += amt;
+  });
+
+  total = parseFloat(total.toFixed(2));
+
+  // 计算跨越的月份数（用于日均）
+  const [sy, sm] = startYM.split('-').map(Number);
+  const [ey, em] = endYM.split('-').map(Number);
+  const months = Math.max(1, (ey - sy) * 12 + (em - sm) + 1);
+  const daysApprox = months * 30;
+  const dailyAvg = total > 0 ? parseFloat((total / daysApprox).toFixed(2)) : 0;
+
+  const items = Object.keys(categoryMap)
+    .map(category => ({
+      category,
+      amount: parseFloat(categoryMap[category].amount.toFixed(2)),
+      count: categoryMap[category].count,
+      avgAmount: categoryMap[category].count > 0
+        ? parseFloat((categoryMap[category].amount / categoryMap[category].count).toFixed(2))
+        : 0,
+      percent: total > 0
+        ? parseFloat((categoryMap[category].amount / total * 100).toFixed(1))
+        : 0
+    }))
+    .sort((a, b) => b.amount - a.amount);
+
+  return { items, total, months, dailyAvg };
+}
+
 module.exports = {
   getRecords,
   saveRecord,
@@ -1297,5 +1364,6 @@ module.exports = {
   getNoteAutoComplete,
   getTemplates,
   saveTemplate,
-  deleteTemplate
+  deleteTemplate,
+  getCategoryRanking
 };

@@ -1,5 +1,5 @@
-// pages/stats/stats.js - 统计页（饼图 + 趋势柱状图 + 年度总览 + 分类预算）
-const { getCategoryStats, getMonthSummary, getCategoryBudgets, setCategoryBudget } = require('../../utils/storage');
+// pages/stats/stats.js - 统计页（饼图 + 趋势柱状图 + 年度总览 + 分类环比 + 分类预算 + 排行榜）
+const { getCategoryStats, getMonthSummary, getCategoryBudgets, setCategoryBudget, getCategoryRanking } = require('../../utils/storage');
 
 // 饼图颜色（Cinnamoroll 蓝色系列）
 const COLORS = [
@@ -68,7 +68,15 @@ Page({
     // 分类预算数据
     catBudgetItems: [],        // [{ category, emoji, spent, budget, hasBudget, percent, isOver, remain }]
     catBudgetTip: '',
-    catBudgetTipEmoji: ''
+    catBudgetTipEmoji: '',
+    // 排行榜模式
+    rankingType: 'expense',         // 'expense' | 'income'
+    rankingRange: '3',              // '本月' | '3' | '6' | '年'
+    rankingItems: [],               // [{ category, emoji, amount, percent, count, avgAmount, barWidth }]
+    rankingTotal: 0,                // 统计周期内总金额
+    rankingMonths: 1,               // 时间范围内月数
+    rankingDailyAvg: 0,             // 日均消费
+    rankingIsEmpty: false           // 范围内是否无数据
   },
 
   onLoad() {
@@ -474,6 +482,8 @@ Page({
         this._loadCompareData();
       } else if (viewMode === 'budget') {
         this._loadCatBudgetData();
+      } else if (viewMode === 'ranking') {
+        this._loadRankingData();
       }
     });
   },
@@ -657,6 +667,8 @@ Page({
         this._loadCompareData();
       } else if (viewMode === 'budget') {
         this._loadCatBudgetData();
+      } else if (viewMode === 'ranking') {
+        this._loadRankingData();
       } else {
         // 切回饼图，重新绘制
         if (!this.data.isEmpty) {
@@ -1348,6 +1360,72 @@ Page({
     ctx.font = `${Math.floor(radius * 0.14)}px sans-serif`;
     ctx.fillStyle = '#9BAAB8';
     ctx.fillText(`${categoryList.length} 分类`, cx, cy + radius * 0.15);
+  },
+
+  // ─── 分类消费排行榜 ─────────────────────────────
+
+  /**
+   * 加载分类排行榜数据，依据当前 rankingType + rankingRange 计算
+   */
+  _loadRankingData() {
+    const { rankingType, rankingRange } = this.data;
+    const now = new Date();
+    const curY = now.getFullYear();
+    const curM = now.getMonth() + 1;
+    const endYM = `${curY}-${String(curM).padStart(2, '0')}`;
+
+    let startYM;
+    if (rankingRange === '本月') {
+      startYM = endYM;
+    } else if (rankingRange === '3') {
+      const d = new Date(curY, curM - 3, 1);
+      startYM = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    } else if (rankingRange === '6') {
+      const d = new Date(curY, curM - 6, 1);
+      startYM = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    } else if (rankingRange === '年') {
+      startYM = `${curY}-01`;
+    } else {
+      startYM = endYM;
+    }
+
+    const { items, total, months, dailyAvg } = getCategoryRanking(startYM, endYM, rankingType);
+
+    const maxAmount = items.length > 0 ? items[0].amount : 1;
+    const rankingItems = items.map(item => ({
+      ...item,
+      emoji: CATEGORY_EMOJI[item.category] || '📦',
+      // 最多的分类宽度 100%，其他按比例缩放
+      barWidth: maxAmount > 0 ? Math.round((item.amount / maxAmount) * 100) : 0
+    }));
+
+    this.setData({
+      rankingItems,
+      rankingTotal: total,
+      rankingMonths: months,
+      rankingDailyAvg: dailyAvg,
+      rankingIsEmpty: items.length === 0
+    });
+  },
+
+  /**
+   * 切换排行榜类型（支出 / 收入）
+   */
+  switchRankingType(e) {
+    const rankingType = e.currentTarget.dataset.type;
+    if (rankingType === this.data.rankingType) return;
+    wx.vibrateShort({ type: 'light' }).catch(() => {});
+    this.setData({ rankingType }, () => this._loadRankingData());
+  },
+
+  /**
+   * 切换排行榜时间范围
+   */
+  switchRankingRange(e) {
+    const rankingRange = e.currentTarget.dataset.range;
+    if (rankingRange === this.data.rankingRange) return;
+    wx.vibrateShort({ type: 'light' }).catch(() => {});
+    this.setData({ rankingRange }, () => this._loadRankingData());
   },
 
   _renderPieLegacy(ctx, w, h, categoryList) {

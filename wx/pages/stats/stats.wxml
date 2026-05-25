@@ -28,6 +28,11 @@
       data-mode="budget"
       bindtap="switchViewMode"
     >🎯 预算</view>
+    <view
+      class="view-mode-btn {{viewMode === 'ranking' ? 'view-mode-active' : ''}}"
+      data-mode="ranking"
+      bindtap="switchViewMode"
+    >🏆 排行</view>
   </view>
 
   <!-- ═══════ 饼图模式 ═══════ -->
@@ -558,6 +563,120 @@
           <text class="cat-budget-percent-text {{item.isOver ? 'budget-over-text' : item.percent >= 80 ? 'budget-warn-text' : ''}}">已用 {{item.percent}}%</text>
         </view>
 
+      </view>
+    </view>
+
+  </block>
+
+  <!-- ═══════ 排行榜模式 ═══════ -->
+  <block wx:if="{{viewMode === 'ranking'}}">
+
+    <!-- 类型切换：支出 / 收入 -->
+    <view class="type-switcher ranking-type-switcher">
+      <view
+        class="type-btn {{rankingType === 'expense' ? 'active-expense' : ''}}"
+        data-type="expense"
+        bindtap="switchRankingType"
+      >💸 支出排行</view>
+      <view
+        class="type-btn {{rankingType === 'income' ? 'active-income' : ''}}"
+        data-type="income"
+        bindtap="switchRankingType"
+      >💰 收入排行</view>
+    </view>
+
+    <!-- 时间范围选择 -->
+    <view class="ranking-range-row">
+      <view
+        class="ranking-range-chip {{rankingRange === '本月' ? 'range-chip-active' : ''}}"
+        data-range="本月"
+        bindtap="switchRankingRange"
+      >本月</view>
+      <view
+        class="ranking-range-chip {{rankingRange === '3' ? 'range-chip-active' : ''}}"
+        data-range="3"
+        bindtap="switchRankingRange"
+      >迓 3 月</view>
+      <view
+        class="ranking-range-chip {{rankingRange === '6' ? 'range-chip-active' : ''}}"
+        data-range="6"
+        bindtap="switchRankingRange"
+      >迓 6 月</view>
+      <view
+        class="ranking-range-chip {{rankingRange === '年' ? 'range-chip-active' : ''}}"
+        data-range="年"
+        bindtap="switchRankingRange"
+      >今年</view>
+    </view>
+
+    <!-- 概要信息条 -->
+    <view wx:if="{{!rankingIsEmpty}}" class="ranking-summary-bar">
+      <view class="ranking-summary-item">
+        <text class="ranking-summary-label">{{rankingType === 'expense' ? '总支出' : '总收入'}}</text>
+        <text class="ranking-summary-value {{rankingType === 'expense' ? 'expense-text' : 'income-text'}}">¥{{rankingTotal}}</text>
+      </view>
+      <view class="ranking-summary-divider"></view>
+      <view class="ranking-summary-item">
+        <text class="ranking-summary-label">时间范围</text>
+        <text class="ranking-summary-value">{{rankingMonths}} 个月</text>
+      </view>
+      <view class="ranking-summary-divider"></view>
+      <view class="ranking-summary-item">
+        <text class="ranking-summary-label">日均</text>
+        <text class="ranking-summary-value">¥{{rankingDailyAvg}}</text>
+      </view>
+    </view>
+
+    <!-- 空状态 -->
+    <view wx:if="{{rankingIsEmpty}}" class="empty-wrap">
+      <text class="empty-icon">🌸</text>
+      <text class="empty-text">所选时间范围内还没有记录～</text>
+    </view>
+
+    <!-- 排行榜列表 -->
+    <view wx:else class="card ranking-card">
+      <view class="ranking-title-row">
+        <text class="ranking-title">{{rankingType === 'expense' ? '💸 支出分类排行' : '💰 收入来源排行'}}</text>
+        <text class="ranking-title-hint">共 {{rankingItems.length}} 个分类</text>
+      </view>
+
+      <view
+        class="ranking-row"
+        wx:for="{{rankingItems}}"
+        wx:key="category"
+      >
+        <!-- 排名 – Top3 特殊样式 -->
+        <view class="ranking-rank {{index === 0 ? 'rank-1' : index === 1 ? 'rank-2' : index === 2 ? 'rank-3' : ''}}">
+          <text class="ranking-rank-text">{{index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1}}</text>
+        </view>
+
+        <!-- 分类信息 + 进度条 -->
+        <view class="ranking-body">
+          <view class="ranking-info-row">
+            <view class="ranking-cat-label">
+              <text class="ranking-emoji">{{item.emoji}}</text>
+              <text class="ranking-cat-name">{{item.category}}</text>
+            </view>
+            <view class="ranking-amounts">
+              <text class="ranking-amount {{rankingType === 'expense' ? 'expense-text' : 'income-text'}}">¥{{item.amount}}</text>
+              <text class="ranking-percent">{{item.percent}}%</text>
+            </view>
+          </view>
+
+          <!-- 水平进度条 -->
+          <view class="ranking-bar-bg">
+            <view
+              class="ranking-bar-fill {{rankingType === 'expense' ? 'ranking-bar-expense' : 'ranking-bar-income'}} {{index === 0 ? 'ranking-bar-top' : ''}}"
+              style="width: {{item.barWidth}}%;"
+            ></view>
+          </view>
+
+          <!-- 次要信息：笔数 + 均均 -->
+          <view class="ranking-sub-row">
+            <text class="ranking-sub-text">记录 {{item.count}} 笔</text>
+            <text class="ranking-sub-text">均均 ¥{{item.avgAmount}}</text>
+          </view>
+        </view>
       </view>
     </view>
 

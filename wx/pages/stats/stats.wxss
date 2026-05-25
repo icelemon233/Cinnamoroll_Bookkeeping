@@ -1095,3 +1095,233 @@
 .budget-warn-text {
   color: #F5A623 !important;
 }
+
+/* ═══════════════════════════════════════════
+   排行榜模式
+═══════════════════════════════════════════ */
+
+.ranking-type-switcher {
+  margin-top: 16rpx;
+}
+
+/* 时间范围选择芯片 */
+.ranking-range-row {
+  display: flex;
+  flex-direction: row;
+  gap: 16rpx;
+  padding: 12rpx 32rpx 0;
+  flex-wrap: nowrap;
+}
+
+.ranking-range-chip {
+  flex: 1;
+  text-align: center;
+  padding: 12rpx 0;
+  font-size: 24rpx;
+  color: #6B8A9A;
+  background: #EBF5FA;
+  border-radius: 32rpx;
+  border: 2rpx solid transparent;
+  transition: all 0.2s;
+}
+
+.range-chip-active {
+  background: #4FB8D4;
+  color: #FFFFFF;
+  font-weight: 600;
+  border-color: #4FB8D4;
+}
+
+/* 概要信息条 */
+.ranking-summary-bar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  background: #F0F8FF;
+  border-radius: 20rpx;
+  margin: 20rpx 32rpx 0;
+  padding: 22rpx 0;
+}
+
+.ranking-summary-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6rpx;
+}
+
+.ranking-summary-label {
+  font-size: 22rpx;
+  color: #9BAAB8;
+}
+
+.ranking-summary-value {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #3D5A6E;
+}
+
+.ranking-summary-divider {
+  width: 2rpx;
+  height: 40rpx;
+  background: #D8EDF5;
+}
+
+/* 排行榜卡片 */
+.ranking-card {
+  margin-top: 20rpx;
+}
+
+.ranking-title-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24rpx;
+}
+
+.ranking-title {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #3D5A6E;
+}
+
+.ranking-title-hint {
+  font-size: 22rpx;
+  color: #9BAAB8;
+}
+
+/* 排行榜每行 */
+.ranking-row {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  padding: 18rpx 0;
+  border-bottom: 1rpx solid #EFF6FA;
+  gap: 16rpx;
+}
+
+.ranking-row:last-child {
+  border-bottom: none;
+}
+
+/* 排名数字/奖牌 */
+.ranking-rank {
+  width: 56rpx;
+  height: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 4rpx;
+}
+
+.ranking-rank-text {
+  font-size: 28rpx;
+  line-height: 1;
+}
+
+.rank-1 .ranking-rank-text,
+.rank-2 .ranking-rank-text,
+.rank-3 .ranking-rank-text {
+  font-size: 36rpx;
+}
+
+/* 排行榜内容区 */
+.ranking-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+}
+
+.ranking-info-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ranking-cat-label {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.ranking-emoji {
+  font-size: 30rpx;
+}
+
+.ranking-cat-name {
+  font-size: 28rpx;
+  color: #3D5A6E;
+  font-weight: 600;
+}
+
+.ranking-amounts {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.ranking-amount {
+  font-size: 30rpx;
+  font-weight: 700;
+}
+
+.ranking-percent {
+  font-size: 22rpx;
+  color: #9BAAB8;
+  background: #EBF5FA;
+  padding: 4rpx 10rpx;
+  border-radius: 16rpx;
+}
+
+/* 进度条 */
+.ranking-bar-bg {
+  width: 100%;
+  height: 10rpx;
+  background: #EBF5FA;
+  border-radius: 6rpx;
+  overflow: hidden;
+}
+
+.ranking-bar-fill {
+  height: 100%;
+  border-radius: 6rpx;
+  transition: width 0.5s ease;
+}
+
+.ranking-bar-expense {
+  background: linear-gradient(90deg, #FF8BAB, #FFB3C6);
+}
+
+.ranking-bar-income {
+  background: linear-gradient(90deg, #4FB8D4, #7EC8E3);
+}
+
+/* 第一名进度条高亮 */
+.ranking-bar-top.ranking-bar-expense {
+  background: linear-gradient(90deg, #FF6B8A, #FF8BAB);
+  box-shadow: 0 2rpx 8rpx rgba(255, 107, 138, 0.35);
+}
+
+.ranking-bar-top.ranking-bar-income {
+  background: linear-gradient(90deg, #2AA8C8, #4FB8D4);
+  box-shadow: 0 2rpx 8rpx rgba(47, 168, 200, 0.35);
+}
+
+/* 次要信息 */
+.ranking-sub-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.ranking-sub-text {
+  font-size: 22rpx;
+  color: #9BAAB8;
+}
