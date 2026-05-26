@@ -1357,3 +1357,275 @@
   line-height: 1.6;
   flex: 1;
 }
+
+/* ────────── 周期性固定账单卡片 ────────── */
+
+.recurring-card {
+  padding: 28rpx 30rpx 20rpx;
+}
+
+.recurring-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+}
+
+.recurring-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.recurring-icon {
+  font-size: 32rpx;
+}
+
+.recurring-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #2C4B5E;
+}
+
+.recurring-manage-btn {
+  padding: 6rpx 20rpx;
+  background: #EFF8FC;
+  border-radius: 20rpx;
+}
+
+.recurring-manage-text {
+  font-size: 22rpx;
+  color: #4FB8D4;
+}
+
+.recurring-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.recurring-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #F5FBFD;
+  border-radius: 18rpx;
+  padding: 18rpx 20rpx;
+}
+
+.recurring-item-left {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+  flex: 1;
+}
+
+.recurring-emoji {
+  font-size: 34rpx;
+  width: 44rpx;
+  text-align: center;
+}
+
+.recurring-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.recurring-item-name {
+  font-size: 26rpx;
+  font-weight: 500;
+  color: #2C4B5E;
+}
+
+.recurring-item-status {
+  font-size: 20rpx;
+}
+
+.recurring-status-overdue {
+  color: #FF6B8A;
+  font-weight: 500;
+}
+
+.recurring-status-today {
+  color: #FF9A3C;
+  font-weight: 500;
+}
+
+.recurring-status-soon {
+  color: #FFAA44;
+}
+
+.recurring-status-normal {
+  color: #8BA4B0;
+}
+
+.recurring-item-right {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.recurring-item-amount {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #FF8BAB;
+}
+
+.recurring-item-btn {
+  font-size: 22rpx;
+  color: #fff;
+  background: #4FB8D4;
+  border-radius: 20rpx;
+  padding: 6rpx 18rpx;
+}
+
+/* 空状态入口卡片 */
+.recurring-empty-card {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 24rpx 28rpx;
+  background: #F5FBFD;
+  border: 2rpx dashed #B8E0EE;
+}
+
+.recurring-empty-icon {
+  font-size: 32rpx;
+}
+
+.recurring-empty-text {
+  font-size: 24rpx;
+  color: #8BA4B0;
+  flex: 1;
+}
+
+.recurring-empty-add {
+  font-size: 24rpx;
+  color: #4FB8D4;
+  font-weight: 500;
+}
+
+/* ────────── 固定账单弹窗 ────────── */
+
+.recurring-manage-modal,
+.recurring-add-modal {
+  width: 90%;
+  max-width: 660rpx;
+  padding: 36rpx 32rpx 28rpx;
+  border-radius: 28rpx;
+  background: #fff;
+}
+
+.recurring-modal-empty {
+  text-align: center;
+  color: #aaa;
+  font-size: 26rpx;
+  padding: 40rpx 0;
+}
+
+.recurring-manage-list {
+  max-height: 600rpx;
+  margin: 12rpx 0 0;
+}
+
+.recurring-manage-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18rpx 0;
+  border-bottom: 1rpx solid #F0F6F9;
+}
+
+.recurring-manage-left {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+  flex: 1;
+}
+
+.recurring-manage-emoji {
+  font-size: 32rpx;
+}
+
+.recurring-manage-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.recurring-manage-name {
+  font-size: 26rpx;
+  font-weight: 500;
+  color: #2C4B5E;
+}
+
+.recurring-manage-meta {
+  font-size: 20rpx;
+  color: #8BA4B0;
+}
+
+.recurring-manage-actions {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.recurring-delete-btn {
+  font-size: 22rpx;
+  color: #FF8BAB;
+  padding: 4rpx 12rpx;
+}
+
+.recurring-add-row {
+  margin-top: 20rpx;
+  text-align: center;
+  padding: 18rpx 0 4rpx;
+}
+
+.recurring-add-row-text {
+  font-size: 26rpx;
+  color: #4FB8D4;
+  font-weight: 500;
+}
+
+/* 新增表单 */
+.recurring-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 10rpx 0 20rpx;
+}
+
+.recurring-form-row {
+  display: flex;
+  align-items: center;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #F0F6F9;
+}
+
+.recurring-form-label {
+  font-size: 26rpx;
+  color: #5A7A8A;
+  width: 130rpx;
+  flex-shrink: 0;
+}
+
+.recurring-form-input {
+  flex: 1;
+  font-size: 26rpx;
+  color: #2C4B5E;
+}
+
+.recurring-form-confirm {
+  background: linear-gradient(135deg, #4FB8D4, #7EC8E3);
+  border-radius: 24rpx;
+  padding: 24rpx 0;
+  text-align: center;
+}
+
+.recurring-form-confirm text {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #fff;
+}

@@ -1,5 +1,5 @@
 // pages/index/index.js - 首页
-const { getRecords, getMonthSummary, groupByDate, formatDate, getMonthBudget, setMonthBudget, getStreakDays, getTodaySummary, getMonthHeatmap, getRecentMonthsSummary, getWeekSummary, getFinanceHealthScore, getSavingGoal, setSavingGoal, getSavingGoalProgress } = require('../../utils/storage');
+const { getRecords, getMonthSummary, groupByDate, formatDate, getMonthBudget, setMonthBudget, getStreakDays, getTodaySummary, getMonthHeatmap, getRecentMonthsSummary, getWeekSummary, getFinanceHealthScore, getSavingGoal, setSavingGoal, getSavingGoalProgress, getRecurringReminders, getRecurringBills, addRecurringBill, updateRecurringBill, deleteRecurringBill } = require('../../utils/storage');
 
 // 分类 emoji 映射（与 add 页保持一致）
 const CATEGORY_EMOJI = {
@@ -46,7 +46,21 @@ Page({
     // 财务健康评分
     healthScore: null,
     // 月度储蓄目标
-    savingGoalProgress: null  // null = 未设置目标
+    savingGoalProgress: null,  // null = 未设置目标
+    // 周期性固定账单提醒
+    recurringReminders: [],      // [{ bill, daysUntil, isOverdue }]
+    showRecurringCard: false,    // 有未完成固定账单时显示
+    // 新增固定账单弹窗
+    showAddRecurringModal: false,
+    newBillName: '',
+    newBillAmount: '',
+    newBillCategory: '住房',
+    newBillType: 'expense',
+    newBillNote: '',
+    newBillDay: '1',
+    // 管理固定账单弹窗
+    showManageRecurringModal: false,
+    allRecurringBills: []
   },
 
   onLoad() {
@@ -160,6 +174,9 @@ Page({
       healthScore,
       savingGoalProgress
     });
+
+    // 周期性固定账单提醒
+    this._loadRecurringReminders(yearMonth);
 
     // 绘制折线图（数据加载后再绘制）
     this._drawTrendLine(trendMonths);
@@ -483,5 +500,222 @@ Page({
 
   goToList() {
     wx.switchTab({ url: '/pages/list/list' });
+  },
+
+  // ─── 周期性固定账单 ─────────────────────────────────
+
+  /**
+   * 加载本月固定账单提醒，附加显示标签
+   */
+  _loadRecurringReminders(yearMonth) {
+    const reminders = getRecurringReminders(yearMonth);
+    const decorated = reminders.map(item => {
+      let statusLabel = '';
+      let statusClass = '';
+      if (item.bill.dayOfMonth) {
+        if (item.isOverdue) {
+          statusLabel = '已过期未记录';
+          statusClass = 'overdue';
+        } else if (item.daysUntil === 0) {
+          statusLabel = '今天到期';
+          statusClass = 'today';
+        } else if (item.daysUntil !== null && item.daysUntil <= 3) {
+          statusLabel = `${item.daysUntil}天后到期`;
+          statusClass = 'soon';
+        } else if (item.daysUntil !== null) {
+          statusLabel = `${item.daysUntil}天后`;
+          statusClass = 'normal';
+        }
+      }
+      return {
+        ...item,
+        statusLabel,
+        statusClass,
+        emoji: CATEGORY_EMOJI[item.bill.category] || '📦'
+      };
+    });
+    this.setData({
+      recurringReminders: decorated,
+      showRecurringCard: decorated.length > 0
+    });
+  },
+
+  /**
+   * 点击固定账单条目 → 一键记账
+   */
+  onRecurringBillTap(e) {
+    const { id } = e.currentTarget.dataset;
+    const { recurringReminders, yearMonth } = this.data;
+    const item = recurringReminders.find(r => String(r.bill.id) === String(id));
+    if (!item) return;
+
+    const { bill } = item;
+    wx.showModal({
+      title: `记录「${bill.name}」`,
+      content: `金额：¥${bill.amount}\n分类：${bill.category}\n\n按确认将自动记账并标记为已完成`,
+      confirmText: '一键记账',
+      cancelText: '取消',
+      success: (res) => {
+        if (res.confirm) {
+          const { saveRecord } = require('../../utils/storage');
+          const now = new Date();
+          const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+          // note 中嵌入固定账单标记
+          const note = bill.note
+            ? `${bill.note} [recurring:${bill.id}]`
+            : `${bill.name} [recurring:${bill.id}]`;
+          saveRecord({
+            type: bill.type,
+            category: bill.category,
+            amount: bill.amount,
+            note,
+            date: dateStr
+          });
+          wx.showToast({ title: '记账成功 ✨', icon: 'success', duration: 1200 });
+          // 刷新提醒列表和页面数据
+          this._loadRecurringReminders(yearMonth);
+          this.loadData();
+        }
+      }
+    });
+  },
+
+  /**
+   * 长按固定账单卡片 → 管理弹窗
+   */
+  onRecurringCardLongPress() {
+    wx.vibrateShort({ type: 'medium' }).catch(() => {});
+    const bills = getRecurringBills();
+    const decorated = bills.map(b => ({
+      ...b,
+      emoji: CATEGORY_EMOJI[b.category] || '📦',
+      dayLabel: b.dayOfMonth ? `每月${b.dayOfMonth}日` : '不限定'
+    }));
+    this.setData({ showManageRecurringModal: true, allRecurringBills: decorated });
+  },
+
+  /**
+   * 关闭管理弹窗
+   */
+  closeManageRecurring() {
+    this.setData({ showManageRecurringModal: false });
+  },
+
+  /**
+   * 切换固定账单开关
+   */
+  onToggleRecurringActive(e) {
+    const { id } = e.currentTarget.dataset;
+    const bills = getRecurringBills();
+    const bill = bills.find(b => String(b.id) === String(id));
+    if (!bill) return;
+    updateRecurringBill(id, { isActive: !bill.isActive });
+    const decorated = getRecurringBills().map(b => ({
+      ...b,
+      emoji: CATEGORY_EMOJI[b.category] || '📦',
+      dayLabel: b.dayOfMonth ? `每月${b.dayOfMonth}日` : '不限定'
+    }));
+    this.setData({ allRecurringBills: decorated });
+    this._loadRecurringReminders(this.data.yearMonth);
+  },
+
+  /**
+   * 删除固定账单
+   */
+  onDeleteRecurringBill(e) {
+    const { id, name } = e.currentTarget.dataset;
+    wx.showModal({
+      title: '删除固定账单',
+      content: `确认删除「${name}」？`,
+      confirmText: '删除',
+      confirmColor: '#FF8BAB',
+      cancelText: '取消',
+      success: (res) => {
+        if (res.confirm) {
+          deleteRecurringBill(id);
+          const bills = getRecurringBills();
+          const decorated = bills.map(b => ({
+            ...b,
+            emoji: CATEGORY_EMOJI[b.category] || '📦',
+            dayLabel: b.dayOfMonth ? `每月${b.dayOfMonth}日` : '不限定'
+          }));
+          this.setData({ allRecurringBills: decorated });
+          this._loadRecurringReminders(this.data.yearMonth);
+          wx.showToast({ title: '已删除', icon: 'success', duration: 800 });
+        }
+      }
+    });
+  },
+
+  /**
+   * 打开新增固定账单弹窗
+   */
+  onAddRecurringBill() {
+    this.setData({
+      showAddRecurringModal: true,
+      showManageRecurringModal: false,
+      newBillName: '',
+      newBillAmount: '',
+      newBillCategory: '住房',
+      newBillType: 'expense',
+      newBillNote: '',
+      newBillDay: '1'
+    });
+  },
+
+  /**
+   * 新增固定账单输入事件
+   */
+  onNewBillInput(e) {
+    const field = e.currentTarget.dataset.field;
+    const value = e.detail.value;
+    const patch = {};
+    patch[`newBill${field}`] = value;
+    this.setData(patch);
+  },
+
+  onNewBillTypeChange(e) {
+    this.setData({ newBillType: e.detail.value });
+  },
+
+  /**
+   * 确认新增固定账单
+   */
+  onConfirmAddRecurring() {
+    const { newBillName, newBillAmount, newBillCategory, newBillType, newBillNote, newBillDay } = this.data;
+    if (!newBillName.trim()) {
+      wx.showToast({ title: '请输入账单名称', icon: 'none' }); return;
+    }
+    const amount = parseFloat(newBillAmount);
+    if (isNaN(amount) || amount <= 0) {
+      wx.showToast({ title: '请输入有效金额', icon: 'none' }); return;
+    }
+    const dayOfMonth = parseInt(newBillDay) || 0;
+    addRecurringBill({
+      name: newBillName.trim(),
+      amount,
+      category: newBillCategory,
+      type: newBillType,
+      note: newBillNote.trim(),
+      dayOfMonth: Math.min(28, Math.max(0, dayOfMonth)),
+      isActive: true
+    });
+    wx.showToast({ title: '已添加固定账单 ✨', icon: 'success', duration: 1200 });
+    this.setData({ showAddRecurringModal: false });
+    this._loadRecurringReminders(this.data.yearMonth);
+  },
+
+  /**
+   * 关闭新增弹窗
+   */
+  closeAddRecurringModal() {
+    this.setData({ showAddRecurringModal: false });
+  },
+
+  /**
+   * 当没有活跃固定账单时，点击提醒卡片中的「+添加」按鈕
+   */
+  onAddFirstRecurring() {
+    this.onAddRecurringBill();
   }
 });

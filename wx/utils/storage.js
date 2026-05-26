@@ -1327,6 +1327,131 @@ function getCategoryRanking(startYM, endYM, type) {
   return { items, total, months, dailyAvg };
 }
 
+// ─────────────────────────────────────────────
+// 周期性固定账单（Recurring Bills）
+// ─────────────────────────────────────────────
+
+const RECURRING_KEY = 'recurring_bills';
+// 数据结构：[{ id, name, amount, category, type, note, dayOfMonth, isActive }]
+// dayOfMonth: 1-28，每月的哪一天应该记账（0 表示不限定）
+
+/**
+ * 获取全部固定账单配置
+ */
+function getRecurringBills() {
+  try {
+    return wx.getStorageSync(RECURRING_KEY) || [];
+  } catch (e) {
+    return [];
+  }
+}
+
+/**
+ * 新增固定账单
+ * @param {{ name, amount, category, type, note, dayOfMonth, isActive }} bill
+ * @returns {{ success: boolean, bill: object }}
+ */
+function addRecurringBill(bill) {
+  const bills = getRecurringBills();
+  const newBill = {
+    id: Date.now().toString(),
+    name: bill.name || bill.category,
+    amount: bill.amount,
+    category: bill.category,
+    type: bill.type || 'expense',
+    note: bill.note || '',
+    dayOfMonth: bill.dayOfMonth || 0,
+    isActive: bill.isActive !== false
+  };
+  bills.push(newBill);
+  try {
+    wx.setStorageSync(RECURRING_KEY, bills);
+    return { success: true, bill: newBill };
+  } catch (e) {
+    return { success: false, bill: null };
+  }
+}
+
+/**
+ * 更新固定账单（仅更新传入字段）
+ */
+function updateRecurringBill(id, patch) {
+  const bills = getRecurringBills();
+  const idx = bills.findIndex(b => String(b.id) === String(id));
+  if (idx === -1) return false;
+  bills[idx] = Object.assign({}, bills[idx], patch);
+  try {
+    wx.setStorageSync(RECURRING_KEY, bills);
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+/**
+ * 删除固定账单
+ */
+function deleteRecurringBill(id) {
+  const bills = getRecurringBills();
+  const filtered = bills.filter(b => String(b.id) !== String(id));
+  try {
+    wx.setStorageSync(RECURRING_KEY, filtered);
+    return bills.length !== filtered.length;
+  } catch (e) {
+    return false;
+  }
+}
+
+/**
+ * 获取本月「待提醒」的固定账单列表
+ * 规则：isActive=true，且本月尚未在同分类/类型/金额下记录过对应账单
+ *       （以 note 中含有固定账单 id 作为已记录标记）
+ *
+ * @param {string} yearMonth - 'YYYY-MM'
+ * @returns {Array<{ bill, daysUntil, isOverdue }>}
+ *   daysUntil: 距离 dayOfMonth 的天数（负数表示已过了该日期）
+ *   isOverdue: 已超过 dayOfMonth 且本月未记录
+ */
+function getRecurringReminders(yearMonth) {
+  const bills = getRecurringBills().filter(b => b.isActive);
+  if (!bills.length) return [];
+
+  // 查本月已有记录中打了固定账单标记的
+  const allRecords = getRecords();
+  const monthRecords = allRecords.filter(r => r.date && r.date.startsWith(yearMonth));
+  const doneIds = new Set();
+  monthRecords.forEach(r => {
+    if (r.note) {
+      const match = r.note.match(/\[recurring:(\w+)\]/);
+      if (match) doneIds.add(match[1]);
+    }
+  });
+
+  const now = new Date();
+  const [year, month] = yearMonth.split('-').map(Number);
+  const todayDate = now.getDate();
+  const isCurrentMonth = now.getFullYear() === year && now.getMonth() + 1 === month;
+
+  return bills
+    .filter(b => !doneIds.has(String(b.id)))
+    .map(b => {
+      let daysUntil = null;
+      let isOverdue = false;
+      if (b.dayOfMonth && isCurrentMonth) {
+        daysUntil = b.dayOfMonth - todayDate;
+        isOverdue = daysUntil < 0;
+      }
+      return { bill: b, daysUntil, isOverdue };
+    })
+    .sort((a, b) => {
+      // 已过期排前面，无日期排后面
+      if (a.isOverdue && !b.isOverdue) return -1;
+      if (!a.isOverdue && b.isOverdue) return 1;
+      if (a.daysUntil !== null && b.daysUntil !== null) return a.daysUntil - b.daysUntil;
+      return 0;
+    });
+}
+
 module.exports = {
   getRecords,
   saveRecord,
@@ -1365,5 +1490,10 @@ module.exports = {
   getTemplates,
   saveTemplate,
   deleteTemplate,
-  getCategoryRanking
+  getCategoryRanking,
+  getRecurringBills,
+  addRecurringBill,
+  updateRecurringBill,
+  deleteRecurringBill,
+  getRecurringReminders
 };
