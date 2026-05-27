@@ -93,6 +93,7 @@
         wx:key="name"
         data-category="{{item.name}}"
         bindtap="selectCategory"
+        bindlongpress="longPressCategory"
       >
         <text class="category-emoji">{{item.emoji}}</text>
         <text class="category-name">{{item.name}}</text>
@@ -250,6 +251,44 @@
         style="flex: 2"
       >
         <text>{{isEditMode ? '保存修改 ✨' : '保存 🐾'}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 分类历史记录弹窗（长按分类触发） -->
+  <view wx:if="{{showCategoryHistory}}" class="cat-history-mask" bindtap="closeCategoryHistory">
+    <view class="cat-history-card" catchtap="noop">
+      <view class="cat-history-drag-bar"></view>
+      <view class="cat-history-header">
+        <text class="cat-history-title">{{categoryHistoryTitle}}</text>
+        <view class="cat-history-close" bindtap="closeCategoryHistory">
+          <text class="cat-history-close-icon">✕</text>
+        </view>
+      </view>
+
+      <!-- 无记录状态 -->
+      <view wx:if="{{categoryHistoryEmpty}}" class="cat-history-empty">
+        <text class="cat-history-empty-emoji">🌸</text>
+        <text class="cat-history-empty-text">还没有这个分类的记录啊</text>
+      </view>
+
+      <!-- 历史记录列表 -->
+      <view wx:else class="cat-history-list">
+        <view class="cat-history-hint">点击可自动填入金额和备注</view>
+        <view
+          class="cat-history-item"
+          wx:for="{{categoryHistoryList}}"
+          wx:key="id"
+          data-amount="{{item.amount}}"
+          data-note="{{item.note}}"
+          bindtap="tapCategoryHistoryItem"
+        >
+          <view class="cat-history-item-left">
+            <text class="cat-history-amount">{{item.amount}}</text>
+            <text wx:if="{{item.note}}" class="cat-history-note">{{item.note}}</text>
+          </view>
+          <text class="cat-history-date">{{item.date}}</text>
+        </view>
       </view>
     </view>
   </view>

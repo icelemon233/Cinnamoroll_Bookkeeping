@@ -1452,6 +1452,29 @@ function getRecurringReminders(yearMonth) {
     });
 }
 
+/**
+ * 获取指定分类/类型的真实历史记录（不去重，按时间倒序）
+ * 用于长按分类时的历史弹窗展示
+ * @param {string} category - 分类名称
+ * @param {string} type - 'expense' | 'income'
+ * @param {number} limit - 最多返回条数，默认 5
+ * @returns {Array} [{ amount, note, date, id }]
+ */
+function getCategoryHistory(category, type, limit) {
+  const n = limit || 5;
+  const records = getRecords();
+  return records
+    .filter(r => r.category === category && r.type === type)
+    .sort((a, b) => b.id - a.id)
+    .slice(0, n)
+    .map(r => ({
+      id: r.id,
+      amount: r.amount,
+      note: r.note || '',
+      date: r.date || ''
+    }));
+}
+
 module.exports = {
   getRecords,
   saveRecord,
@@ -1495,5 +1518,6 @@ module.exports = {
   addRecurringBill,
   updateRecurringBill,
   deleteRecurringBill,
-  getRecurringReminders
+  getRecurringReminders,
+  getCategoryHistory
 };

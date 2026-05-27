@@ -1,5 +1,5 @@
 // pages/add/add.js - 记账页（支持新增和编辑两种模式）
-const { saveRecord, updateRecord, getRecordById, getTodaySummary, getRecentCategoryRecords, getTopAmounts, getNoteAutoComplete, getTemplates, saveTemplate, deleteTemplate } = require('../../utils/storage');
+const { saveRecord, updateRecord, getRecordById, getTodaySummary, getRecentCategoryRecords, getTopAmounts, getNoteAutoComplete, getTemplates, saveTemplate, deleteTemplate, getCategoryHistory } = require('../../utils/storage');
 
 const EXPENSE_CATEGORIES = [
   { name: '餐饮', emoji: '🍜' },
@@ -88,7 +88,12 @@ Page({
     showNoteSuggestions: false, // 是否展示联想下拉
     // 快捷记账模板
     templates: [],            // 所有模板列表
-    hasTemplates: false       // 是否有模板（控制区块显隐）
+    hasTemplates: false,      // 是否有模板（控制区块显隐）
+    // 分类历史弹窗
+    showCategoryHistory: false,
+    categoryHistoryTitle: '',  // 弹窗标题，如「餐饮 最近消费」
+    categoryHistoryList: [],   // [{ amount, note, date, id }]
+    categoryHistoryEmpty: false // 是否暂无记录
   },
 
   onLoad(options) {
@@ -388,6 +393,43 @@ Page({
     this._loadRecentRecords(category, this.data.type);
     this._loadTopAmounts(category, this.data.type);
   },
+
+  // 长按分类 → 弹出历史记录预览
+  longPressCategory(e) {
+    wx.vibrateShort({ type: 'medium' }).catch(() => {});
+    const category = e.currentTarget.dataset.category;
+    const { type } = this.data;
+    const emoji = CATEGORY_EMOJI[category] || '📦';
+    const typeLabel = type === 'expense' ? '消费' : '收入';
+    const list = getCategoryHistory(category, type, 5);
+    this.setData({
+      showCategoryHistory: true,
+      categoryHistoryTitle: `${emoji} ${category} · 近期${typeLabel}`,
+      categoryHistoryList: list,
+      categoryHistoryEmpty: list.length === 0
+    });
+  },
+
+  // 关闭分类历史弹窗
+  closeCategoryHistory() {
+    this.setData({ showCategoryHistory: false });
+  },
+
+  // 点击分类历史记录中某条 → 自动填入金额+备注
+  tapCategoryHistoryItem(e) {
+    const { amount, note } = e.currentTarget.dataset;
+    this.setData({
+      amountStr: String(amount),
+      amountResult: '',
+      hasOperator: false,
+      note: note || '',
+      showCategoryHistory: false
+    });
+    wx.vibrateShort({ type: 'light' }).catch(() => {});
+  },
+
+  // 空操作（阻止冒泡用）
+  noop() {},
 
   // 点击常用备注标签快速填入
   tapQuickNote(e) {

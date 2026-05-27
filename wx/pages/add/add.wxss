@@ -724,3 +724,141 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* ─── 分类历史记录弹窗 ────────────────────────────────────── */
+.cat-history-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(61, 90, 110, 0.45);
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+}
+
+.cat-history-card {
+  width: 100%;
+  background: #FFFFFF;
+  border-radius: 40rpx 40rpx 0 0;
+  padding: 16rpx 36rpx calc(40rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  animation: slideUpCatHist 0.26s ease;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+@keyframes slideUpCatHist {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.cat-history-drag-bar {
+  width: 72rpx;
+  height: 8rpx;
+  background: #DCE8EF;
+  border-radius: 100rpx;
+  margin: 0 auto 28rpx;
+}
+
+.cat-history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24rpx;
+}
+
+.cat-history-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #3D5A6E;
+}
+
+.cat-history-close {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  background: #F0F8FF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cat-history-close-icon {
+  font-size: 26rpx;
+  color: #9BAAB8;
+}
+
+.cat-history-hint {
+  font-size: 22rpx;
+  color: #C8D8E4;
+  text-align: center;
+  margin-bottom: 20rpx;
+}
+
+.cat-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.cat-history-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx 20rpx;
+  border-radius: 20rpx;
+  background: #F6FBFD;
+  transition: background 0.15s;
+}
+
+.cat-history-item:active {
+  background: #E0F5FA;
+}
+
+.cat-history-item-left {
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+  flex: 1;
+  min-width: 0;
+}
+
+.cat-history-amount {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #FF8BAB;
+}
+
+.cat-history-note {
+  font-size: 24rpx;
+  color: #9BAAB8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cat-history-date {
+  font-size: 24rpx;
+  color: #C8D8E4;
+  flex-shrink: 0;
+  margin-left: 20rpx;
+}
+
+.cat-history-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60rpx 0;
+}
+
+.cat-history-empty-emoji {
+  font-size: 80rpx;
+  margin-bottom: 16rpx;
+}
+
+.cat-history-empty-text {
+  font-size: 28rpx;
+  color: #9BAAB8;
+}
