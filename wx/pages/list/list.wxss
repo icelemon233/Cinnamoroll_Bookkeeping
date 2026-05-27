@@ -927,3 +927,86 @@ page.select-mode-active {
 .batch-spacer {
   height: 160rpx;
 }
+
+/* ─── 搜索结果统计摘要条 ──────────────────────────────────── */
+.stats-summary-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #FFFFFF;
+  border-radius: 20rpx;
+  padding: 20rpx 32rpx;
+  margin-bottom: 16rpx;
+  box-shadow: 0 2rpx 12rpx rgba(79, 184, 212, 0.08);
+  gap: 0;
+}
+
+.stats-summary-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6rpx;
+}
+
+.stats-summary-label {
+  font-size: 22rpx;
+  color: #9BAAB8;
+}
+
+.stats-summary-amount {
+  font-size: 32rpx;
+  font-weight: 700;
+}
+
+.stats-summary-divider {
+  width: 1rpx;
+  height: 48rpx;
+  background: #E8F4F8;
+  margin: 0 24rpx;
+  flex-shrink: 0;
+}
+
+/* ─── 月份模式统计摘要行（均值/最大值） ──────────────────── */
+.stats-detail-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #F8FCFE;
+  border-radius: 0 0 20rpx 20rpx;
+  padding: 16rpx 32rpx;
+  margin-top: -16rpx;
+  margin-bottom: 20rpx;
+  gap: 0;
+}
+
+.stats-detail-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4rpx;
+}
+
+.stats-detail-label {
+  font-size: 20rpx;
+  color: #B8D0DC;
+}
+
+.stats-detail-val {
+  font-size: 26rpx;
+  font-weight: 600;
+}
+
+.stats-detail-sep {
+  width: 1rpx;
+  height: 36rpx;
+  background: #E0EFF5;
+  margin: 0 16rpx;
+  flex-shrink: 0;
+}
+
+.stats-detail-sep-big {
+  margin: 0 24rpx;
+  height: 44rpx;
+}

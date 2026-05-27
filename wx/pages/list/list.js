@@ -41,7 +41,9 @@ Page({
     // 批量删除多选模式
     isSelectMode: false,
     selectedIds: [],          // 已选中的记录 id 列表（字符串）
-    selectedCount: 0
+    selectedCount: 0,
+    // 筛选范围统计摘要
+    statsSummary: null        // { expenseCount, incomeCount, avgExpense, avgIncome, maxExpense, maxIncome, showExpense, showIncome }
   },
 
   onLoad() {
@@ -315,13 +317,42 @@ Page({
         filtered = filtered.filter(r => r.category === filterCategory);
       }
       const allGroups = this._buildGroups(filtered, sortMode);
+      // 计算搜索结果摘要
+      let searchIncome = 0, searchExpense = 0;
+      let searchMaxIncome = 0, searchMaxExpense = 0;
+      let searchIncomeCount = 0, searchExpenseCount = 0;
+      filtered.forEach(r => {
+        const amt = Number(r.amount) || 0;
+        if (r.type === 'income') {
+          searchIncome += amt;
+          searchIncomeCount++;
+          if (amt > searchMaxIncome) searchMaxIncome = amt;
+        } else {
+          searchExpense += amt;
+          searchExpenseCount++;
+          if (amt > searchMaxExpense) searchMaxExpense = amt;
+        }
+      });
+      const statsSummary = filtered.length > 0 ? {
+        expenseCount: searchExpenseCount,
+        incomeCount: searchIncomeCount,
+        avgExpense: searchExpenseCount > 0 ? parseFloat((searchExpense / searchExpenseCount).toFixed(2)) : 0,
+        avgIncome: searchIncomeCount > 0 ? parseFloat((searchIncome / searchIncomeCount).toFixed(2)) : 0,
+        maxExpense: parseFloat(searchMaxExpense.toFixed(2)),
+        maxIncome: parseFloat(searchMaxIncome.toFixed(2)),
+        totalExpense: parseFloat(searchExpense.toFixed(2)),
+        totalIncome: parseFloat(searchIncome.toFixed(2)),
+        showExpense: searchExpenseCount > 0,
+        showIncome: searchIncomeCount > 0
+      } : null;
       this.setData({
         allGroups,
         totalIncome: 0,
         totalExpense: 0,
         isEmpty: allGroups.length === 0,
         searchResultCount: filtered.length,
-        categoryChips
+        categoryChips,
+        statsSummary
       });
     } else {
       // 月份模式
@@ -344,13 +375,38 @@ Page({
         else totalExpense += Number(r.amount) || 0;
       });
       const allGroups = this._buildGroups(filtered, sortMode);
+      // 计算统计摘要（月份模式）
+      let maxExpense = 0, maxIncome = 0, expenseCount = 0, incomeCount = 0;
+      filtered.forEach(r => {
+        const amt = Number(r.amount) || 0;
+        if (r.type === 'income') {
+          incomeCount++;
+          if (amt > maxIncome) maxIncome = amt;
+        } else {
+          expenseCount++;
+          if (amt > maxExpense) maxExpense = amt;
+        }
+      });
+      const statsSummary = filtered.length > 0 ? {
+        expenseCount,
+        incomeCount,
+        avgExpense: expenseCount > 0 ? parseFloat((totalExpense / expenseCount).toFixed(2)) : 0,
+        avgIncome: incomeCount > 0 ? parseFloat((totalIncome / incomeCount).toFixed(2)) : 0,
+        maxExpense: parseFloat(maxExpense.toFixed(2)),
+        maxIncome: parseFloat(maxIncome.toFixed(2)),
+        totalExpense: parseFloat(totalExpense.toFixed(2)),
+        totalIncome: parseFloat(totalIncome.toFixed(2)),
+        showExpense: expenseCount > 0,
+        showIncome: incomeCount > 0
+      } : null;
       this.setData({
         allGroups,
         totalIncome: parseFloat(totalIncome.toFixed(2)),
         totalExpense: parseFloat(totalExpense.toFixed(2)),
         isEmpty: allGroups.length === 0,
         searchResultCount: filtered.length,
-        categoryChips
+        categoryChips,
+        statsSummary
       });
     }
   },

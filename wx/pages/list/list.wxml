@@ -51,9 +51,20 @@
     </view>
   </view>
 
-  <!-- 搜索模式：结果数提示 -->
+  <!-- 搜索模式：结果数提示 + 收支汇总 -->
   <view wx:if="{{isSearchMode}}" class="search-result-hint">
     <text class="hint-text">找到 {{searchResultCount}} 条结果</text>
+  </view>
+  <view wx:if="{{isSearchMode && statsSummary}}" class="stats-summary-bar">
+    <view wx:if="{{statsSummary.showExpense}}" class="stats-summary-item">
+      <text class="stats-summary-label">支出 {{statsSummary.expenseCount}} 笔</text>
+      <text class="stats-summary-amount expense-text">¥{{statsSummary.totalExpense}}</text>
+    </view>
+    <view wx:if="{{statsSummary.showExpense && statsSummary.showIncome}}" class="stats-summary-divider"></view>
+    <view wx:if="{{statsSummary.showIncome}}" class="stats-summary-item">
+      <text class="stats-summary-label">收入 {{statsSummary.incomeCount}} 笔</text>
+      <text class="stats-summary-amount income-text">¥{{statsSummary.totalIncome}}</text>
+    </view>
   </view>
 
   <!-- 月份切换导航（搜索模式下隐藏） -->
@@ -77,6 +88,24 @@
     <view class="summary-bar-item">
       <text class="bar-label">支出</text>
       <text class="bar-amount expense-text">-{{totalExpense}}</text>
+    </view>
+  </view>
+
+  <!-- 月份模式统计摘要（有数据时显示） -->
+  <view wx:if="{{!isSearchMode && statsSummary}}" class="stats-detail-bar">
+    <view wx:if="{{statsSummary.showExpense}}" class="stats-detail-item">
+      <text class="stats-detail-label">均均支出</text>
+      <text class="stats-detail-val expense-text">¥{{statsSummary.avgExpense}}</text>
+    </view>
+    <view wx:if="{{statsSummary.showExpense && statsSummary.maxExpense > 0}}" class="stats-detail-sep"></view>
+    <view wx:if="{{statsSummary.showExpense && statsSummary.maxExpense > 0}}" class="stats-detail-item">
+      <text class="stats-detail-label">最大支出</text>
+      <text class="stats-detail-val expense-text">¥{{statsSummary.maxExpense}}</text>
+    </view>
+    <view wx:if="{{statsSummary.showExpense && statsSummary.showIncome}}" class="stats-detail-sep stats-detail-sep-big"></view>
+    <view wx:if="{{statsSummary.showIncome}}" class="stats-detail-item">
+      <text class="stats-detail-label">均均收入</text>
+      <text class="stats-detail-val income-text">¥{{statsSummary.avgIncome}}</text>
     </view>
   </view>
 
