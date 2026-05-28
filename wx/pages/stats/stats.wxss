@@ -1325,3 +1325,279 @@
   font-size: 22rpx;
   color: #9BAAB8;
 }
+
+/* ═══════════ 健康视图 ═══════════ */
+
+/* tab 角标 */
+.health-badge {
+  display: inline-block;
+  background: #FF8BAB;
+  color: #fff;
+  font-size: 18rpx;
+  border-radius: 20rpx;
+  padding: 0 8rpx;
+  vertical-align: middle;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+/* 评分卡片 */
+.health-score-card {
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 32rpx 28rpx 28rpx;
+  margin: 24rpx 0 16rpx;
+  box-shadow: 0 4rpx 20rpx rgba(79, 184, 212, 0.10);
+}
+
+.health-score-top {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-bottom: 28rpx;
+}
+
+.health-score-circle {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 50%;
+  border: 6rpx solid #4FB8D4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-right: 28rpx;
+  background: #F8FDFF;
+}
+
+.health-score-num {
+  font-size: 48rpx;
+  font-weight: 700;
+  color: #4FB8D4;
+  line-height: 1;
+}
+
+.health-score-unit {
+  font-size: 20rpx;
+  color: #9BAAB8;
+  margin-top: 2rpx;
+}
+
+.health-score-info {
+  flex: 1;
+}
+
+.health-score-level {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-bottom: 10rpx;
+}
+
+.health-level-emoji {
+  font-size: 32rpx;
+  margin-right: 8rpx;
+}
+
+.health-level-label {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #4FB8D4;
+}
+
+.health-score-tip {
+  font-size: 24rpx;
+  color: #6B8FAB;
+  line-height: 1.5;
+}
+
+/* 维度进度条 */
+.health-dims {
+  display: flex;
+  flex-direction: column;
+  gap: 18rpx;
+}
+
+.health-dim-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.health-dim-left {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  width: 140rpx;
+  flex-shrink: 0;
+}
+
+.health-dim-icon {
+  font-size: 26rpx;
+  margin-right: 6rpx;
+}
+
+.health-dim-label {
+  font-size: 24rpx;
+  color: #5A7A94;
+}
+
+.health-dim-bar-wrap {
+  flex: 1;
+  height: 14rpx;
+  background: #EEF4F8;
+  border-radius: 7rpx;
+  overflow: hidden;
+}
+
+.health-dim-bar-fill {
+  height: 100%;
+  border-radius: 7rpx;
+  background: #4FB8D4;
+  transition: width 0.3s ease;
+  min-width: 4rpx;
+}
+
+.health-dim-score {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #3A6080;
+  width: 68rpx;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.health-dim-max {
+  font-size: 20rpx;
+  color: #9BAAB8;
+  font-weight: 400;
+}
+
+/* 无数据占位 */
+.health-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48rpx 0 24rpx;
+}
+
+.health-empty-emoji {
+  font-size: 64rpx;
+  margin-bottom: 16rpx;
+}
+
+.health-empty-tip {
+  font-size: 26rpx;
+  color: #9BAAB8;
+}
+
+/* 预警区块 */
+.health-alerts-section {
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 28rpx;
+  margin-top: 16rpx;
+  box-shadow: 0 4rpx 16rpx rgba(79, 184, 212, 0.08);
+}
+
+.health-alerts-title {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  margin-bottom: 20rpx;
+  gap: 12rpx;
+}
+
+.health-alerts-title-text {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #2A4A66;
+}
+
+.health-alerts-subtitle {
+  font-size: 22rpx;
+  color: #9BAAB8;
+}
+
+/* 预警条目 */
+.health-alert-item {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  padding: 20rpx 20rpx;
+  border-radius: 16rpx;
+  margin-bottom: 14rpx;
+  gap: 16rpx;
+}
+
+.health-alert-danger {
+  background: rgba(255, 107, 100, 0.07);
+  border-left: 6rpx solid #FF6B64;
+}
+
+.health-alert-warning {
+  background: rgba(240, 185, 102, 0.10);
+  border-left: 6rpx solid #F0B966;
+}
+
+.health-alert-info {
+  background: rgba(79, 184, 212, 0.07);
+  border-left: 6rpx solid #4FB8D4;
+}
+
+.health-alert-icon-wrap {
+  padding-top: 2rpx;
+  flex-shrink: 0;
+}
+
+.health-alert-icon {
+  font-size: 30rpx;
+}
+
+.health-alert-content {
+  flex: 1;
+}
+
+.health-alert-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8rpx;
+  margin-bottom: 6rpx;
+}
+
+.health-alert-emoji {
+  font-size: 24rpx;
+}
+
+.health-alert-title {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #2A4A66;
+}
+
+.health-alert-desc {
+  font-size: 23rpx;
+  color: #6B8FAB;
+  line-height: 1.5;
+}
+
+/* 无预警提示 */
+.health-no-alerts {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 28rpx 0 12rpx;
+}
+
+.health-no-alerts-emoji {
+  font-size: 48rpx;
+  margin-bottom: 12rpx;
+}
+
+.health-no-alerts-text {
+  font-size: 26rpx;
+  color: #9BAAB8;
+}

@@ -33,6 +33,11 @@
       data-mode="ranking"
       bindtap="switchViewMode"
     >🏆 排行</view>
+    <view
+      class="view-mode-btn {{viewMode === 'health' ? 'view-mode-active' : ''}}"
+      data-mode="health"
+      bindtap="switchViewMode"
+    >🩺 健康<text wx:if="{{healthAlertCount > 0}}" class="health-badge"> {{healthAlertCount}}</text></view>
   </view>
 
   <!-- ═══════ 饼图模式 ═══════ -->
@@ -677,6 +682,79 @@
             <text class="ranking-sub-text">均均 ¥{{item.avgAmount}}</text>
           </view>
         </view>
+      </view>
+    </view>
+
+  </block>
+
+  <!-- ═══════ 健康评分模式 ═══════ -->
+  <block wx:if="{{viewMode === 'health'}}">
+
+    <!-- 评分总览卡片 -->
+    <view wx:if="{{healthScore}}" class="health-score-card">
+      <view class="health-score-top">
+        <view class="health-score-circle" style="border-color: {{healthScore.levelColor}}">
+          <text class="health-score-num" style="color: {{healthScore.levelColor}}">{{healthScore.score}}</text>
+          <text class="health-score-unit">分</text>
+        </view>
+        <view class="health-score-info">
+          <view class="health-score-level">
+            <text class="health-level-emoji">{{healthScore.levelEmoji}}</text>
+            <text class="health-level-label" style="color: {{healthScore.levelColor}}">{{healthScore.level}}</text>
+          </view>
+          <text class="health-score-tip">{{healthScore.tip}}</text>
+        </view>
+      </view>
+
+      <!-- 维度详情 -->
+      <view class="health-dims">
+        <view wx:for="{{healthScore.dimensions}}" wx:key="label" class="health-dim-row">
+          <view class="health-dim-left">
+            <text class="health-dim-icon">{{item.icon}}</text>
+            <text class="health-dim-label">{{item.label}}</text>
+          </view>
+          <view class="health-dim-bar-wrap">
+            <view
+              class="health-dim-bar-fill"
+              style="width: {{item.score / item.maxScore * 100}}%; background: {{item.score / item.maxScore >= 0.7 ? '#4FB8D4' : item.score / item.maxScore >= 0.4 ? '#F0B966' : '#FF8BAB'}}"
+            ></view>
+          </view>
+          <text class="health-dim-score">{{item.score}}<text class="health-dim-max">/{{item.maxScore}}</text></text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 无数据时占位 -->
+    <view wx:if="{{!healthScore}}" class="health-empty">
+      <text class="health-empty-emoji">🌱</text>
+      <text class="health-empty-tip">记录几笔账后即可查看健康评分～</text>
+    </view>
+
+    <!-- 消费预警区块 -->
+    <view class="health-alerts-section">
+      <view class="health-alerts-title">
+        <text class="health-alerts-title-text">📊 消费异常预警</text>
+        <text class="health-alerts-subtitle">基于近3个月历史分析</text>
+      </view>
+
+      <view wx:if="{{healthHasAlerts}}">
+        <view wx:for="{{spendingAlerts}}" wx:key="category" class="health-alert-item health-alert-{{item.level}}">
+          <view class="health-alert-icon-wrap">
+            <text class="health-alert-icon">{{item.icon}}</text>
+          </view>
+          <view class="health-alert-content">
+            <view class="health-alert-header">
+              <text class="health-alert-emoji">{{item.emoji}}</text>
+              <text class="health-alert-title">{{item.title}}</text>
+            </view>
+            <text class="health-alert-desc">{{item.desc}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view wx:if="{{!healthHasAlerts}}" class="health-no-alerts">
+        <text class="health-no-alerts-emoji">✅</text>
+        <text class="health-no-alerts-text">暂无异常预警，消费很正常～</text>
       </view>
     </view>
 

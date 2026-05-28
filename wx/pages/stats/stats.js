@@ -1,5 +1,5 @@
 // pages/stats/stats.js - 统计页（饼图 + 趋势柱状图 + 年度总览 + 分类环比 + 分类预算 + 排行榜）
-const { getCategoryStats, getMonthSummary, getCategoryBudgets, setCategoryBudget, getCategoryRanking } = require('../../utils/storage');
+const { getCategoryStats, getMonthSummary, getCategoryBudgets, setCategoryBudget, getCategoryRanking, getFinanceHealthScore, getSpendingAlerts } = require('../../utils/storage');
 
 // 饼图颜色（Cinnamoroll 蓝色系列）
 const COLORS = [
@@ -76,7 +76,12 @@ Page({
     rankingTotal: 0,                // 统计周期内总金额
     rankingMonths: 1,               // 时间范围内月数
     rankingDailyAvg: 0,             // 日均消费
-    rankingIsEmpty: false           // 范围内是否无数据
+    rankingIsEmpty: false,          // 范围内是否无数据
+    // 财务健康评分 + 消费预警
+    healthScore: null,              // { score, level, levelEmoji, levelColor, tip, dimensions }
+    spendingAlerts: [],             // [{ type, category, emoji, title, desc, level, icon }]
+    healthAlertCount: 0,            // danger+warning 级别预警数量
+    healthHasAlerts: false          // 是否有预警
   },
 
   onLoad() {
@@ -484,7 +489,24 @@ Page({
         this._loadCatBudgetData();
       } else if (viewMode === 'ranking') {
         this._loadRankingData();
+      } else if (viewMode === 'health') {
+        this._loadHealthData();
       }
+    });
+  },
+
+  // ─── 财务健康评分 + 消费预警 ──────────────────────────────
+
+  _loadHealthData() {
+    const { yearMonth } = this.data;
+    const healthScore = getFinanceHealthScore(yearMonth);
+    const spendingAlerts = getSpendingAlerts(yearMonth);
+    const alertCount = spendingAlerts.filter(a => a.level === 'danger' || a.level === 'warning').length;
+    this.setData({
+      healthScore,
+      spendingAlerts,
+      healthAlertCount: alertCount,
+      healthHasAlerts: spendingAlerts.length > 0
     });
   },
 
@@ -669,6 +691,8 @@ Page({
         this._loadCatBudgetData();
       } else if (viewMode === 'ranking') {
         this._loadRankingData();
+      } else if (viewMode === 'health') {
+        this._loadHealthData();
       } else {
         // 切回饼图，重新绘制
         if (!this.data.isEmpty) {

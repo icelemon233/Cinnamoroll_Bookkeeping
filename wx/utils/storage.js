@@ -1475,6 +1475,132 @@ function getCategoryHistory(category, type, limit) {
     }));
 }
 
+/**
+ * 消费异常智能预警
+ * 分析当月各分类消费是否明显偏离历史均值，同时检测活跃分类是否长时间未记录
+ * @param {string} yearMonth - 'YYYY-MM'
+ * @returns {Array} alerts [{ type, category, emoji, title, desc, level, icon }]
+ *   type: 'overspend'（超支预警）| 'inactive'（分类沉默）| 'newcat'（新分类突增）
+ *   level: 'warning'（⚠️中等）| 'danger'（🚨严重）| 'info'（💡提示）
+ */
+function getSpendingAlerts(yearMonth) {
+  const CATEGORY_EMOJI_MAP = {
+    '餐饮': '🍜', '交通': '🚌', '购物': '🛍️', '娱乐': '🎮',
+    '住房': '🏠', '医疗': '💊', '教育': '📚', '运动': '🏃',
+    '旅行': '✈️', '宠物': '🐾', '日用': '🧴',
+    '工资': '💼', '奖金': '🎁', '副业': '💡', '理财': '📈', '红包': '🧧',
+    '其他': '📦'
+  };
+
+  const alerts = [];
+  const records = getRecords();
+  const now = new Date();
+  const [curYear, curMonthNum] = yearMonth.split('-').map(Number);
+
+  // 当月支出记录
+  const curRecords = records.filter(r => r.type === 'expense' && r.date && r.date.startsWith(yearMonth));
+
+  // 按分类汇总当月支出
+  const curCatMap = {};
+  curRecords.forEach(r => {
+    curCatMap[r.category] = (curCatMap[r.category] || 0) + r.amount;
+  });
+
+  // 计算过去 3 个月（不含当月）各分类的月均支出
+  const historyCatMap = {}; // { category: [month1Total, month2Total, month3Total] }
+  for (let i = 1; i <= 3; i++) {
+    const d = new Date(curYear, curMonthNum - 1 - i, 1);
+    const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const monthRecords = records.filter(r => r.type === 'expense' && r.date && r.date.startsWith(ym));
+    const monthCatTotals = {};
+    monthRecords.forEach(r => {
+      monthCatTotals[r.category] = (monthCatTotals[r.category] || 0) + r.amount;
+    });
+    Object.keys(monthCatTotals).forEach(cat => {
+      if (!historyCatMap[cat]) historyCatMap[cat] = [];
+      historyCatMap[cat].push(monthCatTotals[cat]);
+    });
+  }
+
+  // 计算历史均值（补 0 到 3 个月）
+  const histAvg = {};
+  Object.keys(historyCatMap).forEach(cat => {
+    const vals = historyCatMap[cat];
+    while (vals.length < 3) vals.push(0);
+    histAvg[cat] = vals.reduce((a, b) => a + b, 0) / 3;
+  });
+
+  // ── 异常1：当月分类消费超出历史均值 ≥ 80%（且超出额 ≥ 50 元）──
+  Object.keys(curCatMap).forEach(cat => {
+    const cur = parseFloat(curCatMap[cat].toFixed(2));
+    const avg = histAvg[cat] || 0;
+    if (avg > 0) {
+      const ratio = (cur - avg) / avg;
+      const diff = parseFloat((cur - avg).toFixed(2));
+      if (ratio >= 1.5 && diff >= 50) {
+        alerts.push({
+          type: 'overspend',
+          category: cat,
+          emoji: CATEGORY_EMOJI_MAP[cat] || '📦',
+          title: `${cat}消费异常偏高`,
+          desc: `本月已花 ¥${cur}，比历史均值 ¥${avg.toFixed(2)} 高出 ¥${diff}（+${Math.round(ratio * 100)}%）`,
+          level: 'danger',
+          icon: '🚨'
+        });
+      } else if (ratio >= 0.8 && diff >= 50) {
+        alerts.push({
+          type: 'overspend',
+          category: cat,
+          emoji: CATEGORY_EMOJI_MAP[cat] || '📦',
+          title: `${cat}消费偏高`,
+          desc: `本月已花 ¥${cur}，比历史均值 ¥${avg.toFixed(2)} 高出 ¥${diff}（+${Math.round(ratio * 100)}%）`,
+          level: 'warning',
+          icon: '⚠️'
+        });
+      }
+    } else if (avg === 0 && cur >= 200) {
+      alerts.push({
+        type: 'newcat',
+        category: cat,
+        emoji: CATEGORY_EMOJI_MAP[cat] || '📦',
+        title: `${cat}首次出现大额消费`,
+        desc: `本月在此分类消费 ¥${cur}，过去 3 个月均无记录`,
+        level: 'info',
+        icon: '💡'
+      });
+    }
+  });
+
+  // ── 异常2：过去 3 个月有活跃记录的分类，本月至今（过了 10 天后）没有任何记录 ──
+  const dayOfMonth = now.getDate();
+  const isSameMonth = now.getFullYear() === curYear && (now.getMonth() + 1) === curMonthNum;
+  if (isSameMonth && dayOfMonth >= 10) {
+    const activeCats = Object.keys(histAvg).filter(cat => histAvg[cat] >= 20);
+    activeCats.forEach(cat => {
+      if (!curCatMap[cat]) {
+        const histMonthCount = (historyCatMap[cat] || []).filter(v => v > 0).length;
+        if (histMonthCount >= 2) {
+          alerts.push({
+            type: 'inactive',
+            category: cat,
+            emoji: CATEGORY_EMOJI_MAP[cat] || '📦',
+            title: `${cat}本月还没有记录`,
+            desc: `过去 3 个月月均消费 ¥${histAvg[cat].toFixed(2)}，本月暂无该分类账单，可能有漏记～`,
+            level: 'info',
+            icon: '🔔'
+          });
+        }
+      }
+    });
+  }
+
+  // 按 level 排序：danger > warning > info
+  const levelOrder = { danger: 0, warning: 1, info: 2 };
+  alerts.sort((a, b) => (levelOrder[a.level] || 2) - (levelOrder[b.level] || 2));
+
+  return alerts;
+}
+
 module.exports = {
   getRecords,
   saveRecord,
@@ -1519,5 +1645,6 @@ module.exports = {
   updateRecurringBill,
   deleteRecurringBill,
   getRecurringReminders,
-  getCategoryHistory
+  getCategoryHistory,
+  getSpendingAlerts
 };
