@@ -862,3 +862,255 @@
   font-size: 28rpx;
   color: #9BAAB8;
 }
+
+/* ======== AA 分摊计算器 ======== */
+
+/* 金额卡片内的 AA 按钮 */
+.aa-split-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4rpx;
+  background: #FFF0F5;
+  border-radius: 18rpx;
+  padding: 16rpx 20rpx;
+  min-width: 80rpx;
+  flex-shrink: 0;
+  border: 2rpx solid #FFD6E5;
+  transition: background 0.15s;
+}
+
+.aa-split-btn:active {
+  background: #FFD6E5;
+}
+
+.aa-split-icon {
+  font-size: 32rpx;
+  line-height: 1;
+}
+
+.aa-split-text {
+  font-size: 20rpx;
+  font-weight: 700;
+  color: #FF8BAB;
+  letter-spacing: 1rpx;
+}
+
+/* 遮罩 */
+.split-mask {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+/* 弹窗卡片 */
+.split-card {
+  background: #FFFFFF;
+  border-radius: 40rpx 40rpx 0 0;
+  padding: 20rpx 36rpx 60rpx;
+  width: 100%;
+  box-shadow: 0 -8rpx 32rpx rgba(79, 184, 212, 0.12);
+}
+
+.split-drag-bar {
+  width: 80rpx;
+  height: 8rpx;
+  background: #E8F4F8;
+  border-radius: 4rpx;
+  margin: 8rpx auto 28rpx;
+}
+
+/* 标题行 */
+.split-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28rpx;
+}
+
+.split-title {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #2D4A60;
+}
+
+.split-close {
+  width: 56rpx;
+  height: 56rpx;
+  background: #F0F7FA;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.split-close-icon {
+  font-size: 24rpx;
+  color: #9BAAB8;
+}
+
+/* 总金额 */
+.split-total-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #FFF8FB;
+  border-radius: 20rpx;
+  padding: 20rpx 24rpx;
+  margin-bottom: 20rpx;
+}
+
+.split-total-label {
+  font-size: 28rpx;
+  color: #9BAAB8;
+}
+
+.split-total-val {
+  font-size: 36rpx;
+  font-weight: 700;
+}
+
+/* 人数调节 */
+.split-people-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24rpx;
+}
+
+.split-people-label {
+  font-size: 28rpx;
+  color: #2D4A60;
+  font-weight: 500;
+}
+
+.split-people-ctrl {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: #F0F7FA;
+  border-radius: 24rpx;
+  overflow: hidden;
+}
+
+.split-ctrl-btn {
+  width: 72rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36rpx;
+  color: #4FB8D4;
+  font-weight: 700;
+  transition: background 0.12s;
+}
+
+.split-ctrl-btn:active {
+  background: #D4EEF5;
+}
+
+.split-ctrl-disabled {
+  color: #C8D8E4;
+}
+
+.split-people-input {
+  width: 80rpx;
+  text-align: center;
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #2D4A60;
+  background: transparent;
+  border: none;
+}
+
+/* 分割线 */
+.split-divider {
+  height: 1rpx;
+  background: #F0F7FA;
+  margin: 4rpx 0 24rpx;
+}
+
+/* 结果展示 */
+.split-result-block {
+  text-align: center;
+  padding: 24rpx 0;
+  margin-bottom: 28rpx;
+}
+
+.split-result-main {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 16rpx;
+  margin-bottom: 12rpx;
+}
+
+.split-result-label {
+  font-size: 28rpx;
+  color: #9BAAB8;
+}
+
+.split-result-amount {
+  font-size: 72rpx;
+  font-weight: 700;
+  letter-spacing: -2rpx;
+}
+
+.split-remainder-row {
+  display: flex;
+  justify-content: center;
+}
+
+.split-remainder-tip {
+  font-size: 24rpx;
+  color: #C8D8E4;
+  background: #F8FAFB;
+  border-radius: 20rpx;
+  padding: 8rpx 20rpx;
+}
+
+/* 操作按钮 */
+.split-actions {
+  display: flex;
+  gap: 20rpx;
+}
+
+.split-cancel-btn {
+  flex: 1;
+  height: 96rpx;
+  background: #F0F7FA;
+  border-radius: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30rpx;
+  color: #9BAAB8;
+  font-weight: 500;
+}
+
+.split-cancel-btn:active {
+  background: #E0EFF5;
+}
+
+.split-confirm-btn {
+  flex: 2;
+  height: 96rpx;
+  background: linear-gradient(135deg, #FF8BAB 0%, #FFAEC9 100%);
+  border-radius: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30rpx;
+  color: #FFFFFF;
+  font-weight: 600;
+  box-shadow: 0 6rpx 20rpx rgba(255, 139, 171, 0.35);
+}
+
+.split-confirm-btn:active {
+  opacity: 0.85;
+}

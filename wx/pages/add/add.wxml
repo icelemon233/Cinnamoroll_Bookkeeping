@@ -81,6 +81,15 @@
         </text>
       </view>
     </view>
+    <!-- AA 分摊按钒：有金额时显示 -->
+    <view
+      wx:if="{{amountStr && amountStr !== '0'}}"
+      class="aa-split-btn"
+      bindtap="openSplitModal"
+    >
+      <text class="aa-split-icon">👥</text>
+      <text class="aa-split-text">AA</text>
+    </view>
   </view>
 
   <!-- 分类选择 -->
@@ -251,6 +260,79 @@
         style="flex: 2"
       >
         <text>{{isEditMode ? '保存修改 ✨' : '保存 🐾'}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- AA 分摊计算器弹窗 -->
+  <view wx:if="{{showSplitModal}}" class="split-mask" bindtap="closeSplitModal">
+    <view class="split-card" catchtap="noop">
+      <view class="split-drag-bar"></view>
+
+      <!-- 标题 -->
+      <view class="split-header">
+        <text class="split-title">👥 AA 分摊</text>
+        <view class="split-close" bindtap="closeSplitModal">
+          <text class="split-close-icon">✕</text>
+        </view>
+      </view>
+
+      <!-- 总金额提示 -->
+      <view class="split-total-row">
+        <text class="split-total-label">总金额</text>
+        <text class="split-total-val expense-text">¥{{splitTotal}}</text>
+      </view>
+
+      <!-- 人数调整 -->
+      <view class="split-people-row">
+        <text class="split-people-label">分为多少人</text>
+        <view class="split-people-ctrl">
+          <view
+            class="split-ctrl-btn {{splitPeople <= 2 ? 'split-ctrl-disabled' : ''}}"
+            data-delta="-1"
+            bindtap="changeSplitPeople"
+          >
+            <text>−</text>
+          </view>
+          <input
+            class="split-people-input"
+            type="number"
+            value="{{splitPeople}}"
+            bindinput="onSplitPeopleInput"
+            maxlength="2"
+          />
+          <view
+            class="split-ctrl-btn {{splitPeople >= 20 ? 'split-ctrl-disabled' : ''}}"
+            data-delta="1"
+            bindtap="changeSplitPeople"
+          >
+            <text>+</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 分割线 -->
+      <view class="split-divider"></view>
+
+      <!-- 每人金额结果 -->
+      <view class="split-result-block">
+        <view class="split-result-main">
+          <text class="split-result-label">每人应付</text>
+          <text class="split-result-amount expense-text">¥{{splitPerPerson}}</text>
+        </view>
+        <view wx:if="{{splitRemainder !== '0.00'}}" class="split-remainder-row">
+          <text class="split-remainder-tip">💬 最后一人多付 ¥{{splitRemainder}}（小数补差）</text>
+        </view>
+      </view>
+
+      <!-- 按钒区 -->
+      <view class="split-actions">
+        <view class="split-cancel-btn" bindtap="closeSplitModal">
+          <text>取消</text>
+        </view>
+        <view class="split-confirm-btn" bindtap="confirmSplit">
+          <text>填入每人金额 ✨</text>
+        </view>
       </view>
     </view>
   </view>

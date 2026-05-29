@@ -93,7 +93,13 @@ Page({
     showCategoryHistory: false,
     categoryHistoryTitle: '',  // 弹窗标题，如「餐饮 最近消费」
     categoryHistoryList: [],   // [{ amount, note, date, id }]
-    categoryHistoryEmpty: false // 是否暂无记录
+    categoryHistoryEmpty: false, // 是否暂无记录
+    // AA 分摊计算器
+    showSplitModal: false,      // 是否显示分摊弹窗
+    splitPeople: 2,             // 分摊人数
+    splitTotal: 0,              // 分摊总金额
+    splitPerPerson: '0.00',     // 每人金额（字符串，保留2位小数）
+    splitRemainder: '0.00'      // 最后一人补差（字符串）
   },
 
   onLoad(options) {
@@ -595,5 +601,80 @@ Page({
       this._loadTodaySummary();
       this._loadTopAmounts('餐饮', 'expense');
     }, 500);
+  },
+
+  // ======== AA 分摊计算器 ========
+
+  // 计算分摊金额（内部方法）
+  _calcSplit(total, people) {
+    if (!total || !people || people < 2) return { perPerson: '0.00', remainder: '0.00' };
+    // 每人应付（小数点后两位，下取整）
+    const perCents = Math.floor((total * 100) / people);
+    const perPerson = (perCents / 100).toFixed(2);
+    // 最后一人补差
+    const remainder = (total - (perCents / 100) * people).toFixed(2);
+    return { perPerson, remainder };
+  },
+
+  // 点击 AA 按钒（在金额显示卡旁）
+  openSplitModal() {
+    const { amountStr } = this.data;
+    const total = this._evalExpr(amountStr) || parseFloat(amountStr);
+    if (!total || isNaN(total) || total <= 0) {
+      wx.showToast({ title: '请先输入金额 🐾', icon: 'none' });
+      return;
+    }
+    const { perPerson, remainder } = this._calcSplit(total, 2);
+    this.setData({
+      showSplitModal: true,
+      splitPeople: 2,
+      splitTotal: total,
+      splitPerPerson: perPerson,
+      splitRemainder: remainder
+    });
+  },
+
+  // 关闭分摊弹窗
+  closeSplitModal() {
+    this.setData({ showSplitModal: false });
+  },
+
+  // 修改分摊人数（+1 / -1）
+  changeSplitPeople(e) {
+    const delta = parseInt(e.currentTarget.dataset.delta);
+    let people = this.data.splitPeople + delta;
+    if (people < 2) people = 2;
+    if (people > 20) people = 20;
+    const { perPerson, remainder } = this._calcSplit(this.data.splitTotal, people);
+    this.setData({ splitPeople: people, splitPerPerson: perPerson, splitRemainder: remainder });
+  },
+
+  // 直接输入人数
+  onSplitPeopleInput(e) {
+    let people = parseInt(e.detail.value);
+    if (isNaN(people) || people < 2) people = 2;
+    if (people > 20) people = 20;
+    const { perPerson, remainder } = this._calcSplit(this.data.splitTotal, people);
+    this.setData({ splitPeople: people, splitPerPerson: perPerson, splitRemainder: remainder });
+  },
+
+  // 确认分摊：将每人金额填入金额栏，并追加备注
+  confirmSplit() {
+    const { splitPeople, splitPerPerson, splitTotal } = this.data;
+    const perAmt = parseFloat(splitPerPerson);
+    if (isNaN(perAmt) || perAmt <= 0) return;
+
+    // 将每人金额填入输入框
+    const newAmountStr = perAmt % 1 === 0 ? String(perAmt | 0) : perAmt.toFixed(2);
+    this._updateExprState(newAmountStr);
+
+    // 备注追加 AA 信息（如果备注为空则直接写，否则追加）
+    const { note } = this.data;
+    const aaTag = `AA分摊 ${splitPeople}人（合计¥${splitTotal}）`;
+    const newNote = note ? `${note} / ${aaTag}` : aaTag;
+    const truncated = newNote.length > 30 ? newNote.slice(0, 30) : newNote;
+
+    this.setData({ note: truncated, showSplitModal: false });
+    wx.showToast({ title: `已分为每人 ¥${splitPerPerson} 🎉`, icon: 'none', duration: 1500 });
   }
 });
