@@ -1629,3 +1629,96 @@
   font-weight: 600;
   color: #fff;
 }
+
+/* ─── 本周打卡日历 ──────────────────────────────────── */
+.week-checkin-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin: 20rpx 0 16rpx;
+  padding: 18rpx 16rpx;
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 20rpx;
+}
+
+.week-checkin-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+  flex: 1;
+}
+
+.wc-day-label {
+  font-size: 20rpx;
+  color: rgba(255, 255, 255, 0.75);
+  font-weight: 500;
+}
+
+/* 已完成格 */
+.wc-done .wc-day-label {
+  color: #ffffff;
+}
+
+/* 今日格标签高亮 */
+.wc-today .wc-day-label {
+  color: #FFE0A0;
+  font-weight: 700;
+}
+
+/* 未来格变暗 */
+.wc-future .wc-day-label {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+/* 点圈容器 */
+.wc-dot {
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.15);
+  border: 2rpx solid rgba(255, 255, 255, 0.25);
+}
+
+/* 已打卡：✓ 勾，深绿背景 */
+.wc-done .wc-dot {
+  background: rgba(100, 220, 160, 0.85);
+  border-color: rgba(100, 220, 160, 0.9);
+}
+
+.wc-check {
+  font-size: 24rpx;
+  color: #ffffff;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* 今日未打卡：橙色圆圈 */
+.wc-today:not(.wc-done) .wc-dot {
+  background: rgba(255, 180, 80, 0.3);
+  border-color: #FFB450;
+  border-width: 3rpx;
+}
+
+/* 未来：半透明 */
+.wc-future .wc-dot {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+/* 内部空圆点（非打卡状态） */
+.wc-dot-inner {
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  display: block;
+}
+
+.wc-today-dot {
+  background: #FFB450;
+}

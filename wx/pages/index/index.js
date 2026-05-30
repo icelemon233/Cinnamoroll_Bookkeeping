@@ -1,5 +1,5 @@
 // pages/index/index.js - 首页
-const { getRecords, getMonthSummary, groupByDate, formatDate, getMonthBudget, setMonthBudget, getStreakDays, getTodaySummary, getMonthHeatmap, getRecentMonthsSummary, getWeekSummary, getFinanceHealthScore, getSavingGoal, setSavingGoal, getSavingGoalProgress, getRecurringReminders, getRecurringBills, addRecurringBill, updateRecurringBill, deleteRecurringBill } = require('../../utils/storage');
+const { getRecords, getMonthSummary, groupByDate, formatDate, getMonthBudget, setMonthBudget, getStreakDays, getTodaySummary, getMonthHeatmap, getRecentMonthsSummary, getWeekSummary, getFinanceHealthScore, getSavingGoal, setSavingGoal, getSavingGoalProgress, getRecurringReminders, getRecurringBills, addRecurringBill, updateRecurringBill, deleteRecurringBill, getWeekCheckin } = require('../../utils/storage');
 
 // 分类 emoji 映射（与 add 页保持一致）
 const CATEGORY_EMOJI = {
@@ -39,6 +39,7 @@ Page({
     todayDone: false,
     longestStreak: 0,
     streakTitle: '',         // 连击称号
+    weekCheckin: [],         // 本周打卡日历 [{label,dateStr,done,isToday,isFuture}]
     // 本月消费热力日历
     heatmap: null,
     // 本周账单周报
@@ -118,6 +119,9 @@ Page({
     const { streak, todayDone, longestStreak } = getStreakDays();
     const streakTitle = this._getStreakTitle(streak);
 
+    // 本周打卡日历
+    const weekCheckin = getWeekCheckin();
+
     // 今日速览
     const { todayExpense, todayIncome, todayCount } = getTodaySummary();
 
@@ -162,6 +166,7 @@ Page({
       todayDone,
       longestStreak,
       streakTitle,
+      weekCheckin,
       todayExpense,
       todayIncome,
       todayCount,

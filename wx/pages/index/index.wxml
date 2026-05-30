@@ -413,6 +413,22 @@
       </view>
     </view>
 
+    <!-- 本周打卡日历 -->
+    <view class="week-checkin-row">
+      <view
+        wx:for="{{weekCheckin}}"
+        wx:key="dateStr"
+        class="week-checkin-cell {{item.done ? 'wc-done' : ''}} {{item.isToday ? 'wc-today' : ''}} {{item.isFuture ? 'wc-future' : ''}}"
+      >
+        <text class="wc-day-label">{{item.label}}</text>
+        <view class="wc-dot">
+          <text wx:if="{{item.done}}" class="wc-check">✓</text>
+          <view wx:elif="{{item.isToday}}" class="wc-dot-inner wc-today-dot"></view>
+          <view wx:else class="wc-dot-inner"></view>
+        </view>
+      </view>
+    </view>
+
     <!-- 打卡提示语 -->
     <text wx:if="{{!todayDone}}" class="streak-hint">今天还没记账，去 ✏️ 记一笔吧～</text>
     <text wx:else class="streak-hint streak-hint-done">今天已记账，继续保持！加油 🌸</text>

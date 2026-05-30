@@ -1601,6 +1601,42 @@ function getSpendingAlerts(yearMonth) {
   return alerts;
 }
 
+/**
+ * 获取本周（周一~周日）打卡状态，用于打卡连击卡片中展示每日打卡小日历。
+ * @returns {Array<{ label: string, dateStr: string, done: boolean, isToday: boolean, isFuture: boolean }>}
+ *   共 7 项，对应周一到周日
+ */
+function getWeekCheckin() {
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+  // 找到本周一
+  const dayOfWeek = now.getDay() === 0 ? 7 : now.getDay(); // 1=Mon ... 7=Sun
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - (dayOfWeek - 1));
+
+  // 获取所有有记账的日期集合（去重）
+  const records = getRecords();
+  const datesSet = new Set();
+  records.forEach(r => { if (r.date) datesSet.add(r.date); });
+
+  const DAY_LABELS = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+
+  const result = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i);
+    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    result.push({
+      label: DAY_LABELS[i],
+      dateStr,
+      done: datesSet.has(dateStr),
+      isToday: dateStr === todayStr,
+      isFuture: dateStr > todayStr
+    });
+  }
+  return result;
+}
+
 module.exports = {
   getRecords,
   saveRecord,
@@ -1646,5 +1682,6 @@ module.exports = {
   deleteRecurringBill,
   getRecurringReminders,
   getCategoryHistory,
-  getSpendingAlerts
+  getSpendingAlerts,
+  getWeekCheckin
 };
