@@ -48,6 +48,9 @@ Page({
     healthScore: null,
     // 月度储蓄目标
     savingGoalProgress: null,  // null = 未设置目标
+    // 本月支出构成（Top3 分类进度条）
+    monthCategoryBreakdown: [],  // [{ category, emoji, amount, percent, barWidth }]
+    showCategoryBreakdown: false,
     // 周期性固定账单提醒
     recurringReminders: [],      // [{ bill, daysUntil, isOverdue }]
     showRecurringCard: false,    // 有未完成固定账单时显示
@@ -149,6 +152,9 @@ Page({
     const trendMonths = getRecentMonthsSummary(6);
     const { trendInsight, trendInsightEmoji } = this._buildTrendInsight(trendMonths);
 
+    // 本月支出构成 Top3
+    const categoryBreakdown = this._buildCategoryBreakdown(summary);
+
     this.setData({
       currentMonth: monthLabel,
       yearMonth,
@@ -177,7 +183,9 @@ Page({
       trendInsightEmoji,
       weekSummary,
       healthScore,
-      savingGoalProgress
+      savingGoalProgress,
+      monthCategoryBreakdown: categoryBreakdown,
+      showCategoryBreakdown: categoryBreakdown.length > 0
     });
 
     // 周期性固定账单提醒
@@ -185,6 +193,53 @@ Page({
 
     // 绘制折线图（数据加载后再绘制）
     this._drawTrendLine(trendMonths);
+  },
+
+  // ─── 本月支出构成 ─────────────────────────────────────
+
+  /**
+   * 计算本月支出 Top3 分类构成，带百分比和进度条宽度
+   * @param {object} summary - getMonthSummary 返回值
+   * @returns {Array} [{ category, emoji, amount, percent, barWidth }]
+   */
+  _buildCategoryBreakdown(summary) {
+    const expenseRecords = summary.records.filter(r => r.type === 'expense');
+    if (expenseRecords.length === 0) return [];
+
+    // 按分类汇总
+    const catMap = {};
+    expenseRecords.forEach(r => {
+      const cat = r.category || '其他';
+      catMap[cat] = (catMap[cat] || 0) + (Number(r.amount) || 0);
+    });
+
+    const totalExpense = summary.expense;
+    if (totalExpense <= 0) return [];
+
+    // 排序取 Top3，计算百分比
+    const sorted = Object.keys(catMap)
+      .map(cat => ({
+        category: cat,
+        emoji: CATEGORY_EMOJI[cat] || '📦',
+        amount: parseFloat(catMap[cat].toFixed(2)),
+        percent: parseFloat((catMap[cat] / totalExpense * 100).toFixed(1))
+      }))
+      .sort((a, b) => b.amount - a.amount)
+      .slice(0, 3);
+
+    // barWidth：相对于 Top1 的进度条宽度（Top1 固定 100%，其余按比例缩放）
+    const maxAmount = sorted[0].amount;
+    return sorted.map(item => ({
+      ...item,
+      barWidth: Math.round(item.amount / maxAmount * 100)
+    }));
+  },
+
+  /**
+   * 点击支出构成卡片 → 跳转统计页
+   */
+  onCategoryBreakdownTap() {
+    wx.switchTab({ url: '/pages/stats/stats' });
   },
 
   // ─── 近6个月净储蓄折线图 ──────────────────────────────

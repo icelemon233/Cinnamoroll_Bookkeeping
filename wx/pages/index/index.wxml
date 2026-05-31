@@ -186,6 +186,38 @@
     </view>
   </view>
 
+  <!-- 本月支出构成卡片 -->
+  <view wx:if="{{showCategoryBreakdown}}" class="card category-breakdown-card" bindtap="onCategoryBreakdownTap">
+    <view class="cb-header">
+      <view class="cb-title-row">
+        <text class="cb-icon">🧮</text>
+        <text class="cb-title">本月支出构成</text>
+      </view>
+      <view class="cb-arrow">
+        <text class="cb-arrow-text">查看详情 ›</text>
+      </view>
+    </view>
+    <view class="cb-list">
+      <block wx:for="{{monthCategoryBreakdown}}" wx:key="category">
+        <view class="cb-item">
+          <view class="cb-item-left">
+            <text class="cb-emoji">{{item.emoji}}</text>
+            <text class="cb-cat-name">{{item.category}}</text>
+          </view>
+          <view class="cb-bar-wrap">
+            <view class="cb-bar-bg">
+              <view class="cb-bar-fill" style="width: {{item.barWidth}}%;"></view>
+            </view>
+          </view>
+          <view class="cb-item-right">
+            <text class="cb-amount">¥{{item.amount}}</text>
+            <text class="cb-percent">{{item.percent}}%</text>
+          </view>
+        </view>
+      </block>
+    </view>
+  </view>
+
   <!-- 本月消费热力日历卡片 -->
   <view wx:if="{{heatmap}}" class="card heatmap-card">
     <view class="heatmap-header">
