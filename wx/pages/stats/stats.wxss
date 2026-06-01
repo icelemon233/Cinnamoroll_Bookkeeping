@@ -1601,3 +1601,136 @@
   font-size: 26rpx;
   color: #9BAAB8;
 }
+
+/* ─── 预算总览摘要卡片 ──────────────────────────────── */
+.budget-summary-card {
+  padding: 24rpx 28rpx 20rpx;
+  margin-bottom: 18rpx;
+}
+
+.budget-summary-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18rpx;
+}
+
+.budget-summary-title {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #2A4A66;
+}
+
+.budget-summary-badge {
+  font-size: 22rpx;
+  font-weight: 600;
+  padding: 4rpx 14rpx;
+  border-radius: 20rpx;
+}
+
+.budget-badge-ok {
+  background: rgba(79, 184, 100, 0.12);
+  color: #3A9C5A;
+}
+
+.budget-badge-over {
+  background: rgba(255, 100, 80, 0.12);
+  color: #E85535;
+}
+
+.budget-summary-bar-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 14rpx;
+  margin-bottom: 20rpx;
+}
+
+.budget-summary-bar-bg {
+  flex: 1;
+  height: 14rpx;
+  background: #EBF7FB;
+  border-radius: 8rpx;
+  overflow: hidden;
+}
+
+.budget-summary-bar-fill {
+  height: 100%;
+  border-radius: 8rpx;
+  transition: width 0.4s ease;
+}
+
+.bsbar-ok { background: #4FCBA0; }
+.bsbar-warn { background: #F5A623; }
+.bsbar-over { background: #E85535; }
+
+.budget-summary-bar-pct {
+  font-size: 22rpx;
+  font-weight: 700;
+  color: #4FB8D4;
+  min-width: 56rpx;
+  text-align: right;
+}
+
+.budget-summary-stats {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+}
+
+.budget-summary-stat-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4rpx;
+}
+
+.budget-summary-stat-divider {
+  width: 1rpx;
+  background: #D6EFF6;
+  margin: 2rpx 0;
+}
+
+.bss-label {
+  font-size: 21rpx;
+  color: #9BAAB8;
+  text-align: center;
+}
+
+.bss-value {
+  font-size: 24rpx;
+  font-weight: 700;
+  color: #2A4A66;
+  text-align: center;
+}
+
+/* ─── 分类预算行：超支高亮 & 明细提示 ────────────────── */
+.cat-budget-row-wrap {
+  margin-bottom: 2rpx;
+}
+
+.cat-budget-row {
+  padding: 16rpx 0 12rpx;
+  border-bottom: 1rpx solid #F0F8FC;
+  cursor: pointer;
+}
+
+.cat-budget-row-over {
+  background: rgba(255, 90, 60, 0.03);
+  border-radius: 12rpx;
+  padding: 16rpx 10rpx 12rpx;
+  margin: 0 -10rpx;
+}
+
+.cat-budget-over-hint {
+  margin-top: 8rpx;
+  margin-bottom: 4rpx;
+}
+
+.cat-budget-over-hint-text {
+  font-size: 22rpx;
+  color: #E85535;
+  font-weight: 500;
+}

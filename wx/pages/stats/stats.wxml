@@ -518,62 +518,106 @@
       <text class="empty-text">本月还没有支出记录～</text>
     </view>
 
-    <!-- 分类预算列表 -->
-    <view wx:else class="card cat-budget-card">
-      <view class="list-title-row">
-        <text class="list-title">支出分类限额</text>
-        <text class="list-title-hint">点击「设预算」设置限额</text>
+    <!-- 预算总览摘要卡片（已设置限额分类 > 0 时展示） -->
+    <view wx:if="{{budgetSummary}}" class="card budget-summary-card">
+      <view class="budget-summary-header">
+        <text class="budget-summary-title">🎯 {{currentMonth}} 预算总览</text>
+        <text class="budget-summary-badge {{budgetSummary.allInBudget ? 'budget-badge-ok' : 'budget-badge-over'}}">{{budgetSummary.allInBudget ? '✅ 均在预算内' : '⚠️ ' + budgetSummary.overCount + '个超支'}}</text>
       </view>
-
-      <view
-        class="cat-budget-row"
-        wx:for="{{catBudgetItems}}"
-        wx:key="category"
-      >
-        <!-- 分类名 + 超预算标志 -->
-        <view class="cat-budget-header">
-          <view class="cat-budget-label">
-            <text class="cat-budget-emoji">{{item.emoji}}</text>
-            <text class="cat-budget-name">{{item.category}}</text>
-            <view wx:if="{{item.isOver}}" class="cat-budget-over-badge">超预算</view>
-          </view>
+      <!-- 总进度条 -->
+      <view class="budget-summary-bar-row">
+        <view class="budget-summary-bar-bg">
           <view
-            class="cat-budget-set-btn"
-            data-category="{{item.category}}"
-            bindtap="onSetCatBudget"
-          >
-            <text class="cat-budget-set-text">{{item.hasBudget ? '修改' : '设预算'}}</text>
-          </view>
-        </view>
-
-        <!-- 金额行 -->
-        <view class="cat-budget-amounts">
-          <text class="cat-budget-spent expense-text">¥{{item.spent}}</text>
-          <text wx:if="{{item.hasBudget}}" class="cat-budget-slash"> / </text>
-          <text wx:if="{{item.hasBudget}}" class="cat-budget-limit">¥{{item.budget}}</text>
-          <view wx:if="{{item.hasBudget}}" class="cat-budget-remain-wrap">
-            <text wx:if="{{!item.isOver}}" class="cat-budget-remain-ok">还剩 ¥{{item.remain}}</text>
-            <text wx:else class="cat-budget-remain-over">超出 ¥{{item.remain}}</text>
-          </view>
-        </view>
-
-        <!-- 进度条 -->
-        <view wx:if="{{item.hasBudget}}" class="cat-budget-bar-bg">
-          <view
-            class="cat-budget-bar-fill {{item.isOver ? 'cat-budget-bar-over' : item.percent >= 80 ? 'cat-budget-bar-warn' : 'cat-budget-bar-ok'}}"
-            style="width: {{item.percent}}%;"
+            class="budget-summary-bar-fill {{!budgetSummary.allInBudget ? 'bsbar-over' : budgetSummary.usedPercent >= 80 ? 'bsbar-warn' : 'bsbar-ok'}}"
+            style="width: {{budgetSummary.usedPercent}}%;"
           ></view>
         </view>
-        <view wx:if="{{item.hasBudget}}" class="cat-budget-percent-row">
-          <text class="cat-budget-percent-text {{item.isOver ? 'budget-over-text' : item.percent >= 80 ? 'budget-warn-text' : ''}}">已用 {{item.percent}}%</text>
+        <text class="budget-summary-bar-pct {{!budgetSummary.allInBudget ? 'budget-over-text' : ''}}">{{budgetSummary.usedPercent}}%</text>
+      </view>
+      <!-- 三列数据 -->
+      <view class="budget-summary-stats">
+        <view class="budget-summary-stat-item">
+          <text class="bss-label">已设限额分类</text>
+          <text class="bss-value">{{budgetSummary.hasBudgetCount}} 个</text>
         </view>
+        <view class="budget-summary-stat-divider"></view>
+        <view class="budget-summary-stat-item">
+          <text class="bss-label">已花 / 限额</text>
+          <text class="bss-value">¥{{budgetSummary.totalSpent}} / ¥{{budgetSummary.totalBudget}}</text>
+        </view>
+        <block wx:if="{{budgetSummary.totalOver > 0}}">
+          <view class="budget-summary-stat-divider"></view>
+          <view class="budget-summary-stat-item">
+            <text class="bss-label">总超支金额</text>
+            <text class="bss-value budget-over-text">+¥{{budgetSummary.totalOver}}</text>
+          </view>
+        </block>
+      </view>
+    </view>
 
+    <!-- 分类预算列表（有记录时展示） -->
+    <view wx:if="{{catBudgetItems.length > 0}}" class="card cat-budget-card">
+      <view class="list-title-row">
+        <text class="list-title">支出分类限额</text>
+        <text class="list-title-hint">超支分类点击可看明细</text>
+      </view>
+
+      <view wx:for="{{catBudgetItems}}" wx:key="category" class="cat-budget-row-wrap">
+        <view
+          class="cat-budget-row {{item.isOver ? 'cat-budget-row-over' : ''}}"
+          data-category="{{item.category}}"
+          bindtap="onCatBudgetRowTap"
+        >
+          <!-- 分类名 + 超预算标志 -->
+          <view class="cat-budget-header">
+            <view class="cat-budget-label">
+              <text class="cat-budget-emoji">{{item.emoji}}</text>
+              <text class="cat-budget-name">{{item.category}}</text>
+              <view wx:if="{{item.isOver}}" class="cat-budget-over-badge">超预算</view>
+            </view>
+            <view
+              class="cat-budget-set-btn"
+              data-category="{{item.category}}"
+              catchtap="onSetCatBudget"
+            >
+              <text class="cat-budget-set-text">{{item.hasBudget ? '修改' : '设预算'}}</text>
+            </view>
+          </view>
+
+          <!-- 金额行 -->
+          <view class="cat-budget-amounts">
+            <text class="cat-budget-spent expense-text">¥{{item.spent}}</text>
+            <text wx:if="{{item.hasBudget}}" class="cat-budget-slash"> / </text>
+            <text wx:if="{{item.hasBudget}}" class="cat-budget-limit">¥{{item.budget}}</text>
+            <view wx:if="{{item.hasBudget}}" class="cat-budget-remain-wrap">
+              <text wx:if="{{!item.isOver}}" class="cat-budget-remain-ok">还剩 ¥{{item.remain}}</text>
+              <text wx:else class="cat-budget-remain-over">超出 ¥{{item.remain}}</text>
+            </view>
+          </view>
+
+          <!-- 超预算：点击查看账单明细提示 -->
+          <view wx:if="{{item.isOver}}" class="cat-budget-over-hint">
+            <text class="cat-budget-over-hint-text">🔍 点击查看该分类账单明细 ›</text>
+          </view>
+
+          <!-- 进度条 -->
+          <view wx:if="{{item.hasBudget}}" class="cat-budget-bar-bg">
+            <view
+              class="cat-budget-bar-fill {{item.isOver ? 'cat-budget-bar-over' : item.percent >= 80 ? 'cat-budget-bar-warn' : 'cat-budget-bar-ok'}}"
+              style="width: {{item.percent}}%;"
+            ></view>
+          </view>
+          <view wx:if="{{item.hasBudget}}" class="cat-budget-percent-row">
+            <text class="cat-budget-percent-text {{item.isOver ? 'budget-over-text' : item.percent >= 80 ? 'budget-warn-text' : ''}}">已用 {{item.percent}}%</text>
+          </view>
+
+        </view>
       </view>
     </view>
 
   </block>
 
-  <!-- ═══════ 排行榜模式 ═══════ -->
+    <!-- ═══════ 排行榜模式 ═══════ -->
   <block wx:if="{{viewMode === 'ranking'}}">
 
     <!-- 类型切换：支出 / 收入 -->

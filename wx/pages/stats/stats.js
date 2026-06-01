@@ -69,6 +69,7 @@ Page({
     catBudgetItems: [],        // [{ category, emoji, spent, budget, hasBudget, percent, isOver, remain }]
     catBudgetTip: '',
     catBudgetTipEmoji: '',
+    budgetSummary: null,       // { totalBudget, totalSpent, totalOver, overCount, hasBudgetCount, allInBudget }
     // 排行榜模式
     rankingType: 'expense',         // 'expense' | 'income'
     rankingRange: '3',              // '本月' | '3' | '6' | '年'
@@ -932,7 +933,28 @@ Page({
       catBudgetTipEmoji = '🎉';
     }
 
-    this.setData({ catBudgetItems: items, catBudgetTip, catBudgetTipEmoji });
+    // 计算预算总览摘要
+    const hasBudgetItems = items.filter(i => i.hasBudget);
+    let totalBudget = 0, totalSpentInBudget = 0, totalOver = 0, overCount2 = 0;
+    hasBudgetItems.forEach(i => {
+      totalBudget += i.budget;
+      totalSpentInBudget += i.spent;
+      if (i.isOver) {
+        totalOver += (i.spent - i.budget);
+        overCount2++;
+      }
+    });
+    const budgetSummary = hasBudgetItems.length > 0 ? {
+      totalBudget: parseFloat(totalBudget.toFixed(2)),
+      totalSpent: parseFloat(totalSpentInBudget.toFixed(2)),
+      totalOver: parseFloat(totalOver.toFixed(2)),
+      overCount: overCount2,
+      hasBudgetCount: hasBudgetItems.length,
+      usedPercent: totalBudget > 0 ? Math.min(100, parseFloat((totalSpentInBudget / totalBudget * 100).toFixed(1))) : 0,
+      allInBudget: overCount2 === 0
+    } : null;
+
+    this.setData({ catBudgetItems: items, catBudgetTip, catBudgetTipEmoji, budgetSummary });
   },
 
   /**
@@ -970,6 +992,18 @@ Page({
         }
       }
     });
+  },
+
+  /**
+   * 点击预算分类行 → 跳转到账单列表页筛选该分类（支出）
+   */
+  onCatBudgetRowTap(e) {
+    const { category } = e.currentTarget.dataset;
+    if (!category) return;
+    // 通过 globalData 传递筛选参数（tabBar 页面间不能用 url 参数）
+    const app = getApp();
+    app.globalData.listFilter = { category, type: 'expense' };
+    wx.switchTab({ url: '/pages/list/list' });
   },
 
   // ─── 趋势数据加载 ─────────────────────────────────────
