@@ -34,6 +34,9 @@ Page({
     budgetOver: false,       // 是否超预算
     budgetRemain: 0,         // 剩余预算
     hasBudget: false,        // 是否设置了预算
+    dailyBudget: 0,          // 每日可用额度（剩余预算 ÷ 剩余天数）
+    daysLeft: 0,             // 本月剩余天数（含今天）
+    showDailyBudget: false,  // 未超支且剩余天数 > 0 时显示
     // 打卡连击
     streak: 0,
     todayDone: false,
@@ -112,10 +115,20 @@ Page({
     let budgetPercent = 0;
     let budgetOver = false;
     let budgetRemain = 0;
+    let dailyBudget = 0;
+    let daysLeft = 0;
+    let showDailyBudget = false;
     if (hasBudget) {
       budgetPercent = Math.min(100, parseFloat((summary.expense / budget * 100).toFixed(1)));
       budgetOver = summary.expense > budget;
       budgetRemain = parseFloat((budget - summary.expense).toFixed(2));
+      // 计算本月剩余天数（含今天）及每日可用额度
+      const daysInMonth = new Date(year, month, 0).getDate();
+      daysLeft = Math.max(1, daysInMonth - now.getDate() + 1);
+      if (!budgetOver && budgetRemain > 0) {
+        dailyBudget = parseFloat((budgetRemain / daysLeft).toFixed(2));
+        showDailyBudget = true;
+      }
     }
 
     // 打卡连击
@@ -168,6 +181,9 @@ Page({
       budgetPercent,
       budgetOver,
       budgetRemain,
+      dailyBudget,
+      daysLeft,
+      showDailyBudget,
       streak,
       todayDone,
       longestStreak,

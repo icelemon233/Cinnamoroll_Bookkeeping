@@ -482,6 +482,39 @@
   font-size: 22rpx;
   color: #9BAAB8;
 }
+/* 每日可用预算提示 */
+.budget-daily-row {
+  display: flex;
+  align-items: center;
+  margin-top: 16rpx;
+  padding: 12rpx 20rpx;
+  background: rgba(79, 184, 212, 0.08);
+  border-radius: 12rpx;
+  gap: 6rpx;
+}
+
+.budget-daily-icon {
+  font-size: 24rpx;
+  margin-right: 4rpx;
+}
+
+.budget-daily-text {
+  font-size: 24rpx;
+  color: #4A6A7C;
+  flex: 1;
+}
+
+.budget-daily-amount {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #4FB8D4;
+}
+
+.budget-daily-sub {
+  font-size: 20rpx;
+  color: #9BAAB8;
+  white-space: nowrap;
+}
 
 /* ─── 打卡连击卡片 ────────────────────────────────────── */
 .streak-card {

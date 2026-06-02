@@ -128,6 +128,13 @@
       <view class="budget-percent-row">
         <text class="budget-percent-text {{budgetOver ? 'budget-over-text' : ''}}">已用 {{budgetPercent}}%</text>
       </view>
+
+      <!-- 每日可用预算提示 -->
+      <view wx:if="{{showDailyBudget}}" class="budget-daily-row">
+        <text class="budget-daily-icon">📅</text>
+        <text class="budget-daily-text">今日可花 <text class="budget-daily-amount">¥{{dailyBudget}}</text></text>
+        <text class="budget-daily-sub">（剩余 {{daysLeft}} 天均摊）</text>
+      </view>
     </view>
   </view>
 
