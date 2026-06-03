@@ -1,5 +1,5 @@
 // pages/add/add.js - 记账页（支持新增和编辑两种模式）
-const { saveRecord, updateRecord, getRecordById, getTodaySummary, getRecentCategoryRecords, getTopAmounts, getNoteAutoComplete, getTemplates, saveTemplate, deleteTemplate, getCategoryHistory } = require('../../utils/storage');
+const { saveRecord, updateRecord, getRecordById, getTodaySummary, getDailySummaryCompare, getRecentCategoryRecords, getTopAmounts, getNoteAutoComplete, getTemplates, saveTemplate, deleteTemplate, getCategoryHistory } = require('../../utils/storage');
 
 const EXPENSE_CATEGORIES = [
   { name: '餐饮', emoji: '🍜' },
@@ -94,6 +94,9 @@ Page({
     categoryHistoryTitle: '',  // 弹窗标题，如「餐饮 最近消费」
     categoryHistoryList: [],   // [{ amount, note, date, id }]
     categoryHistoryEmpty: false, // 是否暂无记录
+    // 今日 vs 昨日消费对比
+    dailyCompare: null,          // null | { isUp, isDown, isSame, diff, diffAbs, diffPct, hasYesterday, hasTodayExpense, yesterdayExpense }
+    showDailyCompare: false,     // 今日有支出且昨日有记录时才显示
     // AA 分摊计算器
     showSplitModal: false,      // 是否显示分摊弹窗
     splitPeople: 2,             // 分摊人数
@@ -309,11 +312,16 @@ Page({
   // 加载今日消费概览
   _loadTodaySummary() {
     const { todayExpense, todayIncome, todayCount } = getTodaySummary();
+    const compare = getDailySummaryCompare();
+    // 仅当今日有支出且昨日有记录时才显示对比条
+    const showDailyCompare = compare.hasTodayExpense && compare.hasYesterday;
     this.setData({
       todayExpense,
       todayIncome,
       todayCount,
-      hasTodayRecords: todayCount > 0
+      hasTodayRecords: todayCount > 0,
+      dailyCompare: compare,
+      showDailyCompare
     });
   },
 

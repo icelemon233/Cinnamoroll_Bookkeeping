@@ -367,6 +367,66 @@ function getTodaySummary() {
 }
 
 /**
+ * 获取今日 vs 昨日消费对比数据
+ * 用于记账页「今日速览」中的同比提示条
+ * @returns {{
+ *   todayExpense: number,
+ *   yesterdayExpense: number,
+ *   diff: number,           // 今日 - 昨日，正值表示花更多
+ *   diffAbs: number,        // 差值绝对值
+ *   diffPct: number,        // 变化百分比（昨日为0时返回null）
+ *   isUp: boolean,          // 今日 > 昨日
+ *   isDown: boolean,        // 今日 < 昨日
+ *   isSame: boolean,        // 今日 == 昨日
+ *   hasYesterday: boolean,  // 昨日是否有消费记录（昨日=0则隐藏对比）
+ *   hasTodayExpense: boolean // 今日是否有支出
+ * }}
+ */
+function getDailySummaryCompare() {
+  const now = new Date();
+  const toStr = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const todayStr = toStr(now);
+  const yest = new Date(now); yest.setDate(now.getDate() - 1);
+  const yesterdayStr = toStr(yest);
+
+  const records = getRecords();
+  let todayExpense = 0;
+  let yesterdayExpense = 0;
+  let hasYesterdayRecord = false;
+
+  records.forEach(r => {
+    if (r.type === 'expense') {
+      if (r.date === todayStr) todayExpense += Number(r.amount) || 0;
+      if (r.date === yesterdayStr) {
+        yesterdayExpense += Number(r.amount) || 0;
+        hasYesterdayRecord = true;
+      }
+    }
+  });
+
+  todayExpense = parseFloat(todayExpense.toFixed(2));
+  yesterdayExpense = parseFloat(yesterdayExpense.toFixed(2));
+  const diff = parseFloat((todayExpense - yesterdayExpense).toFixed(2));
+  const diffAbs = Math.abs(diff);
+  const diffPct = hasYesterdayRecord && yesterdayExpense > 0
+    ? Math.round(Math.abs(diff / yesterdayExpense) * 100)
+    : null;
+
+  return {
+    todayExpense,
+    yesterdayExpense,
+    diff,
+    diffAbs,
+    diffPct,
+    isUp: diff > 0,
+    isDown: diff < 0,
+    isSame: diff === 0,
+    hasYesterday: hasYesterdayRecord,
+    hasTodayExpense: todayExpense > 0
+  };
+}
+
+/**
  * 获取连续记账天数（打卡连击数）
  * 从今天往前数，每天至少有一条记录算「已记账」，连续不中断的天数即为连击。
  * 今天如果还没记账，则从昨天开始往前数。
@@ -1683,5 +1743,6 @@ module.exports = {
   getRecurringReminders,
   getCategoryHistory,
   getSpendingAlerts,
-  getWeekCheckin
+  getWeekCheckin,
+  getDailySummaryCompare
 };

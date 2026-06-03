@@ -187,6 +187,36 @@
   color: #4FB8D4;
 }
 
+/* 今日 vs 昨日对比行 */
+.daily-compare-row {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  margin-top: 10rpx;
+  padding-top: 10rpx;
+  border-top: 1rpx solid #D8EEF5;
+}
+
+.daily-compare-icon {
+  font-size: 22rpx;
+  line-height: 1;
+}
+
+.daily-compare-text {
+  font-size: 22rpx;
+  color: #9BAAB8;
+}
+
+.daily-compare-up {
+  color: #FF8BAB;
+  font-weight: 600;
+}
+
+.daily-compare-down {
+  color: #4FB8D4;
+  font-weight: 600;
+}
+
 /* 收支切换 */
 .type-switcher {
   display: flex;

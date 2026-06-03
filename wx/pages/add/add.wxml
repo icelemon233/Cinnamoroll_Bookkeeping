@@ -46,6 +46,15 @@
       <text class="today-banner-income-label">今日收入</text>
       <text class="today-banner-income-val">+¥{{todayIncome}}</text>
     </view>
+    <!-- 今日 vs 昨日消费对比 -->
+    <view wx:if="{{showDailyCompare}}" class="daily-compare-row">
+      <text class="daily-compare-icon">{{dailyCompare.isUp ? '📈' : (dailyCompare.isDown ? '📉' : '➡️')}}</text>
+      <text class="daily-compare-text">较昨日
+        <text wx:if="{{dailyCompare.isSame}}">持平（昨日 ¥{{dailyCompare.yesterdayExpense}}）</text>
+        <text wx:elif="{{dailyCompare.isUp}}" class="daily-compare-up">多花 ¥{{dailyCompare.diffAbs}}{{dailyCompare.diffPct !== null ? '（+' + dailyCompare.diffPct + '%）' : ''}}</text>
+        <text wx:else class="daily-compare-down">少花 ¥{{dailyCompare.diffAbs}}{{dailyCompare.diffPct !== null ? '（-' + dailyCompare.diffPct + '%）' : ''}}</text>
+      </text>
+    </view>
   </view>
 
   <!-- 收入/支出切换（编辑模式下仍可切换） -->
