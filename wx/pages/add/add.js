@@ -1,5 +1,5 @@
 // pages/add/add.js - 记账页（支持新增和编辑两种模式）
-const { saveRecord, updateRecord, getRecordById, getTodaySummary, getDailySummaryCompare, getRecentCategoryRecords, getTopAmounts, getNoteAutoComplete, getTemplates, saveTemplate, deleteTemplate, getCategoryHistory } = require('../../utils/storage');
+const { saveRecord, updateRecord, getRecordById, getTodaySummary, getDailySummaryCompare, getRecentCategoryRecords, getTopAmounts, getNoteAutoComplete, getTemplates, saveTemplate, deleteTemplate, getCategoryHistory, getCategorySaveSummary } = require('../../utils/storage');
 
 const EXPENSE_CATEGORIES = [
   { name: '餐饮', emoji: '🍜' },
@@ -97,6 +97,9 @@ Page({
     // 今日 vs 昨日消费对比
     dailyCompare: null,          // null | { isUp, isDown, isSame, diff, diffAbs, diffPct, hasYesterday, hasTodayExpense, yesterdayExpense }
     showDailyCompare: false,     // 今日有支出且昨日有记录时才显示
+    // 记账成功 - 消费小结弹窗
+    showSaveSummary: false,       // 是否显示消费小结
+    saveSummaryData: null,        // { category, emoji, amount, curTotal, curCount, tip, tipEmoji, type }
     // AA 分摊计算器
     showSplitModal: false,      // 是否显示分摊弹窗
     splitPeople: 2,             // 分摊人数
@@ -584,6 +587,30 @@ Page({
     };
 
     saveRecord(record);
+
+    // 获取消费小结数据（在重置表单前，type/category 还是本次记录的值）
+    const { type: recType, selectedCategory: recCat } = this.data;
+    const catEmoji = CATEGORY_EMOJI[recCat] || '📦';
+    if (recType === 'expense' || recType === 'income') {
+      const summary = getCategorySaveSummary(recCat, recType, '');
+      this.setData({
+        showSaveSummary: true,
+        saveSummaryData: {
+          category: recCat,
+          emoji: catEmoji,
+          amount,
+          curTotal: summary.curTotal,
+          curCount: summary.curCount,
+          tip: summary.tip,
+          tipEmoji: summary.tipEmoji,
+          type: recType
+        }
+      });
+      // 2.5 秒后自动关闭小结弹窗
+      setTimeout(() => {
+        this.setData({ showSaveSummary: false, saveSummaryData: null });
+      }, 2500);
+    }
 
     wx.showToast({
       title: '记录成功 🎉',

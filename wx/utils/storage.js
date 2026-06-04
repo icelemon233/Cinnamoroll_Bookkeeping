@@ -1697,6 +1697,88 @@ function getWeekCheckin() {
   return result;
 }
 
+/**
+ * 记账成功后的分类消费小结
+ * 返回本月该分类累计金额/笔数，以及与上月对比信息
+ * @param {string} category - 分类名称
+ * @param {string} type - 'expense' | 'income'
+ * @param {string} yearMonth - 当前月份 'YYYY-MM'，默认当月
+ * @returns {Object} { curTotal, curCount, prevTotal, diff, diffAbs, diffPct, isUp, isDown, isSame, hasPrev, tip, tipEmoji }
+ */
+function getCategorySaveSummary(category, type, yearMonth) {
+  if (!yearMonth) {
+    const now = new Date();
+    const m = now.getMonth() + 1;
+    yearMonth = `${now.getFullYear()}-${m < 10 ? '0' + m : m}`;
+  }
+
+  // 计算上月 YYYY-MM
+  const [y, m] = yearMonth.split('-').map(Number);
+  const prevDate = new Date(y, m - 2, 1); // m-2 因为 getMonth 是 0-indexed，m-1 是当月，m-2 是上月
+  const prevYM = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
+
+  const allRecords = getRecords();
+
+  // 本月该分类记录
+  const curRecords = allRecords.filter(r =>
+    r.date && r.date.startsWith(yearMonth) &&
+    r.category === category && r.type === type
+  );
+  const curTotal = parseFloat(curRecords.reduce((s, r) => s + (Number(r.amount) || 0), 0).toFixed(2));
+  const curCount = curRecords.length;
+
+  // 上月该分类记录
+  const prevRecords = allRecords.filter(r =>
+    r.date && r.date.startsWith(prevYM) &&
+    r.category === category && r.type === type
+  );
+  const prevTotal = parseFloat(prevRecords.reduce((s, r) => s + (Number(r.amount) || 0), 0).toFixed(2));
+  const hasPrev = prevRecords.length > 0;
+
+  // 对比计算
+  const diff = parseFloat((curTotal - prevTotal).toFixed(2));
+  const diffAbs = Math.abs(diff);
+  const diffPct = prevTotal > 0 ? parseFloat((diffAbs / prevTotal * 100).toFixed(1)) : 0;
+  const isUp = diff > 0.01;
+  const isDown = diff < -0.01;
+  const isSame = !isUp && !isDown;
+
+  // 生成提示文案
+  let tip = '';
+  let tipEmoji = '';
+  if (type === 'expense') {
+    if (!hasPrev) {
+      tip = `本月首次记录${category}支出`;
+      tipEmoji = '✨';
+    } else if (isSame) {
+      tip = `与上月持平`;
+      tipEmoji = '😌';
+    } else if (isUp) {
+      tip = `比上月多 ¥${diffAbs}（+${diffPct}%）`;
+      tipEmoji = diffPct > 50 ? '😱' : diffPct > 20 ? '🤔' : '📈';
+    } else {
+      tip = `比上月少 ¥${diffAbs}（-${diffPct}%）`;
+      tipEmoji = '🎉';
+    }
+  } else {
+    if (!hasPrev) {
+      tip = `本月首笔${category}收入`;
+      tipEmoji = '💪';
+    } else if (isSame) {
+      tip = `与上月持平`;
+      tipEmoji = '😌';
+    } else if (isUp) {
+      tip = `比上月多 ¥${diffAbs}（+${diffPct}%）`;
+      tipEmoji = '🚀';
+    } else {
+      tip = `比上月少 ¥${diffAbs}（-${diffPct}%）`;
+      tipEmoji = '😔';
+    }
+  }
+
+  return { curTotal, curCount, prevTotal, diff, diffAbs, diffPct, isUp, isDown, isSame, hasPrev, tip, tipEmoji };
+}
+
 module.exports = {
   getRecords,
   saveRecord,
@@ -1744,5 +1826,6 @@ module.exports = {
   getCategoryHistory,
   getSpendingAlerts,
   getWeekCheckin,
-  getDailySummaryCompare
+  getDailySummaryCompare,
+  getCategorySaveSummary
 };

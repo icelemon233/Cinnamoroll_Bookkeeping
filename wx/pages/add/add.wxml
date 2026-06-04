@@ -346,6 +346,33 @@
     </view>
   </view>
 
+  <!-- 记账成功消费小结弹窗 -->
+  <view wx:if="{{showSaveSummary && saveSummaryData}}" class="save-summary-mask">
+    <view class="save-summary-card">
+      <!-- 成功图标区 -->
+      <view class="save-summary-top">
+        <view class="save-summary-check">✓</view>
+        <text class="save-summary-title">记账成功</text>
+      </view>
+      <!-- 本次记账金额 -->
+      <view class="save-summary-amount-row">
+        <text class="save-summary-cat-emoji">{{saveSummaryData.emoji}}</text>
+        <text class="save-summary-cat-name">{{saveSummaryData.category}}</text>
+        <text class="save-summary-amount {{saveSummaryData.type === 'expense' ? 'expense-text' : 'income-text'}}">{{saveSummaryData.type === 'expense' ? '-' : '+'}}¥{{saveSummaryData.amount}}</text>
+      </view>
+      <!-- 本月累计 -->
+      <view class="save-summary-stat">
+        <text class="save-summary-stat-label">本月{{saveSummaryData.category}}累计</text>
+        <text class="save-summary-stat-val">¥{{saveSummaryData.curTotal}} · 共{{saveSummaryData.curCount}}笔</text>
+      </view>
+      <!-- 环比提示 -->
+      <view class="save-summary-tip">
+        <text class="save-summary-tip-emoji">{{saveSummaryData.tipEmoji}}</text>
+        <text class="save-summary-tip-text">{{saveSummaryData.tip}}</text>
+      </view>
+    </view>
+  </view>
+
   <!-- 分类历史记录弹窗（长按分类触发） -->
   <view wx:if="{{showCategoryHistory}}" class="cat-history-mask" bindtap="closeCategoryHistory">
     <view class="cat-history-card" catchtap="noop">
