@@ -157,6 +157,9 @@
         bindinput="onNoteInput"
         maxlength="30"
       />
+      <view class="note-fav-star {{currentNoteIsFavorited ? 'note-fav-star-active' : ''}}" bindtap="toggleNoteToFavorite">
+        <text class="note-fav-star-icon">{{currentNoteIsFavorited ? '⭐' : '☆'}}</text>
+      </view>
     </view>
     <!-- 备注智能联想下拉 -->
     <view wx:if="{{showNoteSuggestions}}" class="note-suggestions-wrap">
@@ -186,6 +189,35 @@
           </view>
         </view>
       </scroll-view>
+    </view>
+    <!-- 备注收藏夹入口（有收藏时显示） -->
+    <view wx:if="{{hasNoteFavorites}}" class="note-fav-section">
+      <view class="note-fav-header" bindtap="toggleFavoritesPanel">
+        <view class="note-fav-header-left">
+          <text class="note-fav-icon">⭐</text>
+          <text class="note-fav-title">备注收藏夹</text>
+          <text class="note-fav-count">{{noteFavorites.length}}</text>
+        </view>
+        <view class="note-fav-header-right">
+          <text class="note-fav-manage-btn" catchtap="openFavoritesManage">管理</text>
+          <text class="note-fav-arrow {{showFavoritesPanel ? 'note-fav-arrow-open' : ''}}">›</text>
+        </view>
+      </view>
+      <view wx:if="{{showFavoritesPanel}}" class="note-fav-chips-wrap">
+        <scroll-view scroll-x class="note-fav-chips-scroll" enhanced="{{true}}" show-scrollbar="{{false}}">
+          <view class="note-fav-chips-row">
+            <view
+              class="note-fav-chip {{note === item.text ? 'note-fav-chip-active' : ''}}"
+              wx:for="{{noteFavorites}}"
+              wx:key="id"
+              data-text="{{item.text}}"
+              bindtap="tapFavoriteNote"
+            >
+              <text class="note-fav-chip-text">{{item.text}}</text>
+            </view>
+          </view>
+        </scroll-view>
+      </view>
     </view>
   </view>
 
@@ -408,6 +440,41 @@
           <text class="cat-history-date">{{item.date}}</text>
         </view>
       </view>
+    </view>
+  </view>
+
+  <!-- 备注收藏夹管理弹窗 -->
+  <view wx:if="{{showFavoritesManage}}" class="fav-manage-mask" bindtap="closeFavoritesManage">
+    <view class="fav-manage-card" catchtap="noop">
+      <view class="fav-manage-drag-bar"></view>
+      <view class="fav-manage-header">
+        <text class="fav-manage-title">⭐ 备注收藏夹</text>
+        <view class="fav-manage-close" bindtap="closeFavoritesManage">
+          <text class="fav-manage-close-icon">✕</text>
+        </view>
+      </view>
+      <view wx:if="{{allNoteFavorites.length === 0}}" class="fav-manage-empty">
+        <text class="fav-manage-empty-emoji">🌸</text>
+        <text class="fav-manage-empty-text">收藏夹空空的，记账时点 ☆ 可收藏备注</text>
+      </view>
+      <scroll-view wx:else scroll-y class="fav-manage-list" enhanced="{{true}}">
+        <view
+          class="fav-manage-item"
+          wx:for="{{allNoteFavorites}}"
+          wx:key="id"
+          data-text="{{item.text}}"
+          data-id="{{item.id}}"
+        >
+          <view class="fav-manage-item-left" bindtap="tapFavoriteManageItem" data-text="{{item.text}}">
+            <text class="fav-manage-item-text">{{item.text}}</text>
+            <text wx:if="{{item.category}}" class="fav-manage-item-cat">{{item.category}}</text>
+          </view>
+          <view class="fav-manage-item-del" bindtap="deleteFavoriteItem" data-id="{{item.id}}">
+            <text class="fav-manage-item-del-icon">🗑</text>
+          </view>
+        </view>
+      </scroll-view>
+      <view class="fav-manage-hint">点击备注可快速填入 · 滑动查看全部</view>
     </view>
   </view>
 

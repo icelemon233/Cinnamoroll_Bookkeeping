@@ -1,5 +1,5 @@
 // pages/add/add.js - 记账页（支持新增和编辑两种模式）
-const { saveRecord, updateRecord, getRecordById, getTodaySummary, getDailySummaryCompare, getRecentCategoryRecords, getTopAmounts, getNoteAutoComplete, getTemplates, saveTemplate, deleteTemplate, getCategoryHistory, getCategorySaveSummary } = require('../../utils/storage');
+const { saveRecord, updateRecord, getRecordById, getTodaySummary, getDailySummaryCompare, getRecentCategoryRecords, getTopAmounts, getNoteAutoComplete, getTemplates, saveTemplate, deleteTemplate, getCategoryHistory, getCategorySaveSummary, getNoteFavorites, addNoteFavorite, removeNoteFavorite, getNoteFavoritesForCategory } = require('../../utils/storage');
 
 const EXPENSE_CATEGORIES = [
   { name: '餐饮', emoji: '🍜' },
@@ -105,7 +105,14 @@ Page({
     splitPeople: 2,             // 分摊人数
     splitTotal: 0,              // 分摊总金额
     splitPerPerson: '0.00',     // 每人金额（字符串，保留2位小数）
-    splitRemainder: '0.00'      // 最后一人补差（字符串）
+    splitRemainder: '0.00',     // 最后一人补差（字符串）
+    // 备注收藏夹
+    noteFavorites: [],            // 当前分类+类型的收藏备注 [{ id, text }]
+    hasNoteFavorites: false,      // 是否有收藏备注
+    showFavoritesPanel: false,    // 是否展开收藏夹面板
+    allNoteFavorites: [],         // 全部收藏备注（管理视图用）
+    showFavoritesManage: false,   // 管理弹窗
+    currentNoteIsFavorited: false // 当前备注是否已收藏
   },
 
   onLoad(options) {
@@ -122,6 +129,7 @@ Page({
       });
       this._loadRecentRecords('工资', 'income');
       this._loadTopAmounts('工资', 'income');
+    this._loadNoteFavorites('工资', 'income');
     }
 
     // 编辑模式：从 options 中读取 recordId
@@ -148,6 +156,7 @@ Page({
         // 编辑模式也加载最近记录和常用金额（供参考，但不会主动覆盖当前值）
         this._loadRecentRecords(record.category, record.type);
         this._loadTopAmounts(record.category, record.type);
+    this._loadNoteFavorites(record.category, record.type);
         return;
       }
     }
@@ -157,6 +166,7 @@ Page({
     // 加载默认分类（餐饮/支出）的最近记录和常用金额
     this._loadRecentRecords('餐饮', 'expense');
     this._loadTopAmounts('餐饮', 'expense');
+    this._loadNoteFavorites('餐饮', 'expense');
   },
 
   // ─── 快捷日期 ──────────────────────────────────────────
@@ -259,6 +269,7 @@ Page({
     });
     this._loadRecentRecords(tpl.category, tpl.type);
     this._loadTopAmounts(tpl.category, tpl.type);
+    this._loadNoteFavorites(tpl.category, tpl.type);
     wx.vibrateShort({ type: 'light' }).catch(() => {});
     wx.showToast({ title: '已填入模板 ✨', icon: 'none', duration: 800 });
   },
@@ -337,6 +348,7 @@ Page({
     this.setData({ type, categories, selectedCategory, quickNotes, noteSuggestions: [], showNoteSuggestions: false });
     this._loadRecentRecords(selectedCategory, type);
     this._loadTopAmounts(selectedCategory, type);
+    this._loadNoteFavorites(selectedCategory, type);
   },
 
   // 对加减表达式求值（安全实现，仅处理正数加减）
@@ -385,6 +397,124 @@ Page({
     });
   },
 
+  // 加载当前分类/类型的备注收藏
+  _loadNoteFavorites(category, type) {
+    const favs = getNoteFavoritesForCategory(category, type);
+    const { note } = this.data;
+    const allFavs = getNoteFavorites();
+    this.setData({
+      noteFavorites: favs,
+      hasNoteFavorites: favs.length > 0,
+      currentNoteIsFavorited: this._isNoteInFavorites(note, category, type, allFavs)
+    });
+  },
+
+  // 检查某备注是否已收藏
+  _isNoteInFavorites(note, category, type, allFavs) {
+    if (!note || !note.trim()) return false;
+    return allFavs.some(f => f.text === note.trim() && f.category === category && f.type === type);
+  },
+
+  // 收藏夹展开/收起
+  toggleFavoritesPanel() {
+    this.setData({ showFavoritesPanel: !this.data.showFavoritesPanel });
+  },
+
+  // 收藏/取消收藏当前备注
+  toggleNoteToFavorite() {
+    const { note, selectedCategory, type } = this.data;
+    const trimmed = (note || '').trim();
+    if (!trimmed) {
+      wx.showToast({ title: '请先输入备注', icon: 'none', duration: 1500 });
+      return;
+    }
+    const allFavs = getNoteFavorites();
+    const existing = allFavs.find(f => f.text === trimmed && f.category === selectedCategory && f.type === type);
+    if (existing) {
+      const { favorites } = removeNoteFavorite(existing.id);
+      const favs = getNoteFavoritesForCategory(selectedCategory, type);
+      this.setData({
+        noteFavorites: favs,
+        hasNoteFavorites: favs.length > 0,
+        currentNoteIsFavorited: false,
+        allNoteFavorites: favorites
+      });
+      wx.showToast({ title: '已取消收藏', icon: 'none', duration: 1200 });
+    } else {
+      const { success, isDuplicate, favorites } = addNoteFavorite({
+        text: trimmed,
+        category: selectedCategory,
+        type
+      });
+      if (isDuplicate) {
+        wx.showToast({ title: '已在收藏夹中！', icon: 'none', duration: 1200 });
+        return;
+      }
+      const favs = getNoteFavoritesForCategory(selectedCategory, type);
+      this.setData({
+        noteFavorites: favs,
+        hasNoteFavorites: favs.length > 0,
+        currentNoteIsFavorited: success,
+        allNoteFavorites: favorites
+      });
+      if (success) {
+        wx.vibrateShort({ type: 'light' }).catch(() => {});
+        wx.showToast({ title: '已收藏到备注夹 ⭐', icon: 'none', duration: 1200 });
+      }
+    }
+  },
+
+  // 点击收藏备注按钮 → 填入备注框
+  tapFavoriteNote(e) {
+    const { text } = e.currentTarget.dataset;
+    const { selectedCategory, type } = this.data;
+    const allFavs = getNoteFavorites();
+    this.setData({
+      note: text,
+      showFavoritesPanel: false,
+      currentNoteIsFavorited: this._isNoteInFavorites(text, selectedCategory, type, allFavs)
+    });
+    wx.vibrateShort({ type: 'light' }).catch(() => {});
+  },
+
+  // 打开收藏夹管理弹窗
+  openFavoritesManage() {
+    const allFavs = getNoteFavorites();
+    this.setData({ showFavoritesManage: true, allNoteFavorites: allFavs, showFavoritesPanel: false });
+  },
+
+  // 关闭收藏夹管理弹窗
+  closeFavoritesManage() {
+    this.setData({ showFavoritesManage: false });
+  },
+
+  // 管理弹窗中删除单个收藏
+  deleteFavoriteItem(e) {
+    const { id } = e.currentTarget.dataset;
+    const { favorites } = removeNoteFavorite(Number(id));
+    const { selectedCategory, type } = this.data;
+    const favs = getNoteFavoritesForCategory(selectedCategory, type);
+    this.setData({
+      allNoteFavorites: favorites,
+      noteFavorites: favs,
+      hasNoteFavorites: favs.length > 0
+    });
+    wx.showToast({ title: '已删除', icon: 'none', duration: 800 });
+  },
+
+  // 管理弹窗中点击收藏项 → 填入备注
+  tapFavoriteManageItem(e) {
+    const { text } = e.currentTarget.dataset;
+    const { selectedCategory, type } = this.data;
+    const allFavs = getNoteFavorites();
+    this.setData({
+      note: text,
+      showFavoritesManage: false,
+      currentNoteIsFavorited: this._isNoteInFavorites(text, selectedCategory, type, allFavs)
+    });
+    wx.vibrateShort({ type: 'light' }).catch(() => {});
+  },
+
   // 点击常用金额快捷按钮 → 直接填入金额
   tapTopAmount(e) {
     const amount = e.currentTarget.dataset.amount;
@@ -409,6 +539,7 @@ Page({
     this.setData({ selectedCategory: category, quickNotes, noteSuggestions: [], showNoteSuggestions: false });
     this._loadRecentRecords(category, this.data.type);
     this._loadTopAmounts(category, this.data.type);
+    this._loadNoteFavorites(category, this.data.type);
   },
 
   // 长按分类 → 弹出历史记录预览
@@ -511,7 +642,12 @@ Page({
   // 备注输入（实时触发联想）
   onNoteInput(e) {
     const note = e.detail.value;
-    this.setData({ note });
+    const { selectedCategory, type } = this.data;
+    const allFavs = getNoteFavorites();
+    this.setData({
+      note,
+      currentNoteIsFavorited: this._isNoteInFavorites(note, selectedCategory, type, allFavs)
+    });
     this._updateNoteSuggestions(note);
   },
 
@@ -635,6 +771,7 @@ Page({
       // 刷新今日速览（保存后立即更新数据），同时刷新常用金额（新记录可能影响频率）
       this._loadTodaySummary();
       this._loadTopAmounts('餐饮', 'expense');
+    this._loadNoteFavorites('餐饮', 'expense');
     }, 500);
   },
 

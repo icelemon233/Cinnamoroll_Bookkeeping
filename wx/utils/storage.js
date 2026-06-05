@@ -1779,6 +1779,83 @@ function getCategorySaveSummary(category, type, yearMonth) {
   return { curTotal, curCount, prevTotal, diff, diffAbs, diffPct, isUp, isDown, isSame, hasPrev, tip, tipEmoji };
 }
 
+// ─────────────────────────────────────────────
+// 备注收藏夹 (Note Favorites)
+// 存储结构：[{ id, text, category, type, createdAt }]
+// ─────────────────────────────────────────────
+const NOTE_FAVORITES_KEY = 'note_favorites';
+const NOTE_FAVORITES_MAX = 20;
+
+/**
+ * 获取所有备注收藏
+ * @returns {Array<{ id: number, text: string, category: string, type: string, createdAt: number }>}
+ */
+function getNoteFavorites() {
+  return wx.getStorageSync(NOTE_FAVORITES_KEY) || [];
+}
+
+/**
+ * 添加备注收藏（相同文本+分类+类型不重复添加）
+ * @param {{ text: string, category: string, type: string }} fav
+ * @returns {{ success: boolean, isDuplicate: boolean, favorites: Array }}
+ */
+function addNoteFavorite(fav) {
+  const text = (fav.text || '').trim();
+  if (!text) return { success: false, isDuplicate: false, favorites: getNoteFavorites() };
+
+  const favorites = getNoteFavorites();
+  // 同文本+分类+类型视为重复
+  const exists = favorites.some(f => f.text === text && f.category === fav.category && f.type === fav.type);
+  if (exists) return { success: false, isDuplicate: true, favorites };
+
+  if (favorites.length >= NOTE_FAVORITES_MAX) {
+    favorites.pop(); // 移除最旧的
+  }
+  const newFav = {
+    id: Date.now(),
+    text,
+    category: fav.category || '',
+    type: fav.type || 'expense',
+    createdAt: Date.now()
+  };
+  favorites.unshift(newFav);
+  wx.setStorageSync(NOTE_FAVORITES_KEY, favorites);
+  return { success: true, isDuplicate: false, favorites };
+}
+
+/**
+ * 删除备注收藏
+ * @param {number} id
+ * @returns {{ success: boolean, favorites: Array }}
+ */
+function removeNoteFavorite(id) {
+  const favorites = getNoteFavorites();
+  const filtered = favorites.filter(f => f.id !== id);
+  wx.setStorageSync(NOTE_FAVORITES_KEY, filtered);
+  return { success: favorites.length !== filtered.length, favorites: filtered };
+}
+
+/**
+ * 获取当前分类+类型的备注收藏（快速填入用）
+ * @param {string} category
+ * @param {string} type
+ * @returns {Array<{ id: number, text: string }>}
+ */
+function getNoteFavoritesForCategory(category, type) {
+  const all = getNoteFavorites();
+  // 优先返回匹配分类的，其次返回无分类限制的（category 为空串表示通用）
+  const catMatch = all.filter(f => f.category === category && f.type === type);
+  const generic = all.filter(f => f.category === '' && f.type === type);
+  const combined = [...catMatch, ...generic];
+  // 去重 text
+  const seen = new Set();
+  return combined.filter(f => {
+    if (seen.has(f.text)) return false;
+    seen.add(f.text);
+    return true;
+  });
+}
+
 module.exports = {
   getRecords,
   saveRecord,
@@ -1827,5 +1904,9 @@ module.exports = {
   getSpendingAlerts,
   getWeekCheckin,
   getDailySummaryCompare,
-  getCategorySaveSummary
+  getCategorySaveSummary,
+  getNoteFavorites,
+  addNoteFavorite,
+  removeNoteFavorite,
+  getNoteFavoritesForCategory
 };
