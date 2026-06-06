@@ -1856,6 +1856,72 @@ function getNoteFavoritesForCategory(category, type) {
   });
 }
 
+// ─── 分享卡片数据 ──────────────────────────────────────────────────────────────
+/**
+ * 生成月度账单分享卡片所需数据
+ * @param {string} yearMonth - 'YYYY-MM'
+ * @returns {{ monthLabel, totalExpense, totalIncome, topCategories, recordCount, tipText }}
+ */
+function getShareCardData(yearMonth) {
+  const CARD_EMOJI = {
+    '餐饮': '🍜', '交通': '🚌', '购物': '🛍️', '娱乐': '🎮',
+    '住房': '🏠', '医疗': '💊', '教育': '📚', '运动': '🏃',
+    '旅行': '✈️', '宠物': '🐾', '日用': '🧴',
+    '工资': '💼', '奖金': '🎁', '副业': '💡', '理财': '📈', '红包': '🧧',
+    '其他': '📦'
+  };
+
+  const summary = getMonthSummary(yearMonth);
+  const records = summary.records || [];
+  const [y, m] = yearMonth.split('-');
+  const monthLabel = `${y}年${parseInt(m)}月`;
+
+  let totalExpense = 0, totalIncome = 0;
+  const catMap = {};
+  records.forEach(r => {
+    const amt = Number(r.amount) || 0;
+    if (r.type === 'expense') {
+      totalExpense += amt;
+      const cat = r.category || '其他';
+      catMap[cat] = (catMap[cat] || 0) + amt;
+    } else {
+      totalIncome += amt;
+    }
+  });
+
+  const topCategories = Object.keys(catMap)
+    .map(cat => ({
+      name: cat,
+      emoji: CARD_EMOJI[cat] || '📦',
+      amount: parseFloat(catMap[cat].toFixed(2)),
+      percent: totalExpense > 0 ? Math.round(catMap[cat] / totalExpense * 100) : 0
+    }))
+    .sort((a, b) => b.amount - a.amount)
+    .slice(0, 3);
+
+  // 底部提示文案
+  const net = totalIncome - totalExpense;
+  let tipText = '';
+  if (records.length === 0) {
+    tipText = '还没有账单记录，快去记一笔吧 🐾';
+  } else if (net > 0) {
+    tipText = `本月结余 ¥${net.toFixed(2)}，继续保持 ✨`;
+  } else if (net < 0) {
+    tipText = `本月超支 ¥${Math.abs(net).toFixed(2)}，下月加油 💪`;
+  } else {
+    tipText = '收支刚好平衡，财务很稳健 🌟';
+  }
+
+  return {
+    monthLabel,
+    totalExpense: parseFloat(totalExpense.toFixed(2)),
+    totalIncome: parseFloat(totalIncome.toFixed(2)),
+    topCategories,
+    recordCount: records.length,
+    tipText
+  };
+}
+
 module.exports = {
   getRecords,
   saveRecord,
@@ -1908,5 +1974,6 @@ module.exports = {
   getNoteFavorites,
   addNoteFavorite,
   removeNoteFavorite,
-  getNoteFavoritesForCategory
+  getNoteFavoritesForCategory,
+  getShareCardData
 };

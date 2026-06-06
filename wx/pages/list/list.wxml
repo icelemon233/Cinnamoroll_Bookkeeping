@@ -308,3 +308,10 @@
   </view>
 
 </view>
+<!-- 分享卡片隐藏 Canvas（仅生成时挂载，宽 320px 高 520px） -->
+<canvas
+  wx:if="{{shareCardGenerating}}"
+  type="2d"
+  id="shareCardCanvas"
+  class="share-card-canvas"
+></canvas>

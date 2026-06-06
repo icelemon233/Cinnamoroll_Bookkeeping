@@ -1,5 +1,5 @@
 // pages/list/list.js - 账单列表页
-const { getRecords, deleteRecord, groupByDate, formatDate, exportToCSV, downloadCSV, getMonthSummary, getSearchHistory, saveSearchHistory, deleteSearchHistory, clearSearchHistory, generateMonthReport } = require('../../utils/storage');
+const { getRecords, deleteRecord, groupByDate, formatDate, exportToCSV, downloadCSV, getMonthSummary, getSearchHistory, saveSearchHistory, deleteSearchHistory, clearSearchHistory, generateMonthReport, getShareCardData } = require('../../utils/storage');
 
 // 分类 emoji 映射（与 add 页保持一致）
 const CATEGORY_EMOJI = {
@@ -43,7 +43,10 @@ Page({
     selectedIds: [],          // 已选中的记录 id 列表（字符串）
     selectedCount: 0,
     // 筛选范围统计摘要
-    statsSummary: null        // { expenseCount, incomeCount, avgExpense, avgIncome, maxExpense, maxIncome, showExpense, showIncome }
+    statsSummary: null,       // { expenseCount, incomeCount, avgExpense, avgIncome, maxExpense, maxIncome, showExpense, showIncome }
+    // 分享卡片
+    shareCardData: null,      // getShareCardData 返回的数据
+    shareCardGenerating: false // 是否正在生成卡片
   },
 
   onLoad() {
@@ -610,15 +613,305 @@ Page({
 
   onExport() {
     wx.showActionSheet({
-      itemList: ['📊 导出为 CSV', '📒 生成月度复盘报告'],
+      itemList: ['📊 导出为 CSV', '📒 生成月度复盘报告', '🖼️ 生成分享卡片'],
       success: (res) => {
         if (res.tapIndex === 0) {
           this._exportCSV();
         } else if (res.tapIndex === 1) {
           this._showMonthReport();
+        } else if (res.tapIndex === 2) {
+          this._generateShareCard();
         }
       }
     });
+  },
+
+  // ─── 分享卡片生成 ─────────────────────────────────────────────────────────
+
+  /**
+   * 生成月度账单分享卡片，保存到相册
+   */
+  _generateShareCard() {
+    const { filterMonth, isSearchMode } = this.data;
+    const now = new Date();
+    const nowYM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const targetYM = (!isSearchMode && filterMonth) ? filterMonth : nowYM;
+    const cardData = getShareCardData(targetYM);
+
+    if (cardData.recordCount === 0) {
+      wx.showToast({ title: '本月暂无账单数据', icon: 'none' });
+      return;
+    }
+
+    this.setData({ shareCardData: cardData, shareCardGenerating: true });
+
+    wx.showLoading({ title: '生成卡片...' });
+
+    // 延迟一帧确保 canvas 已渲染
+    wx.nextTick(() => {
+      const query = wx.createSelectorQuery();
+      query.select('#shareCardCanvas')
+        .fields({ node: true, size: true })
+        .exec((res) => {
+          if (!res || !res[0] || !res[0].node) {
+            wx.hideLoading();
+            wx.showToast({ title: '卡片生成失败', icon: 'none' });
+            this.setData({ shareCardGenerating: false });
+            return;
+          }
+          const canvas = res[0].node;
+          const W = res[0].width;
+          const H = res[0].height;
+          const dpr = wx.getWindowInfo
+            ? wx.getWindowInfo().pixelRatio
+            : (wx.getSystemInfoSync().pixelRatio || 2);
+          canvas.width = W * dpr;
+          canvas.height = H * dpr;
+          const ctx = canvas.getContext('2d');
+          ctx.scale(dpr, dpr);
+
+          this._drawShareCard(ctx, W, H, cardData);
+
+          // 导出图片
+          wx.canvasToTempFilePath({
+            canvas,
+            success: (imgRes) => {
+              wx.hideLoading();
+              this.setData({ shareCardGenerating: false });
+              this._previewAndSaveCard(imgRes.tempFilePath);
+            },
+            fail: () => {
+              wx.hideLoading();
+              this.setData({ shareCardGenerating: false });
+              wx.showToast({ title: '导出图片失败', icon: 'none' });
+            }
+          }, this);
+        });
+    });
+  },
+
+  /**
+   * 预览并提示保存
+   */
+  _previewAndSaveCard(tempFilePath) {
+    wx.showActionSheet({
+      itemList: ['💾 保存到相册', '📱 预览图片'],
+      success: (res) => {
+        if (res.tapIndex === 0) {
+          this._saveCardToAlbum(tempFilePath);
+        } else if (res.tapIndex === 1) {
+          wx.previewImage({ urls: [tempFilePath], current: tempFilePath });
+        }
+      }
+    });
+  },
+
+  /**
+   * 保存卡片到相册
+   */
+  _saveCardToAlbum(tempFilePath) {
+    wx.saveImageToPhotosAlbum({
+      filePath: tempFilePath,
+      success: () => {
+        wx.showToast({ title: '已保存到相册 ✨', icon: 'success', duration: 2000 });
+      },
+      fail: (err) => {
+        if (err.errMsg && err.errMsg.includes('auth deny')) {
+          wx.showModal({
+            title: '需要相册权限',
+            content: '请在设置中开启相册权限',
+            confirmText: '去开启',
+            success: (r) => {
+              if (r.confirm) wx.openSetting();
+            }
+          });
+        } else {
+          wx.showToast({ title: '保存失败', icon: 'none' });
+        }
+      }
+    });
+  },
+
+  /**
+   * Canvas 绘制分享卡片（Cinnamoroll 风格）
+   * @param {CanvasRenderingContext2D} ctx
+   * @param {number} W - 画布实际宽度(px)
+   * @param {number} H - 画布实际高度(px)
+   * @param {object} data - getShareCardData 返回的数据
+   */
+  _drawShareCard(ctx, W, H, data) {
+    const { monthLabel, totalExpense, totalIncome, topCategories, recordCount, tipText } = data;
+
+    // ─── 背景渐变 ───
+    const bg = ctx.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, '#E8F5FC');
+    bg.addColorStop(0.5, '#D6EEF8');
+    bg.addColorStop(1, '#C8E6F5');
+    ctx.fillStyle = bg;
+    this._roundRect(ctx, 0, 0, W, H, 24);
+    ctx.fill();
+
+    // ─── 顶部装饰带 ───
+    const topBar = ctx.createLinearGradient(0, 0, W, 0);
+    topBar.addColorStop(0, '#4FB8D4');
+    topBar.addColorStop(0.5, '#7EC8E3');
+    topBar.addColorStop(1, '#9DC3E6');
+    ctx.fillStyle = topBar;
+    this._roundRect(ctx, 0, 0, W, 72, 24, 24, 0, 0);
+    ctx.fill();
+
+    // App 名称 + Cinnamoroll
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = 'bold 22px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('🐾 Cinnamoroll 记账', 24, 42);
+    // 子标题
+    ctx.font = '13px sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    ctx.fillText('财务小卡片', W - 80, 42);
+
+    // ─── 月份标题 ───
+    ctx.fillStyle = '#2A7A9A';
+    ctx.font = 'bold 28px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(monthLabel, W / 2, 116);
+
+    // 小点装饰
+    ctx.fillStyle = '#7EC8E3';
+    ctx.beginPath();
+    ctx.arc(W / 2 - 68, 116, 3, 0, Math.PI * 2);
+    ctx.arc(W / 2 + 68, 116, 3, 0, Math.PI * 2);
+    ctx.fill();
+
+    // ─── 支出 / 收入卡片区域 ───
+    const cardY = 134;
+    const cardH = 88;
+    const halfW = (W - 48 - 12) / 2;
+
+    // 支出卡
+    this._drawAmountCard(ctx, 16, cardY, halfW, cardH, '支出', `¥${totalExpense}`, '#FF8BAB', '#FFF0F4');
+    // 收入卡
+    this._drawAmountCard(ctx, 16 + halfW + 12, cardY, halfW, cardH, '收入', `¥${totalIncome}`, '#4FB8D4', '#EFF9FD');
+
+    // ─── TOP 分类标题 ───
+    const secY = cardY + cardH + 20;
+    ctx.fillStyle = '#2A7A9A';
+    ctx.font = 'bold 15px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('📊 Top 支出分类', 20, secY);
+
+    ctx.strokeStyle = '#B8E0F0';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(20, secY + 8);
+    ctx.lineTo(W - 20, secY + 8);
+    ctx.stroke();
+
+    // 分类条目
+    const barX = 20;
+    const barW = W - 40;
+    topCategories.forEach((cat, i) => {
+      const rowY = secY + 22 + i * 42;
+
+      // 分类名 + emoji
+      ctx.fillStyle = '#3A6A80';
+      ctx.font = '14px sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText(`${cat.emoji} ${cat.name}`, barX, rowY + 14);
+
+      // 金额
+      ctx.fillStyle = '#2A7A9A';
+      ctx.font = 'bold 14px sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillText(`¥${cat.amount}`, W - 20, rowY + 14);
+
+      // 进度条背景
+      ctx.fillStyle = '#E0EFF5';
+      this._roundRect(ctx, barX, rowY + 20, barW, 8, 4);
+      ctx.fill();
+
+      // 进度条充展
+      const fillW = Math.max(barW * (cat.percent / 100), 8);
+      const barGrad = ctx.createLinearGradient(barX, 0, barX + fillW, 0);
+      barGrad.addColorStop(0, '#4FB8D4');
+      barGrad.addColorStop(1, '#7EC8E3');
+      ctx.fillStyle = barGrad;
+      this._roundRect(ctx, barX, rowY + 20, fillW, 8, 4);
+      ctx.fill();
+
+      // 百分比标注
+      ctx.fillStyle = '#4FB8D4';
+      ctx.font = '11px sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText(`${cat.percent}%`, barX + fillW + 4, rowY + 29);
+    });
+
+    // ─── 底部小尾巴区域 ───
+    const footerY = H - 56;
+    const footerGrad = ctx.createLinearGradient(0, footerY, 0, H);
+    footerGrad.addColorStop(0, 'rgba(79,184,212,0.10)');
+    footerGrad.addColorStop(1, 'rgba(79,184,212,0.22)');
+    ctx.fillStyle = footerGrad;
+    this._roundRect(ctx, 16, footerY, W - 32, 40, 12);
+    ctx.fill();
+
+    // 条数提示 + tip
+    ctx.fillStyle = '#3A7A96';
+    ctx.font = '13px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(tipText, W / 2, footerY + 26);
+
+    // 共 N 笔记录
+    ctx.fillStyle = 'rgba(79,184,212,0.7)';
+    ctx.font = '11px sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(`共 ${recordCount} 笔`, W - 20, footerY - 6);
+  },
+
+  /**
+   * 绘制单个金额卡片（支出或收入）
+   */
+  _drawAmountCard(ctx, x, y, w, h, label, amountText, accentColor, bgColor) {
+    // 卡片背景
+    ctx.fillStyle = bgColor;
+    this._roundRect(ctx, x, y, w, h, 14);
+    ctx.fill();
+
+    // 左侧彩色条
+    ctx.fillStyle = accentColor;
+    this._roundRect(ctx, x, y + 12, 4, h - 24, 2);
+    ctx.fill();
+
+    // 标题
+    ctx.fillStyle = '#7A9AAA';
+    ctx.font = '13px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(label, x + 14, y + 30);
+
+    // 金额
+    ctx.fillStyle = accentColor;
+    ctx.font = `bold ${amountText.length > 8 ? '18' : '22'}px sans-serif`;
+    ctx.textAlign = 'left';
+    ctx.fillText(amountText, x + 14, y + 62);
+  },
+
+  /**
+   * 带圆角矩形路径（支持单独设置四角）
+   */
+  _roundRect(ctx, x, y, w, h, r, rTR, rBR, rBL) {
+    const tl = r, tr = rTR !== undefined ? rTR : r;
+    const br = rBR !== undefined ? rBR : r, bl = rBL !== undefined ? rBL : r;
+    ctx.beginPath();
+    ctx.moveTo(x + tl, y);
+    ctx.lineTo(x + w - tr, y);
+    ctx.arcTo(x + w, y, x + w, y + tr, tr);
+    ctx.lineTo(x + w, y + h - br);
+    ctx.arcTo(x + w, y + h, x + w - br, y + h, br);
+    ctx.lineTo(x + bl, y + h);
+    ctx.arcTo(x, y + h, x, y + h - bl, bl);
+    ctx.lineTo(x, y + tl);
+    ctx.arcTo(x, y, x + tl, y, tl);
+    ctx.closePath();
   },
 
   /**

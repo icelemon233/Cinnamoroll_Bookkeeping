@@ -1010,3 +1010,13 @@ page.select-mode-active {
   margin: 0 24rpx;
   height: 44rpx;
 }
+
+/* ─── 分享卡片 Canvas ──────────────────────────────────────────── */
+.share-card-canvas {
+  position: fixed;
+  left: -9999rpx;
+  top: 0;
+  width: 320px;
+  height: 520px;
+  z-index: -1;
+}
