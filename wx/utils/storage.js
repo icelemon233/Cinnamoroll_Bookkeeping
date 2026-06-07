@@ -1922,6 +1922,93 @@ function getShareCardData(yearMonth) {
   };
 }
 
+/**
+ * 统计指定月份（或多月）每周各天的消费分布
+ * @param {string} startYM - 开始月份 'YYYY-MM'（含）
+ * @param {string} endYM   - 结束月份 'YYYY-MM'（含）
+ * @param {string} type    - 'expense' | 'income' | 'all'
+ * @returns {{
+ *   weekdays: Array<{ label, dayIndex, amount, count, avgAmount, percent, barWidth }>,
+ *   totalAmount: number,
+ *   totalCount: number,
+ *   peakDay: string,
+ *   lightDay: string,
+ *   weekendRatio: number,
+ *   tip: string,
+ *   tipEmoji: string
+ * }}
+ */
+function getWeekdayStats(startYM, endYM, type) {
+  const LABELS = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+  // JS Date.getDay()：0=周日,1=周一,...,6=周六 → 映射到 0=周一,...,6=周日
+  const jsToIndex = [6, 0, 1, 2, 3, 4, 5];
+
+  const amounts = new Array(7).fill(0);
+  const counts  = new Array(7).fill(0);
+
+  const allRecords = getRecords();
+  allRecords.forEach(r => {
+    if (!r.date) return;
+    const ym = r.date.substring(0, 7);
+    if (ym < startYM || ym > endYM) return;
+    if (type !== 'all' && r.type !== type) return;
+
+    const [y, m, d] = r.date.split('-').map(Number);
+    const jsDay = new Date(y, m - 1, d).getDay();
+    const idx = jsToIndex[jsDay];
+    amounts[idx] += Number(r.amount) || 0;
+    counts[idx]++;
+  });
+
+  const totalAmount = parseFloat(amounts.reduce((s, v) => s + v, 0).toFixed(2));
+  const totalCount  = counts.reduce((s, v) => s + v, 0);
+  const maxAmount   = Math.max.apply(null, amounts.concat([1]));
+
+  const weekdays = LABELS.map((label, i) => ({
+    label,
+    dayIndex: i,
+    amount:    parseFloat(amounts[i].toFixed(2)),
+    count:     counts[i],
+    avgAmount: counts[i] > 0 ? parseFloat((amounts[i] / counts[i]).toFixed(2)) : 0,
+    percent:   totalAmount > 0 ? parseFloat((amounts[i] / totalAmount * 100).toFixed(1)) : 0,
+    barWidth:  Math.round((amounts[i] / maxAmount) * 100)
+  }));
+
+  // 高峰日 / 最省日
+  var peakIdx = 0, lightIdx = -1;
+  weekdays.forEach(function(d, i) {
+    if (d.amount > weekdays[peakIdx].amount) peakIdx = i;
+    if (d.amount > 0) {
+      if (lightIdx === -1 || d.amount < weekdays[lightIdx].amount) lightIdx = i;
+    }
+  });
+
+  const peakDay  = weekdays[peakIdx].amount > 0 ? weekdays[peakIdx].label : '—';
+  const lightDay = lightIdx >= 0 ? weekdays[lightIdx].label : '—';
+
+  // 周末（周六=5，周日=6）占比
+  const weekendAmt   = amounts[5] + amounts[6];
+  const weekendRatio = totalAmount > 0
+    ? parseFloat((weekendAmt / totalAmount * 100).toFixed(1))
+    : 0;
+
+  // 洞察文案
+  var tip = '', tipEmoji = '';
+  if (totalCount === 0) {
+    tip = '这段时间还没有记录，快去记账吧～'; tipEmoji = '🌸';
+  } else if (weekendRatio >= 50) {
+    tip = '周末消费占 ' + weekendRatio + '%，是个爱享受周末的人 🎉'; tipEmoji = '🎉';
+  } else if (weekendRatio <= 20 && weekendAmt > 0) {
+    tip = '工作日支出远多于周末，上班开销不小哦'; tipEmoji = '💼';
+  } else if (peakDay !== '—') {
+    tip = peakDay + '是消费高峰，占总支出 ' + weekdays[peakIdx].percent + '%'; tipEmoji = '📊';
+  } else {
+    tip = '消费分布较均匀，节奏很稳定 ✨'; tipEmoji = '✨';
+  }
+
+  return { weekdays: weekdays, totalAmount: totalAmount, totalCount: totalCount, peakDay: peakDay, lightDay: lightDay, weekendRatio: weekendRatio, tip: tip, tipEmoji: tipEmoji };
+}
+
 module.exports = {
   getRecords,
   saveRecord,
@@ -1975,5 +2062,6 @@ module.exports = {
   addNoteFavorite,
   removeNoteFavorite,
   getNoteFavoritesForCategory,
-  getShareCardData
+  getShareCardData,
+  getWeekdayStats
 };

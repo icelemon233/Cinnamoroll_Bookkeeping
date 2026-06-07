@@ -38,6 +38,11 @@
       data-mode="health"
       bindtap="switchViewMode"
     >🩺 健康<text wx:if="{{healthAlertCount > 0}}" class="health-badge"> {{healthAlertCount}}</text></view>
+    <view
+      class="view-mode-btn {{viewMode === 'weekday' ? 'view-mode-active' : ''}}"
+      data-mode="weekday"
+      bindtap="switchViewMode"
+    >📅 周几</view>
   </view>
 
   <!-- ═══════ 饼图模式 ═══════ -->
@@ -799,6 +804,125 @@
       <view wx:if="{{!healthHasAlerts}}" class="health-no-alerts">
         <text class="health-no-alerts-emoji">✅</text>
         <text class="health-no-alerts-text">暂无异常预警，消费很正常～</text>
+      </view>
+    </view>
+
+  </block>
+
+  <!-- ═══════ 周几消费分布模式 ═══════ -->
+  <block wx:if="{{viewMode === 'weekday'}}">
+
+    <!-- 控制栏：类型 + 时间范围 -->
+    <view class="weekday-controls">
+      <view class="weekday-type-tabs">
+        <view
+          class="weekday-type-tab {{weekdayType === 'expense' ? 'weekday-tab-active' : ''}}"
+          data-type="expense"
+          bindtap="switchWeekdayType"
+        >支出</view>
+        <view
+          class="weekday-type-tab {{weekdayType === 'income' ? 'weekday-tab-active' : ''}}"
+          data-type="income"
+          bindtap="switchWeekdayType"
+        >收入</view>
+      </view>
+      <view class="weekday-range-tabs">
+        <view
+          class="weekday-range-tab {{weekdayRange === '1' ? 'weekday-range-active' : ''}}"
+          data-range="1"
+          bindtap="switchWeekdayRange"
+        >本月</view>
+        <view
+          class="weekday-range-tab {{weekdayRange === '3' ? 'weekday-range-active' : ''}}"
+          data-range="3"
+          bindtap="switchWeekdayRange"
+        >3月</view>
+        <view
+          class="weekday-range-tab {{weekdayRange === '6' ? 'weekday-range-active' : ''}}"
+          data-range="6"
+          bindtap="switchWeekdayRange"
+        >6月</view>
+        <view
+          class="weekday-range-tab {{weekdayRange === '年' ? 'weekday-range-active' : ''}}"
+          data-range="年"
+          bindtap="switchWeekdayRange"
+        >今年</view>
+      </view>
+    </view>
+
+    <!-- 消费无数据占位框 -->
+    <view wx:if="{{weekdayIsEmpty}}" class="weekday-empty">
+      <text class="weekday-empty-emoji">🌸</text>
+      <text class="weekday-empty-text">这段时间还没有记录，快去记账吧～</text>
+    </view>
+
+    <!-- 周几柱状图卡片 -->
+    <view wx:if="{{!weekdayIsEmpty && weekdayData}}" class="card weekday-card">
+      <view class="weekday-header">
+        <text class="weekday-title">📅 周几{{weekdayType === 'expense' ? '支出' : '收入'}}分布</text>
+        <view class="weekday-meta">
+          <text class="weekday-total">{{weekdayType === 'expense' ? '总支出' : '总收入'}} ¥{{weekdayData.totalAmount}}</text>
+          <text class="weekday-count"> · {{weekdayData.totalCount}}笔</text>
+        </view>
+      </view>
+
+      <!-- 柱状图行列表 -->
+      <view class="weekday-bars">
+        <view
+          wx:for="{{weekdayData.weekdays}}"
+          wx:key="dayIndex"
+          class="weekday-bar-row"
+        >
+          <text class="weekday-label">{{item.label}}</text>
+          <view class="weekday-bar-track">
+            <view
+              class="weekday-bar-fill {{item.dayIndex >= 5 ? 'weekday-bar-weekend' : 'weekday-bar-weekday'}}"
+              style="width: {{item.barWidth}}%"
+            ></view>
+          </view>
+          <view class="weekday-bar-info">
+            <text class="weekday-bar-amount">{{item.amount > 0 ? '¥' + item.amount : '—'}}</text>
+            <text class="weekday-bar-pct">{{item.amount > 0 ? item.percent + '%' : ''}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 小标记行：周末 vs 工作日 -->
+      <view class="weekday-legend-row">
+        <view class="weekday-legend-item">
+          <view class="weekday-legend-dot weekday-legend-dot-weekday"></view>
+          <text class="weekday-legend-text">工作日</text>
+        </view>
+        <view class="weekday-legend-item">
+          <view class="weekday-legend-dot weekday-legend-dot-weekend"></view>
+          <text class="weekday-legend-text">周末</text>
+        </view>
+        <text class="weekday-weekend-ratio">周末占比 {{weekdayData.weekendRatio}}%</text>
+      </view>
+
+      <!-- 洞察文案 -->
+      <view class="weekday-insight">
+        <text class="weekday-insight-emoji">{{weekdayData.tipEmoji}}</text>
+        <text class="weekday-insight-text">{{weekdayData.tip}}</text>
+      </view>
+
+      <!-- 高峰日 / 最省日 标签 -->
+      <view class="weekday-tags">
+        <view wx:if="{{weekdayData.peakDay !== '—'}}" class="weekday-tag weekday-tag-peak">
+          <text>🔥 {{weekdayType === 'expense' ? '消费' : '收入'}}高峰：{{weekdayData.peakDay}}</text>
+        </view>
+        <view wx:if="{{weekdayData.lightDay !== '—' && weekdayData.lightDay !== weekdayData.peakDay && weekdayType === 'expense'}}" class="weekday-tag weekday-tag-light">
+          <text>🌿 最财小：{{weekdayData.lightDay}}</text>
+        </view>
+      </view>
+
+      <!-- 每天平均行 -->
+      <view class="weekday-avg-row">
+        <view wx:for="{{weekdayData.weekdays}}" wx:key="dayIndex" class="weekday-avg-item">
+          <text class="weekday-avg-label">{{item.label}}</text>
+          <text class="weekday-avg-count">{{item.count}}笔</text>
+          <text class="weekday-avg-amount">{{item.avgAmount > 0 ? '¥' + item.avgAmount : '—'}}</text>
+        </view>
       </view>
     </view>
 

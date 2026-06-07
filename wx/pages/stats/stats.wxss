@@ -1734,3 +1734,294 @@
   color: #E85535;
   font-weight: 500;
 }
+
+/* ═══════════ 周几消费分布 ═══════════ */
+
+.weekday-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  padding: 0 32rpx 8rpx;
+}
+
+.weekday-type-tabs {
+  display: flex;
+  background: #EBF7FB;
+  border-radius: 24rpx;
+  padding: 6rpx;
+  gap: 6rpx;
+}
+
+.weekday-type-tab {
+  flex: 1;
+  text-align: center;
+  padding: 12rpx 0;
+  border-radius: 18rpx;
+  font-size: 26rpx;
+  color: #7A9AAB;
+  transition: all 0.2s;
+}
+
+.weekday-tab-active {
+  background: #FFFFFF;
+  color: #4FB8D4;
+  font-weight: 600;
+  box-shadow: 0 2rpx 8rpx rgba(79, 184, 212, 0.18);
+}
+
+.weekday-range-tabs {
+  display: flex;
+  gap: 12rpx;
+}
+
+.weekday-range-tab {
+  flex: 1;
+  text-align: center;
+  padding: 10rpx 0;
+  border-radius: 16rpx;
+  font-size: 24rpx;
+  color: #7A9AAB;
+  background: #EBF7FB;
+}
+
+.weekday-range-active {
+  background: #4FB8D4;
+  color: #FFFFFF;
+  font-weight: 600;
+}
+
+.weekday-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 80rpx 0 40rpx;
+}
+
+.weekday-empty-emoji {
+  font-size: 56rpx;
+  margin-bottom: 20rpx;
+}
+
+.weekday-empty-text {
+  font-size: 26rpx;
+  color: #9BAAB8;
+}
+
+.weekday-card {
+  margin: 0 32rpx 32rpx;
+  padding: 36rpx 32rpx 28rpx;
+}
+
+.weekday-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28rpx;
+}
+
+.weekday-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #3D5A6E;
+}
+
+.weekday-meta {
+  display: flex;
+  align-items: center;
+}
+
+.weekday-total {
+  font-size: 24rpx;
+  color: #4FB8D4;
+  font-weight: 500;
+}
+
+.weekday-count {
+  font-size: 22rpx;
+  color: #9BAAB8;
+}
+
+/* 柱状图行 */
+.weekday-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 18rpx;
+  margin-bottom: 28rpx;
+}
+
+.weekday-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.weekday-label {
+  width: 60rpx;
+  font-size: 24rpx;
+  color: #7A9AAB;
+  flex-shrink: 0;
+}
+
+.weekday-bar-track {
+  flex: 1;
+  height: 18rpx;
+  background: #F0F8FF;
+  border-radius: 9rpx;
+  overflow: hidden;
+}
+
+.weekday-bar-fill {
+  height: 100%;
+  border-radius: 9rpx;
+  transition: width 0.4s ease;
+  min-width: 4rpx;
+}
+
+.weekday-bar-weekday {
+  background: linear-gradient(90deg, #4FB8D4, #88C8D8);
+}
+
+.weekday-bar-weekend {
+  background: linear-gradient(90deg, #FF8BAB, #FFCCD8);
+}
+
+.weekday-bar-info {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  width: 140rpx;
+  flex-shrink: 0;
+  justify-content: flex-end;
+}
+
+.weekday-bar-amount {
+  font-size: 24rpx;
+  color: #3D5A6E;
+  font-weight: 500;
+}
+
+.weekday-bar-pct {
+  font-size: 20rpx;
+  color: #9BAAB8;
+  min-width: 52rpx;
+  text-align: right;
+}
+
+/* 图例行 */
+.weekday-legend-row {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  margin-bottom: 20rpx;
+}
+
+.weekday-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.weekday-legend-dot {
+  width: 20rpx;
+  height: 20rpx;
+  border-radius: 50%;
+}
+
+.weekday-legend-dot-weekday {
+  background: #4FB8D4;
+}
+
+.weekday-legend-dot-weekend {
+  background: #FF8BAB;
+}
+
+.weekday-legend-text {
+  font-size: 22rpx;
+  color: #7A9AAB;
+}
+
+.weekday-weekend-ratio {
+  margin-left: auto;
+  font-size: 22rpx;
+  color: #FF8BAB;
+  font-weight: 500;
+}
+
+/* 洞察文案 */
+.weekday-insight {
+  display: flex;
+  align-items: flex-start;
+  gap: 12rpx;
+  background: #F0F8FF;
+  border-radius: 16rpx;
+  padding: 20rpx 24rpx;
+  margin-bottom: 24rpx;
+}
+
+.weekday-insight-emoji {
+  font-size: 28rpx;
+  flex-shrink: 0;
+}
+
+.weekday-insight-text {
+  font-size: 24rpx;
+  color: #3D5A6E;
+  line-height: 1.6;
+}
+
+/* 高峰 / 最省标签 */
+.weekday-tags {
+  display: flex;
+  gap: 16rpx;
+  flex-wrap: wrap;
+  margin-bottom: 28rpx;
+}
+
+.weekday-tag {
+  padding: 8rpx 20rpx;
+  border-radius: 20rpx;
+  font-size: 22rpx;
+  font-weight: 500;
+}
+
+.weekday-tag-peak {
+  background: rgba(255, 139, 171, 0.12);
+  color: #E5648A;
+}
+
+.weekday-tag-light {
+  background: rgba(79, 184, 212, 0.12);
+  color: #3A97B8;
+}
+
+/* 每天平均行 */
+.weekday-avg-row {
+  display: flex;
+  gap: 0;
+  border-top: 1rpx solid #EBF7FB;
+  padding-top: 20rpx;
+}
+
+.weekday-avg-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6rpx;
+}
+
+.weekday-avg-label {
+  font-size: 20rpx;
+  color: #9BAAB8;
+}
+
+.weekday-avg-count {
+  font-size: 20rpx;
+  color: #B0C4D0;
+}
+
+.weekday-avg-amount {
+  font-size: 20rpx;
+  color: #3D5A6E;
+  font-weight: 500;
+}

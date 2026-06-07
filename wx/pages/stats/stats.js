@@ -1,5 +1,5 @@
-// pages/stats/stats.js - 统计页（饼图 + 趋势柱状图 + 年度总览 + 分类环比 + 分类预算 + 排行榜）
-const { getCategoryStats, getMonthSummary, getCategoryBudgets, setCategoryBudget, getCategoryRanking, getFinanceHealthScore, getSpendingAlerts } = require('../../utils/storage');
+// pages/stats/stats.js - 统计页（饼图 + 趋势柱状图 + 年度总览 + 分类环比 + 分类预算 + 排行榜 + 周几分析）
+const { getCategoryStats, getMonthSummary, getCategoryBudgets, setCategoryBudget, getCategoryRanking, getFinanceHealthScore, getSpendingAlerts, getWeekdayStats } = require('../../utils/storage');
 
 // 饼图颜色（Cinnamoroll 蓝色系列）
 const COLORS = [
@@ -82,7 +82,12 @@ Page({
     healthScore: null,              // { score, level, levelEmoji, levelColor, tip, dimensions }
     spendingAlerts: [],             // [{ type, category, emoji, title, desc, level, icon }]
     healthAlertCount: 0,            // danger+warning 级别预警数量
-    healthHasAlerts: false          // 是否有预警
+    healthHasAlerts: false,          // 是否有预警
+    // 周几消费分布
+    weekdayType: 'expense',           // 'expense' | 'income'
+    weekdayRange: '3',                // '1' | '3' | '6' | '年'
+    weekdayData: null,                // getWeekdayStats 返回结果
+    weekdayIsEmpty: false
   },
 
   onLoad() {
@@ -492,6 +497,8 @@ Page({
         this._loadRankingData();
       } else if (viewMode === 'health') {
         this._loadHealthData();
+      } else if (viewMode === 'weekday') {
+        this._loadWeekdayData();
       }
     });
   },
@@ -694,6 +701,8 @@ Page({
         this._loadRankingData();
       } else if (viewMode === 'health') {
         this._loadHealthData();
+      } else if (viewMode === 'weekday') {
+        this._loadWeekdayData();
       } else {
         // 切回饼图，重新绘制
         if (!this.data.isEmpty) {
@@ -1518,5 +1527,59 @@ Page({
     ctx.setFillStyle('#9BAAB8');
     ctx.setTextAlign('center');
     ctx.fillText('🐾', cx, cy + 8);
+  },
+
+  // ─── 周几消费分布 ──────────────────────────────
+
+  /**
+   * 加载周几消费分布数据
+   */
+  _loadWeekdayData() {
+    const { weekdayType, weekdayRange } = this.data;
+    const now = new Date();
+    const curY = now.getFullYear();
+    const curM = now.getMonth() + 1;
+    const endYM = (curY + '-' + (curM < 10 ? '0' + curM : curM));
+
+    let startYM;
+    if (weekdayRange === '1') {
+      startYM = endYM;
+    } else if (weekdayRange === '3') {
+      const d = new Date(curY, curM - 3, 1);
+      startYM = d.getFullYear() + '-' + (d.getMonth() + 1 < 10 ? '0' + (d.getMonth() + 1) : (d.getMonth() + 1));
+    } else if (weekdayRange === '6') {
+      const d = new Date(curY, curM - 6, 1);
+      startYM = d.getFullYear() + '-' + (d.getMonth() + 1 < 10 ? '0' + (d.getMonth() + 1) : (d.getMonth() + 1));
+    } else if (weekdayRange === '年') {
+      startYM = curY + '-01';
+    } else {
+      startYM = endYM;
+    }
+
+    const weekdayData = getWeekdayStats(startYM, endYM, weekdayType);
+    this.setData({
+      weekdayData: weekdayData,
+      weekdayIsEmpty: weekdayData.totalCount === 0
+    });
+  },
+
+  /**
+   * 切换周几分析类型（支出 / 收入）
+   */
+  switchWeekdayType(e) {
+    const weekdayType = e.currentTarget.dataset.type;
+    if (weekdayType === this.data.weekdayType) return;
+    wx.vibrateShort({ type: 'light' }).catch(function() {});
+    this.setData({ weekdayType: weekdayType }, function() { this._loadWeekdayData(); }.bind(this));
+  },
+
+  /**
+   * 切换周几分析时间范围
+   */
+  switchWeekdayRange(e) {
+    const weekdayRange = e.currentTarget.dataset.range;
+    if (weekdayRange === this.data.weekdayRange) return;
+    wx.vibrateShort({ type: 'light' }).catch(function() {});
+    this.setData({ weekdayRange: weekdayRange }, function() { this._loadWeekdayData(); }.bind(this));
   }
 });
