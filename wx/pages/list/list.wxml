@@ -287,9 +287,36 @@
           <text class="detail-info-label">日期</text>
           <text class="detail-info-value">{{detailRecord.date}}</text>
         </view>
-        <view class="detail-info-row" wx:if="{{detailRecord.note}}">
+        <!-- 备注行：支持内联编辑 -->
+        <view class="detail-info-row detail-note-row" bindtap="onDetailNoteEdit">
           <text class="detail-info-label">备注</text>
-          <text class="detail-info-value detail-note-value">{{detailRecord.note}}</text>
+          <!-- 非编辑态：显示备注文字或“添加备注” -->
+          <view wx:if="{{!isEditingNote}}" class="detail-note-display">
+            <text wx:if="{{detailRecord.note}}" class="detail-info-value detail-note-value">{{detailRecord.note}}</text>
+            <text wx:else class="detail-note-placeholder">点击添加备注 ✎</text>
+          </view>
+          <!-- 编辑态：内联输入框 + 确认/取消 -->
+          <view wx:if="{{isEditingNote}}" class="detail-note-edit-wrap" catchtap="">
+            <input
+              class="detail-note-input"
+              value="{{editingNoteText}}"
+              placeholder="输入备注内容"
+              placeholder-class="detail-note-input-placeholder"
+              bindinput="onEditingNoteInput"
+              focus="{{isEditingNote}}"
+              maxlength="100"
+              confirm-type="done"
+              bindconfirm="onNoteEditSave"
+            />
+            <view class="detail-note-actions">
+              <view class="detail-note-cancel-btn" catchtap="onNoteEditCancel">
+                <text class="detail-note-btn-text cancel">取消</text>
+              </view>
+              <view class="detail-note-save-btn" catchtap="onNoteEditSave">
+                <text class="detail-note-btn-text save">保存</text>
+              </view>
+            </view>
+          </view>
         </view>
       </view>
 

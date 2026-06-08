@@ -1,5 +1,5 @@
 // pages/list/list.js - 账单列表页
-const { getRecords, deleteRecord, groupByDate, formatDate, exportToCSV, downloadCSV, getMonthSummary, getSearchHistory, saveSearchHistory, deleteSearchHistory, clearSearchHistory, generateMonthReport, getShareCardData } = require('../../utils/storage');
+const { getRecords, deleteRecord, updateRecord, groupByDate, formatDate, exportToCSV, downloadCSV, getMonthSummary, getSearchHistory, saveSearchHistory, deleteSearchHistory, clearSearchHistory, generateMonthReport, getShareCardData } = require('../../utils/storage');
 
 // 分类 emoji 映射（与 add 页保持一致）
 const CATEGORY_EMOJI = {
@@ -38,6 +38,9 @@ Page({
     // 详情弹窗
     showDetail: false,
     detailRecord: null,       // 当前查看的账单记录
+    // 详情弹窗 - 快速编辑备注
+    isEditingNote: false,     // 是否正在内联编辑备注
+    editingNoteText: '',      // 编辑中的备注内容
     // 批量删除多选模式
     isSelectMode: false,
     selectedIds: [],          // 已选中的记录 id 列表（字符串）
@@ -480,7 +483,44 @@ Page({
   },
 
   closeDetail() {
-    this.setData({ showDetail: false, detailRecord: null });
+    this.setData({ showDetail: false, detailRecord: null, isEditingNote: false, editingNoteText: '' });
+  },
+
+  // 备注行点击：进入内联编辑模式
+  onDetailNoteEdit() {
+    const { detailRecord } = this.data;
+    if (!detailRecord) return;
+    this.setData({
+      isEditingNote: true,
+      editingNoteText: detailRecord.note || ''
+    });
+  },
+
+  // 备注输入内容变化
+  onEditingNoteInput(e) {
+    this.setData({ editingNoteText: e.detail.value });
+  },
+
+  // 取消备注编辑
+  onNoteEditCancel() {
+    this.setData({ isEditingNote: false, editingNoteText: '' });
+  },
+
+  // 保存备注修改
+  onNoteEditSave() {
+    const { detailRecord, editingNoteText } = this.data;
+    if (!detailRecord) return;
+    const newNote = editingNoteText.trim();
+    updateRecord(detailRecord.id, { note: newNote });
+    // 同步更新内存中的 detailRecord
+    const updated = Object.assign({}, detailRecord, { note: newNote });
+    this.setData({
+      detailRecord: updated,
+      isEditingNote: false,
+      editingNoteText: ''
+    });
+    wx.showToast({ title: '已保存', icon: 'success', duration: 800 });
+    this.loadData();
   },
 
   onDetailEdit() {
@@ -511,6 +551,11 @@ Page({
   },
 
   onMaskTap() {
+    // 如果正在编辑备注，先退出编辑模式而不关闭弹窗
+    if (this.data.isEditingNote) {
+      this.setData({ isEditingNote: false, editingNoteText: '' });
+      return;
+    }
     this.setData({ showDetail: false, detailRecord: null });
   },
 

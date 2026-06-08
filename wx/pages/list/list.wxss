@@ -1020,3 +1020,92 @@ page.select-mode-active {
   height: 520px;
   z-index: -1;
 }
+
+/* ─── 详情弹窗：快速编辑备注 ─────────────────────────────── */
+.detail-note-row {
+  cursor: pointer;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+}
+
+.detail-note-row .detail-info-label {
+  margin-bottom: 0;
+}
+
+/* 普通显示态：label + 内容在同一行 */
+.detail-note-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.detail-note-display {
+  flex: 1;
+  text-align: right;
+}
+
+.detail-note-placeholder {
+  font-size: 26rpx;
+  color: #B8D0DC;
+  font-style: italic;
+}
+
+/* 编辑态：input + 操作按钮占满右侧 */
+.detail-note-edit-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+  margin-left: 20rpx;
+}
+
+.detail-note-input {
+  background: #EDF6FA;
+  border-radius: 16rpx;
+  padding: 16rpx 20rpx;
+  font-size: 28rpx;
+  color: #3D5A6E;
+  min-height: 72rpx;
+  width: 100%;
+  box-sizing: border-box;
+  border: 2rpx solid #A8D8EA;
+}
+
+.detail-note-input-placeholder {
+  color: #C0D8E4;
+}
+
+.detail-note-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16rpx;
+}
+
+.detail-note-cancel-btn,
+.detail-note-save-btn {
+  padding: 12rpx 28rpx;
+  border-radius: 100rpx;
+}
+
+.detail-note-cancel-btn {
+  background: #F0F6F9;
+}
+
+.detail-note-save-btn {
+  background: linear-gradient(135deg, #4FB8D4, #3AA0BC);
+}
+
+.detail-note-btn-text {
+  font-size: 26rpx;
+  font-weight: 600;
+}
+
+.detail-note-btn-text.cancel {
+  color: #7A9BAE;
+}
+
+.detail-note-btn-text.save {
+  color: #FFFFFF;
+}
