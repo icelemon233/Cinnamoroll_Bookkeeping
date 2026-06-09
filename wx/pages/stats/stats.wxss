@@ -2025,3 +2025,307 @@
   color: #3D5A6E;
   font-weight: 500;
 }
+
+/* ─── 月度报告样式 ─────────────────────────────────── */
+
+.report-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 80rpx 40rpx;
+  gap: 24rpx;
+}
+
+.report-empty-emoji {
+  font-size: 72rpx;
+}
+
+.report-empty-text {
+  font-size: 28rpx;
+  color: #9BAAB8;
+  text-align: center;
+}
+
+.report-card {
+  margin-bottom: 24rpx;
+}
+
+.report-card-title {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 24rpx;
+}
+
+.report-card-icon {
+  font-size: 36rpx;
+}
+
+.report-card-label {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #3D5A6E;
+}
+
+/* 收支概览 */
+.report-overview-row {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 20rpx;
+}
+
+.report-overview-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.report-ov-label {
+  font-size: 24rpx;
+  color: #9BAAB8;
+}
+
+.report-ov-amount {
+  font-size: 34rpx;
+  font-weight: 700;
+}
+
+.report-ov-amount.expense {
+  color: #FF8BAB;
+}
+
+.report-ov-amount.income {
+  color: #4FB8D4;
+}
+
+.report-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx 24rpx;
+  padding-top: 20rpx;
+  border-top: 1rpx solid #EBF7FB;
+}
+
+.report-meta-item {
+  font-size: 24rpx;
+  color: #6B8B9E;
+  background: #F0F9FC;
+  padding: 8rpx 18rpx;
+  border-radius: 20rpx;
+}
+
+/* TOP3 分类 */
+.report-rank-item {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  margin-bottom: 20rpx;
+}
+
+.report-rank-left {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  width: 160rpx;
+  flex-shrink: 0;
+}
+
+.report-rank-medal {
+  font-size: 28rpx;
+}
+
+.report-rank-emoji {
+  font-size: 28rpx;
+}
+
+.report-rank-cat {
+  font-size: 26rpx;
+  color: #3D5A6E;
+  font-weight: 500;
+}
+
+.report-rank-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.report-rank-bar-track {
+  height: 14rpx;
+  background: #EBF7FB;
+  border-radius: 7rpx;
+  overflow: hidden;
+}
+
+.report-rank-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4FB8D4, #88C8D8);
+  border-radius: 7rpx;
+  transition: width 0.4s ease;
+}
+
+.report-rank-amounts {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.report-rank-amount {
+  font-size: 26rpx;
+  color: #3D5A6E;
+  font-weight: 600;
+}
+
+.report-rank-pct {
+  font-size: 22rpx;
+  color: #9BAAB8;
+}
+
+/* 最大单笔 */
+.report-max-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.report-max-left {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.report-max-emoji {
+  font-size: 44rpx;
+}
+
+.report-max-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.report-max-cat {
+  font-size: 28rpx;
+  color: #3D5A6E;
+  font-weight: 600;
+}
+
+.report-max-note {
+  font-size: 24rpx;
+  color: #6B8B9E;
+}
+
+.report-max-date {
+  font-size: 22rpx;
+  color: #9BAAB8;
+}
+
+.report-max-amount {
+  font-size: 38rpx;
+  font-weight: 700;
+  color: #FF8BAB;
+}
+
+/* 环比对比 */
+.report-compare-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24rpx;
+  margin-bottom: 16rpx;
+}
+
+.report-compare-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.report-cmp-label {
+  font-size: 24rpx;
+  color: #9BAAB8;
+}
+
+.report-cmp-val {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #3D5A6E;
+}
+
+.report-compare-arrow {
+  display: flex;
+  align-items: center;
+}
+
+.report-cmp-arrow-text {
+  font-size: 40rpx;
+  color: #4FB8D4;
+  font-weight: 700;
+}
+
+.report-compare-tip {
+  text-align: center;
+  padding: 12rpx 0 0;
+}
+
+.report-compare-tip-text {
+  font-size: 26rpx;
+  color: #6B8B9E;
+}
+
+/* 小建议 */
+.report-tip-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12rpx;
+  padding: 16rpx 0;
+  border-bottom: 1rpx solid #EBF7FB;
+}
+
+.report-tip-item:last-child {
+  border-bottom: none;
+}
+
+.report-tip-emoji {
+  font-size: 32rpx;
+  flex-shrink: 0;
+}
+
+.report-tip-text {
+  font-size: 26rpx;
+  color: #3D5A6E;
+  line-height: 1.6;
+  flex: 1;
+}
+
+/* 复制按钮 */
+.report-copy-btn {
+  margin: 8rpx 32rpx 24rpx;
+  background: linear-gradient(135deg, #4FB8D4, #7EC8E3);
+  border-radius: 48rpx;
+  padding: 28rpx 0;
+  text-align: center;
+  box-shadow: 0 4rpx 20rpx rgba(79, 184, 212, 0.35);
+  active-opacity: 0.85;
+}
+
+.report-copy-text {
+  font-size: 30rpx;
+  color: #FFFFFF;
+  font-weight: 600;
+  letter-spacing: 1rpx;
+}
+
+/* 底部署名 */
+.report-footer {
+  text-align: center;
+  padding: 8rpx 0 40rpx;
+}
+
+.report-footer-text {
+  font-size: 22rpx;
+  color: #B0C4D0;
+}

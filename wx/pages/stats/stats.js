@@ -1,5 +1,5 @@
-// pages/stats/stats.js - 统计页（饼图 + 趋势柱状图 + 年度总览 + 分类环比 + 分类预算 + 排行榜 + 周几分析）
-const { getCategoryStats, getMonthSummary, getCategoryBudgets, setCategoryBudget, getCategoryRanking, getFinanceHealthScore, getSpendingAlerts, getWeekdayStats } = require('../../utils/storage');
+// pages/stats/stats.js - 统计页（饼图 + 趋势柱状图 + 年度总览 + 分类环比 + 分类预算 + 排行榜 + 周几分析 + 月度报告）
+const { getCategoryStats, getMonthSummary, getCategoryBudgets, setCategoryBudget, getCategoryRanking, getFinanceHealthScore, getSpendingAlerts, getWeekdayStats, generateMonthReport } = require('../../utils/storage');
 
 // 饼图颜色（Cinnamoroll 蓝色系列）
 const COLORS = [
@@ -87,7 +87,9 @@ Page({
     weekdayType: 'expense',           // 'expense' | 'income'
     weekdayRange: '3',                // '1' | '3' | '6' | '年'
     weekdayData: null,                // getWeekdayStats 返回结果
-    weekdayIsEmpty: false
+    weekdayIsEmpty: false,
+    // 月度报告
+    monthReport: null          // { overview, breakdown, maxRecord, compare, tips, isEmpty, rawText }
   },
 
   onLoad() {
@@ -499,6 +501,8 @@ Page({
         this._loadHealthData();
       } else if (viewMode === 'weekday') {
         this._loadWeekdayData();
+      } else if (viewMode === 'report') {
+        this._loadReportData();
       }
     });
   },
@@ -703,6 +707,8 @@ Page({
         this._loadHealthData();
       } else if (viewMode === 'weekday') {
         this._loadWeekdayData();
+      } else if (viewMode === 'report') {
+        this._loadReportData();
       } else {
         // 切回饼图，重新绘制
         if (!this.data.isEmpty) {
@@ -1581,5 +1587,145 @@ Page({
     if (weekdayRange === this.data.weekdayRange) return;
     wx.vibrateShort({ type: 'light' }).catch(function() {});
     this.setData({ weekdayRange: weekdayRange }, function() { this._loadWeekdayData(); }.bind(this));
+  },
+
+  // ─── 月度报告 ────────────────────────────────────────
+
+  /**
+   * 生成月度报告结构化数据，同时保存原始文本
+   */
+  _loadReportData() {
+    const { yearMonth } = this.data;
+    const summary = getMonthSummary(yearMonth);
+    const rawText = generateMonthReport(yearMonth);
+
+    if (summary.records.length === 0) {
+      this.setData({ monthReport: { isEmpty: true, rawText } });
+      return;
+    }
+
+    const [year, month] = yearMonth.split('-');
+
+    // 收支概览
+    const income = summary.income;
+    const expense = summary.expense;
+    const net = summary.net;
+    const savingRate = income > 0 ? Math.round((net / income) * 100) : null;
+    const netSign = net >= 0 ? '+' : '';
+    const netColor = net >= 0 ? '#4FB8D4' : '#FF8BAB';
+
+    // 记账天数 & 日均支出
+    const recordDays = new Set(summary.records.map(function(r) { return r.date; })).size;
+    const recordCount = summary.records.length;
+    const expenseRecords = summary.records.filter(function(r) { return r.type === 'expense'; });
+    const incomeRecords  = summary.records.filter(function(r) { return r.type === 'income'; });
+    const avgDailyExpense = recordDays > 0 ? parseFloat((expense / recordDays).toFixed(2)) : 0;
+
+    // TOP3 支出分类
+    const catMap = {};
+    expenseRecords.forEach(function(r) {
+      var cat = r.category || '其他';
+      catMap[cat] = (catMap[cat] || 0) + (Number(r.amount) || 0);
+    });
+    const catList = Object.keys(catMap)
+      .map(function(cat) { return { cat: cat, amount: parseFloat(catMap[cat].toFixed(2)) }; })
+      .sort(function(a, b) { return b.amount - a.amount; });
+    const topCategories = catList.slice(0, 3).map(function(item, i) {
+      var medals = ['🥇', '🥈', '🥉'];
+      var pct = expense > 0 ? parseFloat((item.amount / expense * 100).toFixed(1)) : 0;
+      var barWidth = catList.length > 0 ? Math.round(item.amount / catList[0].amount * 100) : 0;
+      return {
+        medal: medals[i],
+        category: item.cat,
+        emoji: CATEGORY_EMOJI[item.cat] || '📦',
+        amount: item.amount,
+        pct: pct,
+        barWidth: barWidth
+      };
+    });
+
+    // 最大单笔支出
+    var maxRecord = null;
+    if (expenseRecords.length > 0) {
+      maxRecord = expenseRecords.reduce(function(max, r) {
+        return Number(r.amount) > Number(max.amount) ? r : max;
+      }, expenseRecords[0]);
+      maxRecord = {
+        category: maxRecord.category,
+        emoji: CATEGORY_EMOJI[maxRecord.category] || '📦',
+        amount: maxRecord.amount,
+        note: maxRecord.note || '',
+        date: maxRecord.date
+      };
+    }
+
+    // 上月对比
+    var compare = null;
+    var prevDate = new Date(parseInt(year), parseInt(month) - 2, 1);
+    var prevYM = prevDate.getFullYear() + '-' + String(prevDate.getMonth() + 1).padStart(2, '0');
+    var prevSummary = getMonthSummary(prevYM);
+    if (prevSummary.records.length > 0) {
+      var diff = parseFloat((expense - prevSummary.expense).toFixed(2));
+      compare = {
+        prevYM: prevYM,
+        prevLabel: prevDate.getFullYear() + '年' + String(prevDate.getMonth() + 1).padStart(2, '0') + '月',
+        prevExpense: prevSummary.expense,
+        diff: diff,
+        diffAbs: Math.abs(diff),
+        isUp: diff > 0,
+        isSame: diff === 0,
+        emoji: diff > 0 ? '📈' : (diff < 0 ? '📉' : '➡️'),
+        verb: diff > 0 ? '多花了' : (diff < 0 ? '少花了' : '持平')
+      };
+    }
+
+    // 小建议列表
+    var tips = [];
+    if (savingRate !== null && savingRate < 20 && income > 0) {
+      tips.push({ emoji: '🎯', text: '储蓄率偏低，可尝试为每个分类设置月度预算' });
+    }
+    if (catList.length > 0 && expense > 0 && catList[0].amount / expense > 0.5) {
+      tips.push({ emoji: '💡', text: '「' + catList[0].cat + '」占总支出超过一半，下月可重点关注' });
+    }
+    if (recordDays < 7 && recordCount > 0) {
+      tips.push({ emoji: '📝', text: '记账天数较少，坚持每天记录账单会更准确哦' });
+    }
+    if (savingRate !== null && savingRate >= 30) {
+      tips.push({ emoji: '🌟', text: '储蓄率达到 ' + savingRate + '%，保持这个好习惯！' });
+    }
+    if (tips.length === 0) {
+      tips.push({ emoji: '🐾', text: '记帐很认真，继续加油！' });
+    }
+
+    this.setData({
+      monthReport: {
+        isEmpty: false,
+        yearLabel: year + '年' + parseInt(month) + '月',
+        income, expense, net,
+        netSign, netColor,
+        savingRate,
+        recordCount, recordDays,
+        avgDailyExpense,
+        topCategories,
+        maxRecord,
+        compare,
+        tips: tips.slice(0, 2),
+        rawText
+      }
+    });
+  },
+
+  /**
+   * 一键复制月度报告文本
+   */
+  onCopyReport() {
+    const { monthReport } = this.data;
+    if (!monthReport || !monthReport.rawText) return;
+    wx.setClipboardData({
+      data: monthReport.rawText,
+      success() {
+        wx.showToast({ title: '已复制报告 📋', icon: 'none', duration: 1500 });
+      }
+    });
   }
 });
