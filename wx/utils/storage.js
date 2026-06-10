@@ -712,6 +712,105 @@ function getWeekSummary() {
 }
 
 /**
+ * 获取本周 vs 上周同期的消费对比数据，用于记账页本周速览
+ * @returns {{
+ *   weekExpense: number,       // 本周（截至今天）支出合计
+ *   prevWeekExpense: number,   // 上周同期（相同天数）支出合计
+ *   diff: number,              // 差值（本周 - 上周）
+ *   diffAbs: number,           // 差值绝对值
+ *   isUp: boolean,             // 本周 > 上周
+ *   isDown: boolean,           // 本周 < 上周
+ *   isSame: boolean,           // 持平
+ *   hasPrevWeek: boolean,      // 上周是否有数据
+ *   weekDaysPassed: number,    // 本周已过天数（含今天，1-7）
+ *   topCategory: string|null,  // 本周最大支出分类
+ *   topEmoji: string,          // 对应 emoji
+ *   topAmount: number,         // 本周最大分类金额
+ *   hasData: boolean           // 本周是否有支出记录
+ * }}
+ */
+function getWeekCompare() {
+  const CAT_EMOJI = {
+    '餐饮': '🍜', '交通': '🚌', '购物': '🛍️', '娱乐': '🎮',
+    '住房': '🏠', '医疗': '💊', '教育': '📚', '运动': '🏃',
+    '旅行': '✈️', '宠物': '🐾', '日用': '🧴',
+    '工资': '💼', '奖金': '🎁', '副业': '💡', '理财': '📈', '红包': '🧧',
+    '其他': '📦'
+  };
+
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+  // 本周一日期
+  const dayOfWeek = now.getDay() === 0 ? 7 : now.getDay(); // 1=Mon...7=Sun
+  const weekDaysPassed = dayOfWeek; // 本周已过天数（含今天）
+
+  const thisMonday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (dayOfWeek - 1));
+
+  // 本周各天 dateStr（仅已过天数，含今天）
+  const thisWeekDates = [];
+  for (let i = 0; i < weekDaysPassed; i++) {
+    const d = new Date(thisMonday.getFullYear(), thisMonday.getMonth(), thisMonday.getDate() + i);
+    thisWeekDates.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
+  }
+
+  // 上周同期各天 dateStr（同样天数）
+  const prevWeekDates = [];
+  for (let i = 0; i < weekDaysPassed; i++) {
+    const d = new Date(thisMonday.getFullYear(), thisMonday.getMonth(), thisMonday.getDate() - 7 + i);
+    prevWeekDates.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
+  }
+
+  const allRecords = getRecords();
+
+  let weekExpense = 0;
+  let prevWeekExpense = 0;
+  const catMap = {};
+
+  allRecords.forEach(r => {
+    if (r.type !== 'expense') return;
+    const amt = Number(r.amount) || 0;
+    if (thisWeekDates.includes(r.date)) {
+      weekExpense += amt;
+      const cat = r.category || '其他';
+      catMap[cat] = (catMap[cat] || 0) + amt;
+    } else if (prevWeekDates.includes(r.date)) {
+      prevWeekExpense += amt;
+    }
+  });
+
+  weekExpense = parseFloat(weekExpense.toFixed(2));
+  prevWeekExpense = parseFloat(prevWeekExpense.toFixed(2));
+  const diff = parseFloat((weekExpense - prevWeekExpense).toFixed(2));
+
+  // 本周最大支出分类
+  let topCategory = null, topAmount = 0;
+  Object.keys(catMap).forEach(cat => {
+    if (catMap[cat] > topAmount) { topAmount = catMap[cat]; topCategory = cat; }
+  });
+  topAmount = parseFloat(topAmount.toFixed(2));
+
+  const DAY_LABELS = ['', '一', '二', '三', '四', '五', '六', '日'];
+
+  return {
+    weekExpense,
+    prevWeekExpense,
+    diff,
+    diffAbs: Math.abs(diff),
+    isUp: diff > 0,
+    isDown: diff < 0,
+    isSame: diff === 0,
+    hasPrevWeek: prevWeekExpense > 0,
+    weekDaysPassed,
+    weekDayLabel: DAY_LABELS[weekDaysPassed] || '日', // 周几
+    topCategory,
+    topEmoji: topCategory ? (CAT_EMOJI[topCategory] || '📦') : '',
+    topAmount,
+    hasData: weekExpense > 0
+  };
+}
+
+/**
  * 获取指定分类下最近的 N 条历史记录，用于记账页快速填入
  * @param {string} category - 分类名称
  * @param {string} type - 'expense' | 'income'
@@ -2063,5 +2162,6 @@ module.exports = {
   removeNoteFavorite,
   getNoteFavoritesForCategory,
   getShareCardData,
-  getWeekdayStats
+  getWeekdayStats,
+  getWeekCompare
 };

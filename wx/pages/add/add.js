@@ -1,5 +1,5 @@
 // pages/add/add.js - 记账页（支持新增和编辑两种模式）
-const { saveRecord, updateRecord, getRecordById, getTodaySummary, getDailySummaryCompare, getRecentCategoryRecords, getTopAmounts, getNoteAutoComplete, getTemplates, saveTemplate, deleteTemplate, getCategoryHistory, getCategorySaveSummary, getNoteFavorites, addNoteFavorite, removeNoteFavorite, getNoteFavoritesForCategory } = require('../../utils/storage');
+const { saveRecord, updateRecord, getRecordById, getTodaySummary, getDailySummaryCompare, getRecentCategoryRecords, getTopAmounts, getNoteAutoComplete, getTemplates, saveTemplate, deleteTemplate, getCategoryHistory, getCategorySaveSummary, getNoteFavorites, addNoteFavorite, removeNoteFavorite, getNoteFavoritesForCategory, getWeekCompare } = require('../../utils/storage');
 
 const EXPENSE_CATEGORIES = [
   { name: '餐饮', emoji: '🍜' },
@@ -97,6 +97,9 @@ Page({
     // 今日 vs 昨日消费对比
     dailyCompare: null,          // null | { isUp, isDown, isSame, diff, diffAbs, diffPct, hasYesterday, hasTodayExpense, yesterdayExpense }
     showDailyCompare: false,     // 今日有支出且昨日有记录时才显示
+    // 本周消费速览
+    weekCompare: null,           // getWeekCompare() 返回的数据
+    showWeekCompare: false,      // 本周有支出数据时展示
     // 记账成功 - 消费小结弹窗
     showSaveSummary: false,       // 是否显示消费小结
     saveSummaryData: null,        // { category, emoji, amount, curTotal, curCount, tip, tipEmoji, type }
@@ -329,13 +332,18 @@ Page({
     const compare = getDailySummaryCompare();
     // 仅当今日有支出且昨日有记录时才显示对比条
     const showDailyCompare = compare.hasTodayExpense && compare.hasYesterday;
+    // 本周消费速览
+    const weekCompare = getWeekCompare();
+    const showWeekCompare = weekCompare.hasData;
     this.setData({
       todayExpense,
       todayIncome,
       todayCount,
       hasTodayRecords: todayCount > 0,
       dailyCompare: compare,
-      showDailyCompare
+      showDailyCompare,
+      weekCompare,
+      showWeekCompare
     });
   },
 

@@ -55,6 +55,20 @@
         <text wx:else class="daily-compare-down">少花 ¥{{dailyCompare.diffAbs}}{{dailyCompare.diffPct !== null ? '（-' + dailyCompare.diffPct + '%）' : ''}}</text>
       </text>
     </view>
+    <!-- 本周消费速览 -->
+    <view wx:if="{{showWeekCompare}}" class="week-compare-row">
+      <view class="week-compare-left">
+        <text class="week-compare-icon">📅</text>
+        <text class="week-compare-label">本周已花</text>
+        <text class="week-compare-amount expense-text">¥{{weekCompare.weekExpense}}</text>
+        <text class="week-compare-days">（周{{weekCompare.weekDayLabel}}止）</text>
+      </view>
+      <view class="week-compare-right">
+        <text wx:if="{{weekCompare.hasPrevWeek && weekCompare.isUp}}" class="week-compare-vs up">↑比上周多¥{{weekCompare.diffAbs}}</text>
+        <text wx:elif="{{weekCompare.hasPrevWeek && weekCompare.isDown}}" class="week-compare-vs down">↓比上周少¥{{weekCompare.diffAbs}}</text>
+        <text wx:elif="{{weekCompare.topCategory}}" class="week-compare-top">{{weekCompare.topEmoji}} {{weekCompare.topCategory}}最多</text>
+      </view>
+    </view>
   </view>
 
   <!-- 收入/支出切换（编辑模式下仍可切换） -->

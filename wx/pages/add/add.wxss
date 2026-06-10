@@ -217,6 +217,72 @@
   font-weight: 600;
 }
 
+/* 本周消费速览 */
+.week-compare-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10rpx;
+  padding-top: 10rpx;
+  border-top: 1rpx solid #D8EEF5;
+}
+
+.week-compare-left {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.week-compare-icon {
+  font-size: 22rpx;
+  line-height: 1;
+}
+
+.week-compare-label {
+  font-size: 22rpx;
+  color: #9BAAB8;
+}
+
+.week-compare-amount {
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+.week-compare-days {
+  font-size: 20rpx;
+  color: #B8CCDA;
+}
+
+.week-compare-right {
+  display: flex;
+  align-items: center;
+}
+
+.week-compare-vs {
+  font-size: 21rpx;
+  font-weight: 600;
+  border-radius: 20rpx;
+  padding: 4rpx 14rpx;
+}
+
+.week-compare-vs.up {
+  color: #FF8BAB;
+  background: #FFF0F4;
+}
+
+.week-compare-vs.down {
+  color: #4FB8D4;
+  background: #EFF9FD;
+}
+
+.week-compare-top {
+  font-size: 21rpx;
+  color: #7EC8E3;
+  background: #EFF9FD;
+  border-radius: 20rpx;
+  padding: 4rpx 14rpx;
+}
+
 /* 收支切换 */
 .type-switcher {
   display: flex;
