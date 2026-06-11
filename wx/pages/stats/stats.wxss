@@ -2026,6 +2026,292 @@
   font-weight: 500;
 }
 
+/* ─── 时段消费分析样式 ─────────────────────────────── */
+
+.hourly-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  padding: 20rpx 32rpx 8rpx;
+}
+
+.hourly-type-tabs {
+  display: flex;
+  background: #EBF5FB;
+  border-radius: 20rpx;
+  padding: 4rpx;
+  width: fit-content;
+}
+
+.hourly-type-tab {
+  padding: 10rpx 36rpx;
+  border-radius: 18rpx;
+  font-size: 26rpx;
+  color: #7A9CAE;
+}
+
+.hourly-tab-active {
+  background: #fff;
+  color: #4FB8D4;
+  font-weight: 600;
+  box-shadow: 0 2rpx 8rpx rgba(79,184,212,0.15);
+}
+
+.hourly-range-tabs {
+  display: flex;
+  gap: 12rpx;
+}
+
+.hourly-range-tab {
+  padding: 8rpx 24rpx;
+  border-radius: 20rpx;
+  font-size: 24rpx;
+  color: #7A9CAE;
+  background: #EBF5FB;
+}
+
+.hourly-range-active {
+  background: #4FB8D4;
+  color: #fff;
+  font-weight: 500;
+}
+
+.hourly-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 80rpx 40rpx;
+  gap: 20rpx;
+}
+
+.hourly-empty-emoji {
+  font-size: 64rpx;
+}
+
+.hourly-empty-text {
+  font-size: 28rpx;
+  color: #A0B8C8;
+  text-align: center;
+}
+
+.hourly-card {
+  margin: 20rpx 32rpx;
+  padding: 32rpx;
+}
+
+.hourly-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28rpx;
+}
+
+.hourly-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #3D5A6E;
+}
+
+.hourly-meta {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+}
+
+.hourly-total {
+  font-size: 24rpx;
+  color: #4FB8D4;
+  font-weight: 600;
+}
+
+.hourly-count {
+  font-size: 22rpx;
+  color: #A0B8C8;
+}
+
+.hourly-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 18rpx;
+  margin-bottom: 20rpx;
+}
+
+.hourly-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.hourly-slot-label {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  width: 90rpx;
+  flex-shrink: 0;
+}
+
+.hourly-slot-emoji {
+  font-size: 28rpx;
+}
+
+.hourly-slot-name {
+  font-size: 24rpx;
+  color: #5D7D8E;
+  font-weight: 500;
+}
+
+.hourly-bar-track {
+  flex: 1;
+  height: 20rpx;
+  background: #EBF5FB;
+  border-radius: 10rpx;
+  overflow: hidden;
+}
+
+.hourly-bar-fill {
+  height: 100%;
+  border-radius: 10rpx;
+  min-width: 4rpx;
+}
+
+.hourly-bar-info {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  width: 120rpx;
+  flex-shrink: 0;
+  justify-content: flex-end;
+}
+
+.hourly-bar-amount {
+  font-size: 24rpx;
+  color: #3D5A6E;
+  font-weight: 500;
+}
+
+.hourly-bar-pct {
+  font-size: 20rpx;
+  color: #A0B8C8;
+}
+
+.hourly-range-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx 24rpx;
+  padding: 16rpx 0;
+  border-top: 1rpx solid #EBF5FB;
+  border-bottom: 1rpx solid #EBF5FB;
+  margin-bottom: 20rpx;
+}
+
+.hourly-range-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  min-width: 80rpx;
+}
+
+.hourly-range-label {
+  font-size: 22rpx;
+  color: #5D7D8E;
+  font-weight: 600;
+}
+
+.hourly-range-time {
+  font-size: 18rpx;
+  color: #A0B8C8;
+  margin-top: 4rpx;
+}
+
+.hourly-insight {
+  display: flex;
+  align-items: flex-start;
+  gap: 12rpx;
+  background: linear-gradient(135deg, #EBF8FC, #F0F7FD);
+  border-radius: 16rpx;
+  padding: 20rpx;
+  margin-bottom: 20rpx;
+}
+
+.hourly-insight-emoji {
+  font-size: 32rpx;
+  flex-shrink: 0;
+}
+
+.hourly-insight-text {
+  font-size: 26rpx;
+  color: #3D5A6E;
+  line-height: 1.6;
+}
+
+.hourly-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-bottom: 24rpx;
+}
+
+.hourly-tag {
+  padding: 8rpx 20rpx;
+  border-radius: 20rpx;
+  font-size: 22rpx;
+  font-weight: 500;
+}
+
+.hourly-tag-peak {
+  background: #FFF3E8;
+  color: #E8834A;
+}
+
+.hourly-tag-night {
+  background: #EDE9F7;
+  color: #7B68B0;
+}
+
+.hourly-tag-day {
+  background: #FEF9E7;
+  color: #D4A017;
+}
+
+.hourly-avg-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+}
+
+.hourly-avg-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #F5FBFD;
+  border-radius: 16rpx;
+  padding: 16rpx 12rpx;
+  flex: 1;
+  min-width: 90rpx;
+  gap: 6rpx;
+}
+
+.hourly-avg-emoji {
+  font-size: 28rpx;
+}
+
+.hourly-avg-label {
+  font-size: 22rpx;
+  color: #7A9CAE;
+}
+
+.hourly-avg-count {
+  font-size: 20rpx;
+  color: #A0B8C8;
+}
+
+.hourly-avg-amount {
+  font-size: 22rpx;
+  color: #3D5A6E;
+  font-weight: 600;
+}
+
 /* ─── 月度报告样式 ─────────────────────────────────── */
 
 .report-empty {

@@ -2108,6 +2108,118 @@ function getWeekdayStats(startYM, endYM, type) {
   return { weekdays: weekdays, totalAmount: totalAmount, totalCount: totalCount, peakDay: peakDay, lightDay: lightDay, weekendRatio: weekendRatio, tip: tip, tipEmoji: tipEmoji };
 }
 
+/**
+ * 消费时段分析
+ * 将一天分为 6 个时段，统计各时段的消费金额/笔数
+ * 时段划分：深夜(0-5) 早晨(6-8) 上午(9-11) 中午(12-13) 下午(14-17) 晚上(18-23)
+ * 时间来源：record.id（Date.now() 时间戳）
+ *
+ * @param {string} startYM - 开始月份 'YYYY-MM'
+ * @param {string} endYM   - 结束月份 'YYYY-MM'
+ * @param {string} type    - 'expense' | 'income' | 'all'
+ * @returns {Object}
+ */
+function getHourlyStats(startYM, endYM, type) {
+  var SLOTS = [
+    { key: 'midnight', label: '深夜', range: '0-5点',  emoji: '🌙', start: 0,  end: 5  },
+    { key: 'morning',  label: '早晨', range: '6-8点',  emoji: '🌅', start: 6,  end: 8  },
+    { key: 'forenoon', label: '上午', range: '9-11点', emoji: '☀️', start: 9,  end: 11 },
+    { key: 'noon',     label: '中午', range: '12-13点',emoji: '🌤️', start: 12, end: 13 },
+    { key: 'afternoon',label: '下午', range: '14-17点',emoji: '🌈', start: 14, end: 17 },
+    { key: 'evening',  label: '晚上', range: '18-23点',emoji: '🌆', start: 18, end: 23 }
+  ];
+
+  var amounts = [0, 0, 0, 0, 0, 0];
+  var counts  = [0, 0, 0, 0, 0, 0];
+
+  var allRecords = getRecords();
+  allRecords.forEach(function(r) {
+    if (!r.date || !r.id) return;
+    var ym = r.date.substring(0, 7);
+    if (ym < startYM || ym > endYM) return;
+    if (type !== 'all' && r.type !== type) return;
+
+    // 从 id（时间戳毫秒）提取本地小时
+    var hour = new Date(r.id).getHours();
+    var slotIdx = -1;
+    for (var i = 0; i < SLOTS.length; i++) {
+      if (hour >= SLOTS[i].start && hour <= SLOTS[i].end) {
+        slotIdx = i;
+        break;
+      }
+    }
+    if (slotIdx < 0) return;
+    amounts[slotIdx] += Number(r.amount) || 0;
+    counts[slotIdx]++;
+  });
+
+  var totalAmount = parseFloat(amounts.reduce(function(s, v) { return s + v; }, 0).toFixed(2));
+  var totalCount  = counts.reduce(function(s, v) { return s + v; }, 0);
+  var maxAmount   = Math.max.apply(null, amounts.concat([1]));
+
+  var slots = SLOTS.map(function(s, i) {
+    return {
+      key:       s.key,
+      label:     s.label,
+      range:     s.range,
+      emoji:     s.emoji,
+      amount:    parseFloat(amounts[i].toFixed(2)),
+      count:     counts[i],
+      avgAmount: counts[i] > 0 ? parseFloat((amounts[i] / counts[i]).toFixed(2)) : 0,
+      percent:   totalAmount > 0 ? parseFloat((amounts[i] / totalAmount * 100).toFixed(1)) : 0,
+      barWidth:  Math.round((amounts[i] / maxAmount) * 100)
+    };
+  });
+
+  // 高峰时段
+  var peakIdx = 0;
+  slots.forEach(function(s, i) {
+    if (s.amount > slots[peakIdx].amount) peakIdx = i;
+  });
+  var peakSlot = slots[peakIdx].amount > 0 ? slots[peakIdx] : null;
+
+  // 白天(6-17) vs 夜间(18-23 + 0-5) 占比
+  var dayAmount  = amounts[1] + amounts[2] + amounts[3] + amounts[4]; // 早晨+上午+中午+下午
+  var nightAmount = amounts[0] + amounts[5]; // 深夜+晚上
+  var dayRatio   = totalAmount > 0 ? parseFloat((dayAmount / totalAmount * 100).toFixed(1)) : 0;
+  var nightRatio = totalAmount > 0 ? parseFloat((nightAmount / totalAmount * 100).toFixed(1)) : 0;
+
+  // 洞察文案
+  var tip = '', tipEmoji = '';
+  if (totalCount === 0) {
+    tip = '这段时间还没有记录，快去记账吧～'; tipEmoji = '🌸';
+  } else if (peakSlot && peakSlot.key === 'noon') {
+    tip = '午饭时段消费最集中，占总支出 ' + peakSlot.percent + '%，午餐花销不小哦'; tipEmoji = '🍱';
+  } else if (peakSlot && peakSlot.key === 'evening') {
+    tip = '晚上是消费高峰，占总支出 ' + peakSlot.percent + '%，夜间消费需留意'; tipEmoji = '🌆';
+  } else if (peakSlot && peakSlot.key === 'midnight') {
+    tip = '深夜消费不少，占 ' + peakSlot.percent + '%，夜猫子的钱包要注意了 🦉'; tipEmoji = '🌙';
+  } else if (peakSlot && peakSlot.key === 'afternoon') {
+    tip = '下午消费最多，占 ' + peakSlot.percent + '%，小心下午茶和购物冲动 ☕'; tipEmoji = '🌈';
+  } else if (peakSlot && peakSlot.key === 'forenoon') {
+    tip = '上午消费最集中，占 ' + peakSlot.percent + '%，通勤和早间开销较大'; tipEmoji = '☀️';
+  } else if (nightRatio >= 50) {
+    tip = '夜间消费（含晚上+深夜）占 ' + nightRatio + '%，是个夜型消费者'; tipEmoji = '🌃';
+  } else if (dayRatio >= 70) {
+    tip = '白天消费规律，日间消费占 ' + dayRatio + '%，作息很健康'; tipEmoji = '🌞';
+  } else if (peakSlot) {
+    tip = peakSlot.label + '（' + peakSlot.range + '）是消费高峰，占总支出 ' + peakSlot.percent + '%'; tipEmoji = peakSlot.emoji;
+  } else {
+    tip = '消费时段分布均匀，很有节制 ✨'; tipEmoji = '✨';
+  }
+
+  return {
+    slots:       slots,
+    totalAmount: totalAmount,
+    totalCount:  totalCount,
+    peakSlot:    peakSlot,
+    dayRatio:    dayRatio,
+    nightRatio:  nightRatio,
+    tip:         tip,
+    tipEmoji:    tipEmoji
+  };
+}
+
 module.exports = {
   getRecords,
   saveRecord,
@@ -2163,5 +2275,6 @@ module.exports = {
   getNoteFavoritesForCategory,
   getShareCardData,
   getWeekdayStats,
-  getWeekCompare
+  getWeekCompare,
+  getHourlyStats
 };

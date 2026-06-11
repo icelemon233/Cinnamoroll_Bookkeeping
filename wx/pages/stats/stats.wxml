@@ -44,6 +44,11 @@
       bindtap="switchViewMode"
     >📅 周几</view>
     <view
+      class="view-mode-btn {{viewMode === 'hourly' ? 'view-mode-active' : ''}}"
+      data-mode="hourly"
+      bindtap="switchViewMode"
+    >🕐 时段</view>
+    <view
       class="view-mode-btn {{viewMode === 'report' ? 'view-mode-active' : ''}}"
       data-mode="report"
       bindtap="switchViewMode"
@@ -927,6 +932,135 @@
           <text class="weekday-avg-label">{{item.label}}</text>
           <text class="weekday-avg-count">{{item.count}}笔</text>
           <text class="weekday-avg-amount">{{item.avgAmount > 0 ? '¥' + item.avgAmount : '—'}}</text>
+        </view>
+      </view>
+    </view>
+
+  </block>
+
+  <!-- ═══════ 时段消费分析模式 ═══════ -->
+  <block wx:if="{{viewMode === 'hourly'}}">
+
+    <!-- 控制栏：类型 + 时间范围 -->
+    <view class="hourly-controls">
+      <view class="hourly-type-tabs">
+        <view
+          class="hourly-type-tab {{hourlyType === 'expense' ? 'hourly-tab-active' : ''}}"
+          data-type="expense"
+          bindtap="switchHourlyType"
+        >支出</view>
+        <view
+          class="hourly-type-tab {{hourlyType === 'income' ? 'hourly-tab-active' : ''}}"
+          data-type="income"
+          bindtap="switchHourlyType"
+        >收入</view>
+      </view>
+      <view class="hourly-range-tabs">
+        <view
+          class="hourly-range-tab {{hourlyRange === '1' ? 'hourly-range-active' : ''}}"
+          data-range="1"
+          bindtap="switchHourlyRange"
+        >本月</view>
+        <view
+          class="hourly-range-tab {{hourlyRange === '3' ? 'hourly-range-active' : ''}}"
+          data-range="3"
+          bindtap="switchHourlyRange"
+        >3月</view>
+        <view
+          class="hourly-range-tab {{hourlyRange === '6' ? 'hourly-range-active' : ''}}"
+          data-range="6"
+          bindtap="switchHourlyRange"
+        >6月</view>
+        <view
+          class="hourly-range-tab {{hourlyRange === '年' ? 'hourly-range-active' : ''}}"
+          data-range="年"
+          bindtap="switchHourlyRange"
+        >今年</view>
+      </view>
+    </view>
+
+    <!-- 暂无数据占位框 -->
+    <view wx:if="{{hourlyIsEmpty}}" class="hourly-empty">
+      <text class="hourly-empty-emoji">🌸</text>
+      <text class="hourly-empty-text">这段时间还没有记录，快去记账吧～</text>
+    </view>
+
+    <!-- 时段柱状图卡片 -->
+    <view wx:if="{{!hourlyIsEmpty && hourlyData}}" class="card hourly-card">
+      <view class="hourly-header">
+        <text class="hourly-title">🕐 时段{{hourlyType === 'expense' ? '支出' : '收入'}}分布</text>
+        <view class="hourly-meta">
+          <text class="hourly-total">{{hourlyType === 'expense' ? '总支出' : '总收入'}} ¥{{hourlyData.totalAmount}}</text>
+          <text class="hourly-count"> · {{hourlyData.totalCount}}笔</text>
+        </view>
+      </view>
+
+      <!-- 时段柱状图行列表 -->
+      <view class="hourly-bars">
+        <view
+          wx:for="{{hourlyData.slots}}"
+          wx:key="key"
+          class="hourly-bar-row"
+        >
+          <view class="hourly-slot-label">
+            <text class="hourly-slot-emoji">{{item.emoji}}</text>
+            <text class="hourly-slot-name">{{item.label}}</text>
+          </view>
+          <view class="hourly-bar-track">
+            <view
+              class="hourly-bar-fill"
+              style="width: {{item.barWidth}}%; background: {{item.barWidth >= 60 ? '#4FB8D4' : item.barWidth >= 30 ? '#7EC8E3' : '#A8D8EA'}};"
+            ></view>
+          </view>
+          <view class="hourly-bar-info">
+            <text class="hourly-bar-amount">{{item.amount > 0 ? '¥' + item.amount : '—'}}</text>
+            <text class="hourly-bar-pct">{{item.amount > 0 ? item.percent + '%' : ''}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 时段范围小标注行 -->
+      <view class="hourly-range-legend">
+        <view
+          wx:for="{{hourlyData.slots}}"
+          wx:key="key"
+          class="hourly-range-item"
+        >
+          <text class="hourly-range-label">{{item.label}}</text>
+          <text class="hourly-range-time">{{item.range}}</text>
+        </view>
+      </view>
+
+      <!-- 洞察文案 -->
+      <view class="hourly-insight">
+        <text class="hourly-insight-emoji">{{hourlyData.tipEmoji}}</text>
+        <text class="hourly-insight-text">{{hourlyData.tip}}</text>
+      </view>
+
+      <!-- 高峰时段 + 白天/夜间占比 -->
+      <view class="hourly-tags">
+        <view wx:if="{{hourlyData.peakSlot}}" class="hourly-tag hourly-tag-peak">
+          <text>🔥 {{hourlyType === 'expense' ? '消费' : '收入'}}高峰：{{hourlyData.peakSlot.emoji}}{{hourlyData.peakSlot.label}}（{{hourlyData.peakSlot.range}}）</text>
+        </view>
+        <view class="hourly-tag hourly-tag-night">
+          <text>🌙 夜间占比 {{hourlyData.nightRatio}}%</text>
+        </view>
+        <view class="hourly-tag hourly-tag-day">
+          <text>☀️ 白天占比 {{hourlyData.dayRatio}}%</text>
+        </view>
+      </view>
+
+      <!-- 各时段笔数/均均行 -->
+      <view class="hourly-avg-grid">
+        <view
+          wx:for="{{hourlyData.slots}}"
+          wx:key="key"
+          class="hourly-avg-item"
+        >
+          <text class="hourly-avg-emoji">{{item.emoji}}</text>
+          <text class="hourly-avg-label">{{item.label}}</text>
+          <text class="hourly-avg-count">{{item.count}}笔</text>
+          <text class="hourly-avg-amount">{{item.avgAmount > 0 ? '¥' + item.avgAmount : '—'}}</text>
         </view>
       </view>
     </view>

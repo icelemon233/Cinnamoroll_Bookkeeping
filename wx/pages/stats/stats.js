@@ -1,5 +1,5 @@
-// pages/stats/stats.js - 统计页（饼图 + 趋势柱状图 + 年度总览 + 分类环比 + 分类预算 + 排行榜 + 周几分析 + 月度报告）
-const { getCategoryStats, getMonthSummary, getCategoryBudgets, setCategoryBudget, getCategoryRanking, getFinanceHealthScore, getSpendingAlerts, getWeekdayStats, generateMonthReport } = require('../../utils/storage');
+// pages/stats/stats.js - 统计页（饼图 + 趋势柱状图 + 年度总览 + 分类环比 + 分类预算 + 排行榜 + 周几分析 + 时段分析 + 月度报告）
+const { getCategoryStats, getMonthSummary, getCategoryBudgets, setCategoryBudget, getCategoryRanking, getFinanceHealthScore, getSpendingAlerts, getWeekdayStats, generateMonthReport, getHourlyStats } = require('../../utils/storage');
 
 // 饼图颜色（Cinnamoroll 蓝色系列）
 const COLORS = [
@@ -88,6 +88,11 @@ Page({
     weekdayRange: '3',                // '1' | '3' | '6' | '年'
     weekdayData: null,                // getWeekdayStats 返回结果
     weekdayIsEmpty: false,
+    // 时段消费分析
+    hourlyType: 'expense',            // 'expense' | 'income'
+    hourlyRange: '3',                 // '1' | '3' | '6' | '年'
+    hourlyData: null,                 // getHourlyStats 返回结果
+    hourlyIsEmpty: false,
     // 月度报告
     monthReport: null          // { overview, breakdown, maxRecord, compare, tips, isEmpty, rawText }
   },
@@ -501,6 +506,8 @@ Page({
         this._loadHealthData();
       } else if (viewMode === 'weekday') {
         this._loadWeekdayData();
+      } else if (viewMode === 'hourly') {
+        this._loadHourlyData();
       } else if (viewMode === 'report') {
         this._loadReportData();
       }
@@ -707,6 +714,8 @@ Page({
         this._loadHealthData();
       } else if (viewMode === 'weekday') {
         this._loadWeekdayData();
+      } else if (viewMode === 'hourly') {
+        this._loadHourlyData();
       } else if (viewMode === 'report') {
         this._loadReportData();
       } else {
@@ -1587,6 +1596,60 @@ Page({
     if (weekdayRange === this.data.weekdayRange) return;
     wx.vibrateShort({ type: 'light' }).catch(function() {});
     this.setData({ weekdayRange: weekdayRange }, function() { this._loadWeekdayData(); }.bind(this));
+  },
+
+  // ─── 时段消费分析 ────────────────────────────────────
+
+  /**
+   * 加载时段消费分析数据
+   */
+  _loadHourlyData() {
+    const { hourlyType, hourlyRange } = this.data;
+    const now = new Date();
+    const curY = now.getFullYear();
+    const curM = now.getMonth() + 1;
+    const endYM = (curY + '-' + (curM < 10 ? '0' + curM : curM));
+
+    let startYM;
+    if (hourlyRange === '1') {
+      startYM = endYM;
+    } else if (hourlyRange === '3') {
+      const d = new Date(curY, curM - 3, 1);
+      startYM = d.getFullYear() + '-' + (d.getMonth() + 1 < 10 ? '0' + (d.getMonth() + 1) : (d.getMonth() + 1));
+    } else if (hourlyRange === '6') {
+      const d = new Date(curY, curM - 6, 1);
+      startYM = d.getFullYear() + '-' + (d.getMonth() + 1 < 10 ? '0' + (d.getMonth() + 1) : (d.getMonth() + 1));
+    } else if (hourlyRange === '年') {
+      startYM = curY + '-01';
+    } else {
+      startYM = endYM;
+    }
+
+    const hourlyData = getHourlyStats(startYM, endYM, hourlyType);
+    this.setData({
+      hourlyData: hourlyData,
+      hourlyIsEmpty: hourlyData.totalCount === 0
+    });
+  },
+
+  /**
+   * 切换时段分析类型（支出 / 收入）
+   */
+  switchHourlyType(e) {
+    const hourlyType = e.currentTarget.dataset.type;
+    if (hourlyType === this.data.hourlyType) return;
+    wx.vibrateShort({ type: 'light' }).catch(function() {});
+    this.setData({ hourlyType: hourlyType }, function() { this._loadHourlyData(); }.bind(this));
+  },
+
+  /**
+   * 切换时段分析时间范围
+   */
+  switchHourlyRange(e) {
+    const hourlyRange = e.currentTarget.dataset.range;
+    if (hourlyRange === this.data.hourlyRange) return;
+    wx.vibrateShort({ type: 'light' }).catch(function() {});
+    this.setData({ hourlyRange: hourlyRange }, function() { this._loadHourlyData(); }.bind(this));
   },
 
   // ─── 月度报告 ────────────────────────────────────────
