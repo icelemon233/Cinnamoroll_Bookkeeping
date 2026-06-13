@@ -1,5 +1,5 @@
 // pages/add/add.js - 记账页（支持新增和编辑两种模式）
-const { saveRecord, updateRecord, getRecordById, getTodaySummary, getDailySummaryCompare, getRecentCategoryRecords, getTopAmounts, getNoteAutoComplete, getTemplates, saveTemplate, deleteTemplate, getCategoryHistory, getCategorySaveSummary, getNoteFavorites, addNoteFavorite, removeNoteFavorite, getNoteFavoritesForCategory, getWeekCompare } = require('../../utils/storage');
+const { saveRecord, updateRecord, getRecordById, getTodaySummary, getDailySummaryCompare, getRecentCategoryRecords, getTopAmounts, getNoteAutoComplete, getTemplates, saveTemplate, deleteTemplate, getCategoryHistory, getCategorySaveSummary, getNoteFavorites, addNoteFavorite, removeNoteFavorite, getNoteFavoritesForCategory, getWeekCompare, getDuplicateCheck } = require('../../utils/storage');
 
 const EXPENSE_CATEGORIES = [
   { name: '餐饮', emoji: '🍜' },
@@ -103,6 +103,10 @@ Page({
     // 记账成功 - 消费小结弹窗
     showSaveSummary: false,       // 是否显示消费小结
     saveSummaryData: null,        // { category, emoji, amount, curTotal, curCount, tip, tipEmoji, type }
+    // 重复记账确认弹窗
+    showDuplicateModal: false,    // 是否显示重复确认弹窗
+    duplicateRecords: [],         // 今日相似记录列表 [{ id, amount, note, category, time }]
+    pendingRecord: null,          // 待确认保存的记录（通过重复检测后真正保存）
     // AA 分摊计算器
     showSplitModal: false,      // 是否显示分摊弹窗
     splitPeople: 2,             // 分摊人数
@@ -730,6 +734,39 @@ Page({
       date
     };
 
+    // 重复记账检测（仅新增模式）
+    const duplicates = getDuplicateCheck(date, type, selectedCategory, amount);
+    if (duplicates.length > 0) {
+      const displayList = duplicates.map(function(r) {
+        var timeStr = '';
+        if (r.id) {
+          var d = new Date(r.id);
+          timeStr = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+        }
+        return { id: r.id, amount: r.amount, note: r.note || '', category: r.category, time: timeStr };
+      });
+      this.setData({ showDuplicateModal: true, duplicateRecords: displayList, pendingRecord: record });
+      return;
+    }
+
+    // 无重复，直接保存
+    this._doSaveRecord(record);
+  },
+
+  // 关闭重复确认弹窗（放弃本次保存）
+  cancelDuplicateSave() {
+    this.setData({ showDuplicateModal: false, duplicateRecords: [], pendingRecord: null });
+  },
+
+  // 确认依然保存（允许重复）
+  confirmDuplicateSave() {
+    const { pendingRecord } = this.data;
+    this.setData({ showDuplicateModal: false, duplicateRecords: [], pendingRecord: null });
+    if (pendingRecord) this._doSaveRecord(pendingRecord);
+  },
+
+  // 内部：真正执行保存的逻辑（saveRecord + 小结 + 重置表单）
+  _doSaveRecord(record) {
     saveRecord(record);
 
     // 获取消费小结数据（在重置表单前，type/category 还是本次记录的值）
@@ -742,7 +779,7 @@ Page({
         saveSummaryData: {
           category: recCat,
           emoji: catEmoji,
-          amount,
+          amount: record.amount,
           curTotal: summary.curTotal,
           curCount: summary.curCount,
           tip: summary.tip,

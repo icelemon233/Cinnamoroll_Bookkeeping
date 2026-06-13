@@ -2220,6 +2220,34 @@ function getHourlyStats(startYM, endYM, type) {
   };
 }
 
+/**
+ * 重复记账检测：查找当日相同分类/类型、金额相近（差值 ≤ 5% 或 ≤ 0.5 元）的已有记录。
+ * 用于记账页保存前提示用户，防止手滑重复提交。
+ *
+ * @param {string} date       - 日期字符串 'YYYY-MM-DD'
+ * @param {string} type       - 'expense' | 'income'
+ * @param {string} category   - 分类名称
+ * @param {number} amount     - 金额
+ * @returns {Array<{id, amount, note, category, type, date}>} 匹配的已有记录列表（最多 3 条）
+ */
+function getDuplicateCheck(date, type, category, amount) {
+  if (!date || !type || !category || !amount || amount <= 0) return [];
+  var records = getRecords();
+  var matches = [];
+  for (var i = 0; i < records.length; i++) {
+    var r = records[i];
+    if (r.date !== date || r.type !== type || r.category !== category) continue;
+    var diff = Math.abs(r.amount - amount);
+    var ratio = amount > 0 ? diff / amount : 1;
+    // 完全相同 or 差值 ≤ 0.5 元 or 比例差 ≤ 5%
+    if (diff < 0.001 || diff <= 0.5 || ratio <= 0.05) {
+      matches.push(r);
+      if (matches.length >= 3) break;
+    }
+  }
+  return matches;
+}
+
 module.exports = {
   getRecords,
   saveRecord,
@@ -2276,5 +2304,6 @@ module.exports = {
   getShareCardData,
   getWeekdayStats,
   getWeekCompare,
-  getHourlyStats
+  getHourlyStats,
+  getDuplicateCheck
 };

@@ -1567,3 +1567,111 @@
   text-align: center;
   padding: 16rpx 32rpx 0;
 }
+
+/* ── 重复记账确认弹窗 ─────────────────────────────── */
+.dup-mask {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dup-card {
+  background: #fff;
+  border-radius: 32rpx;
+  padding: 48rpx 40rpx 36rpx;
+  width: 640rpx;
+  box-shadow: 0 8rpx 40rpx rgba(79,184,212,0.18);
+}
+.dup-header {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+  margin-bottom: 16rpx;
+}
+.dup-icon {
+  font-size: 40rpx;
+}
+.dup-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #2D4050;
+}
+.dup-desc {
+  font-size: 26rpx;
+  color: #7A9BB5;
+  margin-bottom: 24rpx;
+  line-height: 1.6;
+}
+.dup-list {
+  max-height: 220rpx;
+  margin-bottom: 32rpx;
+}
+.dup-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18rpx 20rpx;
+  background: #F4F9FC;
+  border-radius: 16rpx;
+  margin-bottom: 12rpx;
+}
+.dup-item-left {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+.dup-item-time {
+  font-size: 24rpx;
+  color: #AABBCC;
+  min-width: 60rpx;
+}
+.dup-item-cat {
+  font-size: 26rpx;
+  color: #4A6FA5;
+  background: #E0EEF8;
+  border-radius: 12rpx;
+  padding: 4rpx 16rpx;
+}
+.dup-item-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4rpx;
+}
+.dup-item-amount {
+  font-size: 30rpx;
+  font-weight: 700;
+}
+.dup-item-note {
+  font-size: 22rpx;
+  color: #AABBCC;
+  max-width: 200rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dup-actions {
+  display: flex;
+  gap: 20rpx;
+}
+.dup-btn {
+  flex: 1;
+  height: 88rpx;
+  border-radius: 44rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+  font-weight: 600;
+}
+.dup-btn-cancel {
+  background: #EEF4F8;
+  color: #7A9BB5;
+}
+.dup-btn-confirm {
+  background: linear-gradient(135deg, #4FB8D4, #5BA3C9);
+  color: #fff;
+}

@@ -492,4 +492,44 @@
     </view>
   </view>
 
+  <!-- 重复记账确认弹窗 -->
+  <view wx:if="{{showDuplicateModal}}" class="dup-mask" catchtap="noop">
+    <view class="dup-card">
+      <view class="dup-header">
+        <text class="dup-icon">⚠️</text>
+        <text class="dup-title">今日已有相似记录</text>
+      </view>
+      <view class="dup-desc">今天已记录过相同分类、相近金额的账单，是否重复记账了？</view>
+
+      <!-- 已有的相似记录列表 -->
+      <scroll-view class="dup-list" scroll-y>
+        <view
+          class="dup-item"
+          wx:for="{{duplicateRecords}}"
+          wx:key="id"
+        >
+          <view class="dup-item-left">
+            <text class="dup-item-time">{{item.time}}</text>
+            <text class="dup-item-cat">{{item.category}}</text>
+          </view>
+          <view class="dup-item-right">
+            <text class="dup-item-amount expense-text">¥{{item.amount}}</text>
+            <text wx:if="{{item.note}}" class="dup-item-note">{{item.note}}</text>
+          </view>
+        </view>
+      </scroll-view>
+
+      <!-- 操作按钮 -->
+      <view class="dup-actions">
+        <view class="dup-btn dup-btn-cancel" bindtap="cancelDuplicateSave">
+          <text>取消，我检查一下</text>
+        </view>
+        <view class="dup-btn dup-btn-confirm" bindtap="confirmDuplicateSave">
+          <text>没问题，继续记</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+
 </view>
