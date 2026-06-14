@@ -1,5 +1,13 @@
 // pages/list/list.js - 账单列表页
-const { getRecords, deleteRecord, updateRecord, groupByDate, formatDate, exportToCSV, downloadCSV, getMonthSummary, getSearchHistory, saveSearchHistory, deleteSearchHistory, clearSearchHistory, generateMonthReport, getShareCardData } = require('../../utils/storage');
+const { getRecords, deleteRecord, updateRecord, groupByDate, formatDate, exportToCSV, downloadCSV, getMonthSummary, getSearchHistory, saveSearchHistory, deleteSearchHistory, clearSearchHistory, generateMonthReport, getShareCardData, getDateRangeStats } = require('../../utils/storage');
+
+// 日期范围预设配置
+const DATE_RANGE_PRESETS = [
+  { label: '最近7天',  key: '7d',   days: 7 },
+  { label: '最近14天', key: '14d',  days: 14 },
+  { label: '最近30天', key: '30d',  days: 30 },
+  { label: '最近3个月', key: '3m',  days: 90 }
+];
 
 // 分类 emoji 映射（与 add 页保持一致）
 const CATEGORY_EMOJI = {
@@ -45,6 +53,13 @@ Page({
     isSelectMode: false,
     selectedIds: [],          // 已选中的记录 id 列表（字符串）
     selectedCount: 0,
+    // 日期范围筛选
+    dateRangePresets: DATE_RANGE_PRESETS,
+    activeDateRangeKey: '',   // 当前激活的预设 key，'' = 未激活
+    dateRangeStart: '',       // 激活范围的起始 YYYY-MM-DD
+    dateRangeEnd: '',         // 激活范围的结束 YYYY-MM-DD
+    showDateRangePanel: false, // 是否展开范围选择面板
+    dateRangeSummary: null,   // getDateRangeStats 返回的汇总数据
     // 筛选范围统计摘要
     statsSummary: null,       // { expenseCount, incomeCount, avgExpense, avgIncome, maxExpense, maxIncome, showExpense, showIncome }
     // 分享卡片
@@ -57,6 +72,72 @@ Page({
     this.loadData();
     this._buildTopCategories(this.data.filterMonth);
   },
+
+  // ─── 日期范围筛选 ─────────────────────────────────────
+
+  /** 切换日期范围面板显隐 */
+  toggleDateRangePanel() {
+    this.setData({ showDateRangePanel: !this.data.showDateRangePanel });
+  },
+
+  /** 关闭日期范围面板（点击遮罩等场景） */
+  closeDateRangePanel() {
+    this.setData({ showDateRangePanel: false });
+  },
+
+  /** 选择预设日期范围 */
+  onDateRangeSelect(e) {
+    const key = e.currentTarget.dataset.key;
+    if (!key) return;
+
+    // 再次点击同一预设 → 取消范围筛选，恢复月份模式
+    if (this.data.activeDateRangeKey === key) {
+      this.clearDateRange();
+      return;
+    }
+
+    const preset = DATE_RANGE_PRESETS.find(p => p.key === key);
+    if (!preset) return;
+
+    const end = new Date();
+    const start = new Date();
+    start.setDate(start.getDate() - preset.days + 1);
+
+    const toStr = d =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+    const startStr = toStr(start);
+    const endStr = toStr(end);
+    const stats = getDateRangeStats(startStr, endStr);
+
+    this.setData({
+      activeDateRangeKey: key,
+      dateRangeStart: startStr,
+      dateRangeEnd: endStr,
+      dateRangeSummary: stats,
+      showDateRangePanel: false,
+      // 范围筛选激活时退出搜索模式，重置分类筛选
+      isSearchMode: false,
+      searchKeyword: '',
+      filterCategory: ''
+    }, () => this.loadData());
+
+    wx.vibrateShort({ type: 'light' }).catch(() => {});
+  },
+
+  /** 清除日期范围筛选，恢复月份模式 */
+  clearDateRange() {
+    this.setData({
+      activeDateRangeKey: '',
+      dateRangeStart: '',
+      dateRangeEnd: '',
+      dateRangeSummary: null,
+      showDateRangePanel: false,
+      filterCategory: ''
+    }, () => this.loadData());
+    wx.vibrateShort({ type: 'light' }).catch(() => {});
+  },
+
 
   onShow() {
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
@@ -302,6 +383,56 @@ Page({
   loadData() {
     const { filterType, filterMonth, searchKeyword, isSearchMode, filterCategory, sortMode } = this.data;
     let records = getRecords();
+
+    // ─── 日期范围筛选模式 ──────────────────────────
+    const { activeDateRangeKey, dateRangeStart, dateRangeEnd } = this.data;
+    if (!isSearchMode && activeDateRangeKey && dateRangeStart && dateRangeEnd) {
+      // 范围模式：按起止日期过滤全量记录
+      let rangeRecords = records.filter(r => r.date && r.date >= dateRangeStart && r.date <= dateRangeEnd);
+      const categoryChips = this._buildCategoryChips(rangeRecords);
+      let filtered = rangeRecords;
+      if (filterType !== 'all') {
+        filtered = filtered.filter(r => r.type === filterType);
+      }
+      if (filterCategory) {
+        filtered = filtered.filter(r => r.category === filterCategory);
+      }
+      let totalIncome = 0, totalExpense = 0;
+      let maxExpense = 0, maxIncome = 0, expenseCount = 0, incomeCount = 0;
+      filtered.forEach(r => {
+        const amt = Number(r.amount) || 0;
+        if (r.type === 'income') {
+          totalIncome += amt; incomeCount++;
+          if (amt > maxIncome) maxIncome = amt;
+        } else {
+          totalExpense += amt; expenseCount++;
+          if (amt > maxExpense) maxExpense = amt;
+        }
+      });
+      const allGroups = this._buildGroups(filtered, sortMode);
+      const statsSummary = filtered.length > 0 ? {
+        expenseCount,
+        incomeCount,
+        avgExpense: expenseCount > 0 ? parseFloat((totalExpense / expenseCount).toFixed(2)) : 0,
+        avgIncome: incomeCount > 0 ? parseFloat((totalIncome / incomeCount).toFixed(2)) : 0,
+        maxExpense: parseFloat(maxExpense.toFixed(2)),
+        maxIncome: parseFloat(maxIncome.toFixed(2)),
+        totalExpense: parseFloat(totalExpense.toFixed(2)),
+        totalIncome: parseFloat(totalIncome.toFixed(2)),
+        showExpense: expenseCount > 0,
+        showIncome: incomeCount > 0
+      } : null;
+      this.setData({
+        allGroups,
+        totalIncome: parseFloat(totalIncome.toFixed(2)),
+        totalExpense: parseFloat(totalExpense.toFixed(2)),
+        isEmpty: allGroups.length === 0,
+        searchResultCount: filtered.length,
+        categoryChips,
+        statsSummary
+      });
+      return;
+    }
 
     if (isSearchMode && searchKeyword) {
       // 搜索模式：跨月全局搜索，匹配备注/分类/金额

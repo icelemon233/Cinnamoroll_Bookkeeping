@@ -67,8 +67,8 @@
     </view>
   </view>
 
-  <!-- 月份切换导航（搜索模式下隐藏） -->
-  <view wx:if="{{!isSearchMode}}" class="month-nav">
+  <!-- 月份切换导航（搜索模式 / 日期范围模式下隐藏） -->
+  <view wx:if="{{!isSearchMode && !activeDateRangeKey}}" class="month-nav">
     <view class="month-arrow" bindtap="prevMonth">
       <text class="arrow-text">‹</text>
     </view>
@@ -78,8 +78,8 @@
     </view>
   </view>
 
-  <!-- 顶部汇总（搜索模式下隐藏） -->
-  <view wx:if="{{!isSearchMode}}" class="summary-bar">
+  <!-- 顶部汇总（搜索模式 / 日期范围模式下隐藏） -->
+  <view wx:if="{{!isSearchMode && !activeDateRangeKey}}" class="summary-bar">
     <view class="summary-bar-item">
       <text class="bar-label">收入</text>
       <text class="bar-amount income-text">+{{totalIncome}}</text>
@@ -92,9 +92,9 @@
   </view>
 
   <!-- 月份模式统计摘要（有数据时显示） -->
-  <view wx:if="{{!isSearchMode && statsSummary}}" class="stats-detail-bar">
+  <view wx:if="{{!isSearchMode && !activeDateRangeKey && statsSummary}}" class="stats-detail-bar">
     <view wx:if="{{statsSummary.showExpense}}" class="stats-detail-item">
-      <text class="stats-detail-label">均均支出</text>
+      <text class="stats-detail-label">均支出</text>
       <text class="stats-detail-val expense-text">¥{{statsSummary.avgExpense}}</text>
     </view>
     <view wx:if="{{statsSummary.showExpense && statsSummary.maxExpense > 0}}" class="stats-detail-sep"></view>
@@ -104,13 +104,13 @@
     </view>
     <view wx:if="{{statsSummary.showExpense && statsSummary.showIncome}}" class="stats-detail-sep stats-detail-sep-big"></view>
     <view wx:if="{{statsSummary.showIncome}}" class="stats-detail-item">
-      <text class="stats-detail-label">均均收入</text>
+      <text class="stats-detail-label">均收入</text>
       <text class="stats-detail-val income-text">¥{{statsSummary.avgIncome}}</text>
     </view>
   </view>
 
-  <!-- 本月 TOP 消费卡片（仅非搜索、非空数据时显示） -->
-  <view wx:if="{{!isSearchMode && showTopCard}}" class="top-card card">
+  <!-- 本月 TOP 消费卡片（仅非搜索、非范围筛选、非空数据时显示） -->
+  <view wx:if="{{!isSearchMode && !activeDateRangeKey && showTopCard}}" class="top-card card">
     <view class="top-card-header">
       <text class="top-card-title">🏆 本月支出 TOP</text>
       <text class="top-card-sub">点击可快速筛选</text>
@@ -141,6 +141,60 @@
     </view>
   </view>
 
+  <!-- 日期范围选择面板（展开时显示） -->
+  <view wx:if="{{showDateRangePanel}}" class="date-range-panel">
+    <view class="date-range-mask" bindtap="closeDateRangePanel"></view>
+    <view class="date-range-card">
+      <view class="date-range-title">
+        <text class="date-range-title-text">范围筛选</text>
+        <view wx:if="{{activeDateRangeKey}}" class="date-range-clear-btn" bindtap="clearDateRange">
+          <text class="date-range-clear-text">清除</text>
+        </view>
+      </view>
+      <view class="date-range-presets">
+        <view
+          class="date-range-preset-btn {{activeDateRangeKey === item.key ? 'preset-active' : ''}}"
+          wx:for="{{dateRangePresets}}"
+          wx:key="key"
+          data-key="{{item.key}}"
+          bindtap="onDateRangeSelect"
+        >
+          <text class="preset-label">{{item.label}}</text>
+        </view>
+      </view>
+      <view wx:if="{{dateRangeSummary && activeDateRangeKey}}" class="date-range-stats">
+        <view class="date-range-stats-row">
+          <view class="date-range-stat-item">
+            <text class="drs-label">支出</text>
+            <text class="drs-val expense-text">¥{{dateRangeSummary.expense}}</text>
+          </view>
+          <view class="drs-sep"></view>
+          <view class="date-range-stat-item">
+            <text class="drs-label">收入</text>
+            <text class="drs-val income-text">¥{{dateRangeSummary.income}}</text>
+          </view>
+          <view class="drs-sep"></view>
+          <view class="date-range-stat-item">
+            <text class="drs-label">笔数</text>
+            <text class="drs-val">¥{{dateRangeSummary.recordCount}}笔</text>
+          </view>
+        </view>
+        <view class="date-range-date-row">
+          <text class="date-range-date-text">{{dateRangeStart}} — {{dateRangeEnd}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 日期范围激活提示条 -->
+  <view wx:if="{{activeDateRangeKey && !showDateRangePanel}}" class="date-range-active-bar" bindtap="toggleDateRangePanel">
+    <text class="date-range-active-icon">📅</text>
+    <text class="date-range-active-text">{{dateRangePresets.filter(p => p.key === activeDateRangeKey)[0].label}} · {{dateRangeStart}} — {{dateRangeEnd}}</text>
+    <view class="date-range-active-close" catchtap="clearDateRange">
+      <text class="date-range-active-close-icon">×</text>
+    </view>
+  </view>
+
   <!-- 类型筛选 -->
   <view class="filter-row">
     <view class="filter-btn {{filterType === 'all' ? 'filter-active' : ''}}" data-type="all" bindtap="switchFilter">全部</view>
@@ -148,6 +202,10 @@
     <view class="filter-btn {{filterType === 'income' ? 'filter-active filter-income' : ''}}" data-type="income" bindtap="switchFilter">收入</view>
     <view class="sort-btn {{sortMode === 'amount' ? 'sort-btn-active' : ''}}" bindtap="toggleSortMode">
       <text class="sort-icon">{{sortMode === 'amount' ? '💰' : '📅'}}</text>
+    </view>
+    <!-- 日期范围筛选按鈕 -->
+    <view class="date-range-btn {{activeDateRangeKey ? 'date-range-btn-active' : ''}}" bindtap="toggleDateRangePanel">
+      <text class="date-range-btn-icon">🔍</text>
     </view>
     <view class="export-btn" bindtap="onExport">
       <text class="export-icon">📤</text>
@@ -202,8 +260,8 @@
 
   <!-- 空状态 -->
   <view wx:if="{{isEmpty}}" class="empty-state">
-    <text class="empty-emoji">{{isSearchMode ? '🔍' : '🌸'}}</text>
-    <text class="empty-text">{{isSearchMode ? '没找到相关账单' : currentMonthLabel + '暂无账单'}}</text>
+    <text class="empty-emoji">{{isSearchMode ? '🔍' : (activeDateRangeKey ? '📅' : '🌸')}}</text>
+    <text class="empty-text">{{isSearchMode ? '没找到相关账单' : (activeDateRangeKey ? '此时间范围暂无账单' : currentMonthLabel + '暂无账单')}}</text>
     <view wx:if="{{!isSearchMode}}" class="add-btn" bindtap="goToAdd">
       <text>去记账 ✏️</text>
     </view>

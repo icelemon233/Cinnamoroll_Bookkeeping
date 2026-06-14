@@ -2230,6 +2230,47 @@ function getHourlyStats(startYM, endYM, type) {
  * @param {number} amount     - 金额
  * @returns {Array<{id, amount, note, category, type, date}>} 匹配的已有记录列表（最多 3 条）
  */
+/**
+ * 获取指定日期范围内的收支统计
+ * @param {string} startDate - 'YYYY-MM-DD'，范围起始（含）
+ * @param {string} endDate   - 'YYYY-MM-DD'，范围结束（含）
+ * @returns {{ income, expense, net, recordCount, records, expenseCount, incomeCount, avgExpense, avgIncome, maxExpense, maxIncome }}
+ */
+function getDateRangeStats(startDate, endDate) {
+  var records = getRecords();
+  var filtered = records.filter(function(r) {
+    return r.date && r.date >= startDate && r.date <= endDate;
+  });
+  var income = 0, expense = 0;
+  var incomeCount = 0, expenseCount = 0;
+  var maxIncome = 0, maxExpense = 0;
+  filtered.forEach(function(r) {
+    var amt = Number(r.amount) || 0;
+    if (r.type === 'income') {
+      income += amt;
+      incomeCount++;
+      if (amt > maxIncome) maxIncome = amt;
+    } else {
+      expense += amt;
+      expenseCount++;
+      if (amt > maxExpense) maxExpense = amt;
+    }
+  });
+  return {
+    income: parseFloat(income.toFixed(2)),
+    expense: parseFloat(expense.toFixed(2)),
+    net: parseFloat((income - expense).toFixed(2)),
+    recordCount: filtered.length,
+    records: filtered,
+    incomeCount: incomeCount,
+    expenseCount: expenseCount,
+    avgExpense: expenseCount > 0 ? parseFloat((expense / expenseCount).toFixed(2)) : 0,
+    avgIncome: incomeCount > 0 ? parseFloat((income / incomeCount).toFixed(2)) : 0,
+    maxExpense: parseFloat(maxExpense.toFixed(2)),
+    maxIncome: parseFloat(maxIncome.toFixed(2))
+  };
+}
+
 function getDuplicateCheck(date, type, category, amount) {
   if (!date || !type || !category || !amount || amount <= 0) return [];
   var records = getRecords();
@@ -2305,5 +2346,6 @@ module.exports = {
   getWeekdayStats,
   getWeekCompare,
   getHourlyStats,
-  getDuplicateCheck
+  getDuplicateCheck,
+  getDateRangeStats
 };

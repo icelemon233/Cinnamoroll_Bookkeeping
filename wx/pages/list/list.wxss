@@ -1109,3 +1109,206 @@ page.select-mode-active {
 .detail-note-btn-text.save {
   color: #FFFFFF;
 }
+
+/* ─── 日期范围筛选按钮 ─────────────────────────────────────── */
+.date-range-btn {
+  width: 72rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #FFFFFF;
+  border: 2rpx solid #E8F4F8;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.date-range-btn-active {
+  background: #E0F5FA;
+  border-color: #4FB8D4;
+}
+
+.date-range-btn-icon {
+  font-size: 30rpx;
+}
+
+/* ─── 日期范围激活提示条 ──────────────────────────────────── */
+.date-range-active-bar {
+  display: flex;
+  align-items: center;
+  background: linear-gradient(90deg, #E0F5FA, #EFF9FD);
+  border-radius: 20rpx;
+  padding: 16rpx 24rpx;
+  margin-bottom: 16rpx;
+  border: 2rpx solid #A8D8EA;
+  gap: 12rpx;
+}
+
+.date-range-active-icon {
+  font-size: 28rpx;
+  flex-shrink: 0;
+}
+
+.date-range-active-text {
+  flex: 1;
+  font-size: 26rpx;
+  color: #3A7A96;
+  font-weight: 500;
+}
+
+.date-range-active-close {
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 50%;
+  background: rgba(79, 184, 212, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.date-range-active-close-icon {
+  font-size: 28rpx;
+  color: #4FB8D4;
+  font-weight: 600;
+}
+
+/* ─── 日期范围选择面板 ──────────────────────────────────────── */
+.date-range-panel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+}
+
+.date-range-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.32);
+}
+
+.date-range-card {
+  position: relative;
+  width: 100%;
+  background: #FFFFFF;
+  border-radius: 40rpx 40rpx 0 0;
+  padding: 40rpx 40rpx 56rpx;
+  z-index: 201;
+}
+
+.date-range-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 32rpx;
+}
+
+.date-range-title-text {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #2A5A7A;
+}
+
+.date-range-clear-btn {
+  padding: 10rpx 28rpx;
+  background: #FFF0F4;
+  border-radius: 100rpx;
+}
+
+.date-range-clear-text {
+  font-size: 26rpx;
+  color: #FF8BAB;
+  font-weight: 600;
+}
+
+.date-range-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20rpx;
+  margin-bottom: 32rpx;
+}
+
+.date-range-preset-btn {
+  flex: 1;
+  min-width: 140rpx;
+  text-align: center;
+  padding: 24rpx 16rpx;
+  border-radius: 24rpx;
+  background: #F0F8FC;
+  border: 2rpx solid transparent;
+  transition: all 0.2s;
+}
+
+.date-range-preset-btn.preset-active {
+  background: #E0F5FA;
+  border-color: #4FB8D4;
+}
+
+.preset-label {
+  font-size: 28rpx;
+  color: #3A6A80;
+  font-weight: 500;
+}
+
+.date-range-preset-btn.preset-active .preset-label {
+  color: #4FB8D4;
+  font-weight: 700;
+}
+
+/* ─── 范围内统计摘要 ─────────────────────────────────────── */
+.date-range-stats {
+  background: #F0F8FC;
+  border-radius: 24rpx;
+  padding: 24rpx 28rpx;
+}
+
+.date-range-stats-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16rpx;
+}
+
+.date-range-stat-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6rpx;
+}
+
+.drs-label {
+  font-size: 22rpx;
+  color: #9BAAB8;
+}
+
+.drs-val {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #3A6A80;
+}
+
+.drs-sep {
+  width: 1rpx;
+  height: 48rpx;
+  background: #C8E4F0;
+  margin: 0 20rpx;
+  flex-shrink: 0;
+}
+
+.date-range-date-row {
+  text-align: center;
+}
+
+.date-range-date-text {
+  font-size: 22rpx;
+  color: #9BAAB8;
+}
