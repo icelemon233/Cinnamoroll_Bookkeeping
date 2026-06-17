@@ -1,1 +1,17 @@
-uniapp/node_modules
+.DS_Store
+
+# Xcode
+ios/*.xcodeproj/project.xcworkspace/
+ios/*.xcodeproj/xcuserdata/
+ios/DerivedData/
+*.xcuserstate
+
+# Android / Gradle
+android/.gradle/
+android/build/
+android/app/build/
+local.properties
+
+# Editors
+.idea/
+.vscode/
